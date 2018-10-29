@@ -9,8 +9,28 @@ import com.ggp.utils.random.RandomSampler;
 import java.util.List;
 
 public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
-    private int iters = 5;
+    public static class Factory implements IUtilityEstimator.IFactory {
+        private final int iters = 5;
+        @Override
+        public IUtilityEstimator create() {
+            return new RandomPlayoutUtilityEstimator(iters);
+        }
+
+        @Override
+        public String getConfigString() {
+            return "rand{" +
+                    "i=" + iters +
+                    '}';
+        }
+    };
+
+    private final int iters;
     private RandomSampler rnd = new RandomSampler();
+
+    public RandomPlayoutUtilityEstimator(int iters) {
+        this.iters = iters;
+    }
+
     @Override
     public EstimatorResult estimate(ICompleteInformationState s) {
         if (s.isTerminal()) {
@@ -40,12 +60,5 @@ public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
             totalProb += prob;
         }
         return new EstimatorResult(u1/totalProb, u2/totalProb);
-    }
-
-    @Override
-    public String getConfigString() {
-        return "rand{" +
-                "i=" + iters +
-                '}';
     }
 }

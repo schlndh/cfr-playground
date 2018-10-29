@@ -4,6 +4,11 @@ import com.ggp.ICompleteInformationState;
 import com.ggp.players.deepstack.utils.Strategy;
 
 public interface IUtilityEstimator {
+    interface IFactory {
+        IUtilityEstimator create();
+        String getConfigString();
+    }
+
     class EstimatorResult {
         public double player1Utility;
         public double player2Utility;
@@ -15,5 +20,4 @@ public interface IUtilityEstimator {
     }
 
     EstimatorResult estimate(ICompleteInformationState s);
-    String getConfigString();
 }

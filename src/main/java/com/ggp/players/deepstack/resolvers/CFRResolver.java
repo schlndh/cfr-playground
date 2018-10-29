@@ -33,7 +33,7 @@ public class CFRResolver extends BaseCFRResolver implements ISubgameResolver {
         @Override
         public String getConfigString() {
             return "CFR{" +
-                    "ue=" + ((utilityEstimator == null) ? "null" : utilityEstimator.getConfigString()) +
+                    //"ue=" + ((utilityEstimator == null) ? "null" : utilityEstimator.getConfigString()) +
                     ", dl=" + depthLimit +
                     ", rm=" + rmFactory.getConfigString() +
                     '}';

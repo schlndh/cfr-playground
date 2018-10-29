@@ -6,45 +6,59 @@ import com.ggp.players.deepstack.IUtilityEstimator;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.utils.PlayerHelpers;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class DepthLimitedCFRSolver {
-    public static class Info {
-        public final double reachProb1, reachProb2, rndProb;
+public class DepthLimitedCFRSolver extends BaseCFRSolver {
+    public static class Factory extends BaseCFRSolver.Factory {
+        private int depthLimit = 0;
+        private IUtilityEstimator.IFactory ueFactory;
 
-        public Info(double reachProb1, double reachProb2, double rndProb) {
-            this.reachProb1 = reachProb1;
-            this.reachProb2 = reachProb2;
-            this.rndProb = rndProb;
+        public Factory(IRegretMatching.Factory rmFactory) {
+            super(rmFactory);
+        }
+
+        public Factory(IRegretMatching.Factory rmFactory, int depthLimit, IUtilityEstimator.IFactory ueFactory) {
+            super(rmFactory);
+            this.depthLimit = depthLimit;
+            this.ueFactory = ueFactory;
+        }
+
+        @Override
+        public BaseCFRSolver create(IStrategyAccumulationFilter accumulationFilter) {
+            return new DepthLimitedCFRSolver(rmFactory.create(), accumulationFilter, depthLimit, (ueFactory == null ? null : ueFactory.create()));
+        }
+
+        @Override
+        public String getConfigString() {
+            return "CFR{" +
+                    "ue=" + ((ueFactory == null) ? "null" : ueFactory.getConfigString()) +
+                    ", dl=" + depthLimit +
+                    ", rm=" + rmFactory.getConfigString() +
+                    '}';
         }
     }
 
-    public interface IListener {
-        void enteringState(IGameTraversalTracker tracker, Info info);
-        void leavingState(IGameTraversalTracker tracker, Info info, double utility);
-    }
-
-    private IRegretMatching regretMatching;
-    private IStrategy strat;
     private int depthLimit = 0;
     private IUtilityEstimator utilityEstimator;
-    private List<IListener> listeners = new ArrayList<>();
 
-    public DepthLimitedCFRSolver(IRegretMatching regretMatching, IStrategy strat) {
-        this.regretMatching = regretMatching;
-        this.strat = strat;
-    }
-
-    public DepthLimitedCFRSolver(IRegretMatching regretMatching, IStrategy strat, int depthLimit, IUtilityEstimator utilityEstimator) {
-        this.regretMatching = regretMatching;
-        this.strat = strat;
+    public DepthLimitedCFRSolver(IRegretMatching regretMatching, IStrategyAccumulationFilter accumulationFilter,
+                                 int depthLimit, IUtilityEstimator utilityEstimator) {
+        super(regretMatching, accumulationFilter);
         this.depthLimit = depthLimit;
         this.utilityEstimator = utilityEstimator;
     }
 
-    public double cfr(IGameTraversalTracker tracker, int player, int depth, double reachProb1, double reachProb2) {
+    /**
+     * Run CFR
+     * @param tracker
+     * @param player
+     * @param depth
+     * @param reachProb1
+     * @param reachProb2
+     * @return 1st player utility of root state under current strategy
+     */
+    private double cfr(IGameTraversalTracker tracker, int player, int depth, double reachProb1, double reachProb2) {
         // CVF_i(h) = reachProb_{-i}(h) * utility_i(H)
         // this method passes reachProb from top and returns player 1's utility
         ICompleteInformationState s = tracker.getCurrentState();
@@ -112,8 +126,12 @@ public class DepthLimitedCFRSolver {
         return utility;
     }
 
-    public void registerListener(IListener listener) {
-        if (listener != null) listeners.add(listener);
+    @Override
+    public void runIteration(IGameTraversalTracker tracker) {
+        cfr(tracker, 1, 0, 1, 1);
+        for (IInformationSet is: accumulationFilter.getAccumulated()) {
+            cumulativeStrat.addProbabilities(is, (action) -> strat.getProbability(is, action));
+        }
+        regretMatching.getRegretMatchedStrategy(strat);
     }
-
 }
