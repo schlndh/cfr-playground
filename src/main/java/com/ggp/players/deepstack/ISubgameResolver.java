@@ -5,44 +5,37 @@ import com.ggp.players.deepstack.utils.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 public interface ISubgameResolver {
     interface Factory {
-        ISubgameResolver create(int myId, IInformationSet hiddenInfo, InformationSetRange myRange, HashMap<IInformationSet, Double> opponentCFV,
+        ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
                                 ICompleteInformationStateFactory cisFactory, ArrayList<IResolvingListener> resolvingListeners);
         String getConfigString();
     }
 
     class ActResult {
         public IStrategy cumulativeStrategy;
-        public Map<IAction, NextTurnInfoTree> actionToNTIT;
-        public Map<IAction, PerceptSequenceMap> actionToPsMap;
-        public Map<IInformationSet, NextRangeTree> myISToNRT;
-        public double opponentCFVNorm;
+        public SubgameMap subgameMap;
+        public NextRangeTree nrt;
+        public HashMap<IInformationSet, Double> nextOpponentCFV;
 
-        public ActResult(IStrategy cumulativeStrategy, Map<IAction, NextTurnInfoTree> actionToNTIT,
-                         Map<IAction, PerceptSequenceMap> actionToPsMap, Map<IInformationSet, NextRangeTree> myISToNRT,
-                         double opponentCFVNorm) {
+        public ActResult(IStrategy cumulativeStrategy, SubgameMap subgameMap, NextRangeTree nrt, HashMap<IInformationSet, Double> nextOpponentCFV) {
             this.cumulativeStrategy = cumulativeStrategy;
-            this.actionToNTIT = actionToNTIT;
-            this.actionToPsMap = actionToPsMap;
-            this.myISToNRT = myISToNRT;
-            this.opponentCFVNorm = opponentCFVNorm;
+            this.subgameMap = subgameMap;
+            this.nrt = nrt;
+            this.nextOpponentCFV = nextOpponentCFV;
         }
     }
 
     class InitResult {
-        public NextTurnInfoTree ntit;
+        public SubgameMap subgameMap;
         public NextRangeTree nrt;
-        public PerceptSequenceMap psMap;
-        public double opponentCFVNorm;
+        public HashMap<IInformationSet, Double> nextOpponentCFV;
 
-        public InitResult(NextTurnInfoTree ntit, NextRangeTree nrt, PerceptSequenceMap psMap, double opponentCFVNorm) {
-            this.ntit = ntit;
+        public InitResult(SubgameMap subgameMap, NextRangeTree nrt, HashMap<IInformationSet, Double> nextOpponentCFV) {
+            this.subgameMap = subgameMap;
             this.nrt = nrt;
-            this.psMap = psMap;
-            this.opponentCFVNorm = opponentCFVNorm;
+            this.nextOpponentCFV = nextOpponentCFV;
         }
     }
 

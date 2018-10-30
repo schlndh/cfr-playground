@@ -7,9 +7,7 @@ import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.players.deepstack.cfrd.CFRDSubgameRoot;
 import com.ggp.players.deepstack.trackers.CFRDTracker;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
-import com.ggp.players.deepstack.utils.InformationSetRange;
-import com.ggp.players.deepstack.utils.IterationTimer;
-import com.ggp.players.deepstack.utils.Strategy;
+import com.ggp.players.deepstack.utils.*;
 import com.ggp.solvers.cfr.BaseCFRSolver;
 import com.ggp.utils.PlayerHelpers;
 
@@ -24,7 +22,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         }
 
         @Override
-        public ISubgameResolver create(int myId, IInformationSet hiddenInfo, InformationSetRange myRange, HashMap<IInformationSet, Double> opponentCFV,
+        public ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
                                        ICompleteInformationStateFactory cisFactory, ArrayList<IResolvingListener> resolvingListeners)
         {
             return new ExternalCFRResolver(myId, hiddenInfo, myRange, opponentCFV, cisFactory, resolvingListeners, solverFactory);
@@ -38,7 +36,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
     private final int myId;
     private IInformationSet hiddenInfo;
-    private InformationSetRange range;
+    private CISRange range;
     private HashMap<IInformationSet, Double> opponentCFV;
     private List<IResolvingListener> resolvingListeners;
     private IResolvingInfo resInfo = new ResolvingInfo();
@@ -46,6 +44,9 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
     private BaseCFRSolver.Factory solverFactory;
     private Strategy cumulativeStrat;
+    private SubgameMap subgameMap = new SubgameMap();
+    private NextRangeTree nrt = new NextRangeTree();
+    private HashMap<IInformationSet, Double> nextOpponentCFV = new HashMap<>();
 
     private class ResolvingInfo implements IResolvingInfo {
         @Override
@@ -59,8 +60,8 @@ public class ExternalCFRResolver implements ISubgameResolver {
         }
     }
 
-    public ExternalCFRResolver(int myId, IInformationSet hiddenInfo, InformationSetRange range, HashMap<IInformationSet, Double> opponentCFV,
-                       ICompleteInformationStateFactory cisFactory, ArrayList<IResolvingListener> resolvingListeners, BaseCFRSolver.Factory solverFactory)
+    public ExternalCFRResolver(int myId, IInformationSet hiddenInfo, CISRange range, HashMap<IInformationSet, Double> opponentCFV,
+                               ICompleteInformationStateFactory cisFactory, ArrayList<IResolvingListener> resolvingListeners, BaseCFRSolver.Factory solverFactory)
     {
         this.myId = myId;
         this.hiddenInfo = hiddenInfo;
@@ -98,7 +99,9 @@ public class ExternalCFRResolver implements ISubgameResolver {
                 if (tracker.isMyNextTurnReached()) {
                     double probWithoutOpponent = info.rndProb * PlayerHelpers.selectByPlayerId(myId, info.reachProb1, info.reachProb2);
                     double playerMul = PlayerHelpers.selectByPlayerId(myId, -1, 1);
-                    tracker.getNtit().addLeaf(tracker.getCurrentState().getInfoSetForPlayer(opponentId), probWithoutOpponent * playerMul * p1Utility);
+                    IInformationSet oppIs = tracker.getCurrentState().getInfoSetForPlayer(opponentId);
+                    double oppCFV = probWithoutOpponent * playerMul * p1Utility;
+                    nextOpponentCFV.merge(oppIs, oppCFV, (oldV, newV) -> oldV + newV);
                 }
             }
         });
@@ -109,9 +112,9 @@ public class ExternalCFRResolver implements ISubgameResolver {
         ICompleteInformationState s = tracker.getCurrentState();
         if (s.isTerminal()) return;
         if (tracker.isMyNextTurnReached()) {
-            tracker.getNtit().addLeaf(s.getInfoSetForPlayer(opponentId), 0);
-            tracker.getPsMap().add(tracker.getMyPerceptSequence(), tracker.getOpponentPerceptSequence());
-            tracker.getNrt().add(tracker.getOpponentPerceptSequence(), s, tracker.getMyTopAction(), tracker.getRndProb());
+            subgameMap.addSubgameState(s);
+            nrt.add(s, tracker.getMyFirstIS(), tracker.getMyTopAction(), tracker.getRndProb());
+            nextOpponentCFV.putIfAbsent(s.getInfoSetForPlayer(opponentId), 0d);
             return;
         }
         for (IAction a: s.getLegalActions()) {
@@ -163,8 +166,10 @@ public class ExternalCFRResolver implements ISubgameResolver {
             iters++;
         }
         cumulativeStrat.normalize();
+        int cfvNorm = iters;
+        nextOpponentCFV.replaceAll((is, cfv) -> cfv/cfvNorm);
 
-        return new ActResult(cumulativeStrat, subgameTracker.getActionToNtit(), subgameTracker.getActionToPsMap(), subgameTracker.getMyISToNRT(), iters);
+        return new ActResult(cumulativeStrat, subgameMap, nrt, nextOpponentCFV);
     }
 
     protected InitResult doInit(CFRDTracker tracker, IterationTimer timeout) {
@@ -177,6 +182,8 @@ public class ExternalCFRResolver implements ISubgameResolver {
             timeout.endIteration();
             iters++;
         }
-        return new InitResult(tracker.getNtit(), tracker.getNrt(), tracker.getPsMap(), iters);
+        int cfvNorm = iters;
+        nextOpponentCFV.replaceAll((is, cfv) -> cfv/cfvNorm);
+        return new InitResult(subgameMap, nrt, nextOpponentCFV);
     }
 }

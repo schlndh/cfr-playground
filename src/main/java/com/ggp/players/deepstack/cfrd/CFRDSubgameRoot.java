@@ -3,17 +3,17 @@ package com.ggp.players.deepstack.cfrd;
 import com.ggp.*;
 import com.ggp.players.deepstack.cfrd.actions.SelectCISAction;
 import com.ggp.players.deepstack.cfrd.percepts.ISSelectedPercept;
-import com.ggp.players.deepstack.utils.InformationSetRange;
+import com.ggp.players.deepstack.utils.CISRange;
 
 import java.util.*;
 
 public class CFRDSubgameRoot implements ICompleteInformationState {
     private static final long serialVersionUID = 1L;
-    private InformationSetRange range;
+    private CISRange range;
     private Map<IInformationSet, Double> opponentCFV;
     private int opponentId;
 
-    public CFRDSubgameRoot(InformationSetRange range, Map<IInformationSet, Double> opponentCFV, int opponentId) {
+    public CFRDSubgameRoot(CISRange range, Map<IInformationSet, Double> opponentCFV, int opponentId) {
         this.range = range;
         this.opponentCFV = opponentCFV;
         this.opponentId = opponentId;

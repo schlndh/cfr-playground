@@ -8,33 +8,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class NextRangeTree {
-    private HashMap<PerceptSequence, HashMap<ICompleteInformationState, HashMap<IAction, Double>>> range = new HashMap<>();
+    private HashMap<ICompleteInformationState, HashMap<IInformationSet, HashMap<IAction, Double>>> rangeMap = new HashMap<>();
 
-    public void add(PerceptSequence opponentPerceptSequence, ICompleteInformationState cis, IAction myAction, double rndProb) {
-        HashMap<ICompleteInformationState, HashMap<IAction, Double>> psSubtree = range.getOrDefault(opponentPerceptSequence, null);
-        if (psSubtree == null) {
-            psSubtree = new HashMap<>();
-            range.put(opponentPerceptSequence, psSubtree);
-        }
-        HashMap<IAction, Double> probMap = psSubtree.getOrDefault(cis, null);
-        if (probMap == null) {
-            probMap = new HashMap<>();
-            psSubtree.put(cis, probMap);
-        }
+    public void add(ICompleteInformationState nextTurnState, IInformationSet origIs, IAction myAction, double rndProb) {
+        HashMap<IInformationSet, HashMap<IAction, Double>> pathsToState = rangeMap.computeIfAbsent(nextTurnState, k -> new HashMap<>());
+        HashMap<IAction, Double> probMap = pathsToState.computeIfAbsent(origIs, k -> new HashMap<>());
         probMap.merge(myAction, rndProb, (oldV, newV) -> oldV + newV);
     }
 
-    public NextRangeTree merge(NextRangeTree tree) {
-        if (tree != null) {
-            tree.range.forEach((ps, psSubtree)
-                    -> psSubtree.forEach((cis, probMap)
-                        -> probMap.forEach((myAction, rndProb)
-                            -> add(ps, cis, myAction, rndProb))));
-        }
-        return this;
-    }
-
-    public Map<ICompleteInformationState, ?extends Map<IAction, Double>> getRange(PerceptSequence ps) {
-        return range.getOrDefault(ps, null);
+    public Map<IInformationSet, ?extends Map<IAction, Double>> getNextTurnStatePaths(ICompleteInformationState s) {
+        return rangeMap.getOrDefault(s, null);
     }
 }

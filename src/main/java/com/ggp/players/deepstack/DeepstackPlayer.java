@@ -1,7 +1,6 @@
 package com.ggp.players.deepstack;
 
 import com.ggp.*;
-import com.ggp.players.deepstack.debug.RPSListener;
 import com.ggp.players.deepstack.utils.*;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.random.RandomSampler;
@@ -29,55 +28,48 @@ public class DeepstackPlayer implements IPlayer {
 
     private int id;
     private int opponentId;
-    private InformationSetRange range;
+    private CISRange range;
     private IInformationSet hiddenInfo;
     private HashMap<IInformationSet, Double> opponentCFV;
     private ICompleteInformationStateFactory cisFactory;
-    private NextTurnInfoTree ntit;
-    private Map<IInformationSet, NextRangeTree> myISToNRT = new HashMap<>();
     private IGameDescription gameDesc;
-    private PerceptSequence.Builder myPSBuilder = new PerceptSequence.Builder();
     private IAction myLastAction;
-    private PerceptSequenceMap psMap;
     private IStrategy lastCumulativeStrategy;
     private ArrayList<IResolvingListener> resolvingListeners = new ArrayList<>();
     private ISubgameResolver.Factory resolverFactory;
-    private double opponentCFVNorm = 1;
+    private SubgameMap subgameMap;
+    private NextRangeTree nrt;
     private RandomSampler sampler = new RandomSampler();
 
-    private DeepstackPlayer(int id, InformationSetRange range, IInformationSet hiddenInfo,
+    private DeepstackPlayer(int id, CISRange range, IInformationSet hiddenInfo,
                             ICompleteInformationStateFactory cisFactory,
-                            NextTurnInfoTree ntit, Map<IInformationSet, NextRangeTree> myISToNRT, IGameDescription gameDesc,
-                            PerceptSequence.Builder myPSBuilder, IAction myLastAction, PerceptSequenceMap psMap,
+                            IGameDescription gameDesc,
+                            IAction myLastAction,
                             IStrategy lastCumulativeStrategy, ArrayList<IResolvingListener> resolvingListeners,
-                            ISubgameResolver.Factory resolverFactory, double opponentCFVNorm) {
+                            ISubgameResolver.Factory resolverFactory, SubgameMap subgameMap, NextRangeTree nrt, HashMap<IInformationSet, Double> opponentCFV) {
         this.id = id;
         this.opponentId = PlayerHelpers.getOpponentId(id);
         this.range = range;
         this.hiddenInfo = hiddenInfo;
         this.cisFactory = cisFactory;
-        this.ntit = ntit;
-        this.myISToNRT = myISToNRT;
         this.gameDesc = gameDesc;
-        this.myPSBuilder = myPSBuilder;
         this.myLastAction = myLastAction;
-        this.psMap = psMap;
         this.lastCumulativeStrategy = lastCumulativeStrategy;
         this.resolvingListeners = resolvingListeners;
         this.resolverFactory = resolverFactory;
-        this.opponentCFVNorm = opponentCFVNorm;
+        this.subgameMap = subgameMap;
+        this.nrt = nrt;
+        this.opponentCFV = opponentCFV;
     }
 
     public DeepstackPlayer(int id, IGameDescription gameDesc, ISubgameResolver.Factory resolverFactory) {
         this.id = id;
         this.opponentId = PlayerHelpers.getOpponentId(id);
-        range = new InformationSetRange(id);
         IInformationSet initialSet = gameDesc.getInitialInformationSet(id);
         hiddenInfo = initialSet;
         cisFactory = gameDesc.getCISFactory();
-        IInformationSet initialOpponentSet = gameDesc.getInitialInformationSet(2 - id + 1);
-        range.init(gameDesc.getInitialState());
-        myISToNRT.put(initialSet, new NextRangeTree());
+        IInformationSet initialOpponentSet = gameDesc.getInitialInformationSet(opponentId);
+        range = new CISRange(gameDesc.getInitialState());
         opponentCFV = new HashMap<>(1);
         opponentCFV.put(initialOpponentSet, 0d);
         this.gameDesc = gameDesc;
@@ -102,10 +94,9 @@ public class DeepstackPlayer implements IPlayer {
         timer.start();
         ISubgameResolver r = createResolver();
         ISubgameResolver.InitResult res = r.init(gameDesc.getInitialState(), timer);
-        ntit = res.ntit;
-        myISToNRT.put(gameDesc.getInitialInformationSet(id), res.nrt);
-        psMap = res.psMap;
-        opponentCFVNorm = res.opponentCFVNorm;
+        this.subgameMap = res.subgameMap;
+        this.opponentCFV = res.nextOpponentCFV;
+        this.nrt = res.nrt;
     }
 
     @Override
@@ -116,19 +107,15 @@ public class DeepstackPlayer implements IPlayer {
     public ISubgameResolver.ActResult computeStrategy(long timeoutMillis) {
         IterationTimer timer = new IterationTimer(timeoutMillis);
         timer.start();
-        opponentCFV = new HashMap<>(ntit.getOpponentValues().size());
-        ntit.getOpponentValues().forEach((is, cfv) -> opponentCFV.put(is, cfv.getValue() / opponentCFVNorm));
-        range.advance(psMap.getPossibleSequences(myPSBuilder.close()), myISToNRT, lastCumulativeStrategy);
+        range = new CISRange(subgameMap.getSubgame(hiddenInfo), nrt, lastCumulativeStrategy);
         ISubgameResolver r = createResolver();
         return r.act(timer);
     }
 
     public DeepstackPlayer copy() {
-        InformationSetRange nRange = range.copy();
-        PerceptSequence.Builder nPSBuilder = myPSBuilder.copy();
-        return new DeepstackPlayer(id, nRange, hiddenInfo, cisFactory, ntit,
-                myISToNRT, gameDesc, nPSBuilder, myLastAction, psMap,
-                lastCumulativeStrategy, resolvingListeners, resolverFactory, opponentCFVNorm);
+        return new DeepstackPlayer(id, range, hiddenInfo, cisFactory,
+                gameDesc, myLastAction,
+                lastCumulativeStrategy, resolvingListeners, resolverFactory, subgameMap, nrt, opponentCFV);
     }
 
     private IAction act(IAction forcedAction, long timeoutMillis) {
@@ -147,11 +134,10 @@ public class DeepstackPlayer implements IPlayer {
     public void act(IAction selectedAction, ISubgameResolver.ActResult res) {
         lastCumulativeStrategy = res.cumulativeStrategy;
         myLastAction = selectedAction;
-        ntit = res.actionToNTIT.get(selectedAction);
-        psMap = res.actionToPsMap.get(selectedAction);
-        myISToNRT = res.myISToNRT;
+        subgameMap = res.subgameMap;
+        nrt = res.nrt;
+        opponentCFV = res.nextOpponentCFV;
         hiddenInfo = hiddenInfo.next(selectedAction);
-        opponentCFVNorm = res.opponentCFVNorm;
     }
 
     @Override
@@ -166,9 +152,7 @@ public class DeepstackPlayer implements IPlayer {
 
     @Override
     public void receivePercepts(IPercept percept) {
-        myPSBuilder.add(percept);
         hiddenInfo = hiddenInfo.applyPercept(percept);
-        ntit = ntit.getNext(percept);
     }
 
     public String getConfigString() {
