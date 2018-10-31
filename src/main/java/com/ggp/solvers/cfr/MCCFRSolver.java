@@ -26,9 +26,9 @@ public class MCCFRSolver extends BaseCFRSolver {
         @Override
         public String getConfigString() {
             return "MC-CFR{" +
-                    ", t=" + targetingProb +
-                    ", e=" + explorationProb +
-                    ", rm=" + rmFactory.getConfigString() +
+                    "t=" + targetingProb +
+                    ",e=" + explorationProb +
+                    ",rm=" + rmFactory.getConfigString() +
                     '}';
         }
     }
