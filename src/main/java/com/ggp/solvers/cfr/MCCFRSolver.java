@@ -129,9 +129,9 @@ public class MCCFRSolver extends BaseCFRSolver {
         if (legalActions == null || legalActions.isEmpty()) return null;
         SampleResult sampledAction = samplePlayerAction(s, actingPlayerInfoSet, player);
         CFRResult ret;
+        regretMatching.getRegretMatchedStrategy(actingPlayerInfoSet, strat);
         double actionProb = strat.getProbability(actingPlayerInfoSet, sampledAction.action);
         if (regretMatching.hasInfoSet(actingPlayerInfoSet)) {
-            regretMatching.getRegretMatchedStrategy(actingPlayerInfoSet, strat);
             double newPlayerProb = playerProb;
             double newOpponentProb = opponentProb;
             if (s.getActingPlayerId() == player) {
@@ -143,8 +143,7 @@ public class MCCFRSolver extends BaseCFRSolver {
                     sampledAction.targetedProb * targetedSampleProb,
                     sampledAction.untargetedProb * untargetedSampleProb, player);
         } else {
-            regretMatching.initInfoSet(actingPlayerInfoSet);
-            ret = playout(s, (totalSampleProb)/legalActions.size(), player);
+            ret = playout(s.next(sampledAction.action), (totalSampleProb)/legalActions.size(), player);
         }
 
         double probWithoutPlayer = opponentProb * tracker.getRndProb();
