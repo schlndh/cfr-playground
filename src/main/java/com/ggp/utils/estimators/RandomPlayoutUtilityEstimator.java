@@ -1,16 +1,26 @@
-package com.ggp.players.deepstack.estimators;
+package com.ggp.utils.estimators;
 
 import com.ggp.IAction;
 import com.ggp.ICompleteInformationState;
 import com.ggp.IRandomNode;
-import com.ggp.players.deepstack.IUtilityEstimator;
+import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
+import com.ggp.utils.IUtilityEstimator;
 import com.ggp.utils.random.RandomSampler;
 
 import java.util.List;
 
 public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
     public static class Factory implements IUtilityEstimator.IFactory {
-        private final int iters = 5;
+        private final int iters;
+
+        public Factory() {
+            this(1);
+        }
+
+        public Factory(int iters) {
+            this.iters = iters;
+        }
+
         @Override
         public IUtilityEstimator create() {
             return new RandomPlayoutUtilityEstimator(iters);
@@ -32,11 +42,12 @@ public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
     }
 
     @Override
-    public EstimatorResult estimate(ICompleteInformationState s) {
+    public double estimate(IGameTraversalTracker tracker) {
+        ICompleteInformationState s = tracker.getCurrentState();
         if (s.isTerminal()) {
-            return new EstimatorResult(s.getPayoff(1), s.getPayoff(2));
+            return s.getPayoff(1);
         }
-        double u1 = 0, u2 = 0;
+        double u1 = 0;
         double totalProb = 0;
         for (int i = 0; i < iters; ++i) {
             ICompleteInformationState ws = s;
@@ -56,9 +67,13 @@ public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
                 ws = ws.next(a);
             }
             u1 += prob*ws.getPayoff(1);
-            u2 += prob*ws.getPayoff(2);
             totalProb += prob;
         }
-        return new EstimatorResult(u1/totalProb, u2/totalProb);
+        return u1/totalProb;
+    }
+
+    @Override
+    public boolean canEstimate(IGameTraversalTracker tracker) {
+        return true;
     }
 }

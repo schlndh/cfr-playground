@@ -2,7 +2,7 @@ package com.ggp.solvers.cfr;
 
 import com.ggp.*;
 import com.ggp.players.deepstack.IRegretMatching;
-import com.ggp.players.deepstack.IUtilityEstimator;
+import com.ggp.utils.IUtilityEstimator;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.utils.PlayerHelpers;
 
@@ -69,12 +69,9 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
             return s.getPayoff(1);
         }
 
-        // TODO: generalize condition for utilityEstimator
-        // cutoff can only be made once i know opponentCFV for next turn i'll play
-        /*if (tracker.wasMyNextTurnReached() && depth > depthLimit && utilityEstimator != null) {
-            IUtilityEstimator.EstimatorResult res = utilityEstimator.estimate(s);
-            return res.player1Utility;
-        }*/
+        if (depth > depthLimit && utilityEstimator != null && utilityEstimator.canEstimate(tracker)) {
+            return utilityEstimator.estimate(tracker);
+        }
         List<IAction> legalActions = s.getLegalActions();
         double rndProb = tracker.getRndProb();
 
