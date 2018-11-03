@@ -1,4 +1,4 @@
-package com.ggp.utils;
+package com.ggp.utils.time;
 
 import java.util.ArrayList;
 import java.util.List;

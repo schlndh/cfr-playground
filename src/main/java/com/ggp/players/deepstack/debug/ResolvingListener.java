@@ -5,7 +5,7 @@ import com.ggp.ICompleteInformationState;
 import com.ggp.IGameListener;
 import com.ggp.players.deepstack.IResolvingInfo;
 import com.ggp.players.deepstack.IResolvingListener;
-import com.ggp.utils.StopWatch;
+import com.ggp.utils.time.StopWatch;
 
 public class ResolvingListener implements IResolvingListener, IGameListener {
     private int totalStateCounter = 0;
@@ -22,7 +22,6 @@ public class ResolvingListener implements IResolvingListener, IGameListener {
         actionStateCounter = 0;
         actionReasoningTime.reset();
         totalReasoningTime.start();
-        actionReasoningTime.start();
     }
 
     @Override

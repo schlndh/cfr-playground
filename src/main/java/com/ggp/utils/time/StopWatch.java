@@ -1,4 +1,4 @@
-package com.ggp.utils;
+package com.ggp.utils.time;
 
 public class StopWatch {
     private long durationNano = 0;

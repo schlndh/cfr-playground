@@ -5,7 +5,7 @@ import com.ggp.IStrategy;
 import com.ggp.players.deepstack.IResolvingInfo;
 import com.ggp.players.deepstack.evaluators.EvaluatorEntry;
 import com.ggp.players.deepstack.utils.Strategy;
-import com.ggp.utils.TimedCounter;
+import com.ggp.utils.time.TimedCounter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,6 @@ public class StrategyAggregatorListener extends BaseListener {
     @Override
     public void resolvingStart(IResolvingInfo resInfo) {
         timedCounter.reset();
-        timedCounter.start();
         strategyIdx = 0;
     }
 
