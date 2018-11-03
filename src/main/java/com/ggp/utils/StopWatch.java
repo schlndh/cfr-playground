@@ -17,7 +17,7 @@ public class StopWatch {
 
     public void reset() {
         durationNano = 0;
-        startNano = 0;
+        start();
     }
 
     public long getDurationMs() {

@@ -27,7 +27,6 @@ public class TimedCounter {
      * Resets the timer and counter.
      */
     public void reset() {
-        timer.stop();
         timer.reset();
         counter = 0;
     }
