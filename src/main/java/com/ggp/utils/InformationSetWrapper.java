@@ -5,6 +5,7 @@ import com.ggp.IInformationSet;
 import com.ggp.IPercept;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Base class for IS wrappers, delegates most methods to the original IS.
@@ -45,5 +46,18 @@ public abstract class InformationSetWrapper implements IInformationSet {
 
     public IInformationSet getOrigInfoSet() {
         return infoSet;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        InformationSetWrapper that = (InformationSetWrapper) o;
+        return Objects.equals(infoSet, that.infoSet);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(infoSet);
     }
 }

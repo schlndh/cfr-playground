@@ -3,6 +3,7 @@ package com.ggp.utils;
 import com.ggp.*;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Base class for CIS wrappers, delegates most methods to the original state.
@@ -60,5 +61,18 @@ public abstract class CompleteInformationStateWrapper implements ICompleteInform
 
     public ICompleteInformationState getOrigState() {
         return state;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CompleteInformationStateWrapper that = (CompleteInformationStateWrapper) o;
+        return Objects.equals(state, that.state);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(state);
     }
 }

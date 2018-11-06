@@ -6,6 +6,8 @@ import com.ggp.IInformationSet;
 import com.ggp.IPercept;
 import com.ggp.utils.CompleteInformationStateWrapper;
 
+import java.util.Objects;
+
 class PerfectRecallCIS extends CompleteInformationStateWrapper {
     private PerfectRecallIS player1IS, player2IS;
 
@@ -41,5 +43,20 @@ class PerfectRecallCIS extends CompleteInformationStateWrapper {
         if (player == 1) return player1IS;
         if (player == 2) return player2IS;
         return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        PerfectRecallCIS that = (PerfectRecallCIS) o;
+        return Objects.equals(player1IS, that.player1IS) &&
+                Objects.equals(player2IS, that.player2IS);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), player1IS, player2IS);
     }
 }
