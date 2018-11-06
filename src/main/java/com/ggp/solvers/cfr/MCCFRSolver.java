@@ -129,11 +129,12 @@ public class MCCFRSolver extends BaseCFRSolver {
         IInformationSet actingPlayerInfoSet = s.getInfoSetForActingPlayer();
         List<IAction> legalActions = actingPlayerInfoSet.getLegalActions();
         if (legalActions == null || legalActions.isEmpty()) return null;
+        boolean isInMemory = regretMatching.hasInfoSet(actingPlayerInfoSet);
+        regretMatching.getRegretMatchedStrategy(actingPlayerInfoSet, strat);
         SampleResult sampledAction = samplePlayerAction(s, actingPlayerInfoSet, player);
         CFRResult ret;
-        regretMatching.getRegretMatchedStrategy(actingPlayerInfoSet, strat);
         double actionProb = strat.getProbability(actingPlayerInfoSet, sampledAction.action);
-        if (regretMatching.hasInfoSet(actingPlayerInfoSet)) {
+        if (isInMemory) {
             double newPlayerProb = playerProb;
             double newOpponentProb = opponentProb;
             if (s.getActingPlayerId() == player) {
