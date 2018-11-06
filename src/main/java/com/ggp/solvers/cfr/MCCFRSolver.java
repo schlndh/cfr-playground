@@ -90,6 +90,7 @@ public class MCCFRSolver extends BaseCFRSolver {
     private CFRResult playout(ICompleteInformationState s, double prefixProb, int player) {
         double suffixProb = 1;
         while (!s.isTerminal()) {
+            visitedStates++;
             SampleResult res;
             if (s.isRandomNode()) {
                 res = sampleRandom(s);
@@ -109,6 +110,7 @@ public class MCCFRSolver extends BaseCFRSolver {
                           double targetedSampleProb, double untargetedSampleProb, int player) {
         ICompleteInformationState s = tracker.getCurrentState();
         Info info = PlayerHelpers.callWithOrderedParams(player, playerProb, opponentProb, (prob1, prob2) -> new Info(prob1, prob2, tracker.getRndProb()));
+        visitedStates++;
         listeners.forEach(listener -> listener.enteringState(tracker, info));
 
         double totalSampleProb = targetingProb * targetedSampleProb + (1-targetingProb) * untargetedSampleProb;

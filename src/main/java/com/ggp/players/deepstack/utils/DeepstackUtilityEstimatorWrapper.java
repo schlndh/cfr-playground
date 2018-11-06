@@ -30,7 +30,7 @@ public class DeepstackUtilityEstimatorWrapper implements IUtilityEstimator {
     }
 
     @Override
-    public double estimate(IGameTraversalTracker tracker) {
+    public UtilityEstimate estimate(IGameTraversalTracker tracker) {
         return utilityEstimator.estimate(tracker);
     }
 

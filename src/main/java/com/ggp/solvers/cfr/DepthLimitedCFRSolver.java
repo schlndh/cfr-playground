@@ -63,6 +63,7 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         // this method passes reachProb from top and returns player 1's utility
         ICompleteInformationState s = tracker.getCurrentState();
         Info info = new Info(reachProb1, reachProb2, tracker.getRndProb());
+        visitedStates++;
         listeners.forEach(listener -> listener.enteringState(tracker, info));
 
         if (s.isTerminal()) {
@@ -70,7 +71,9 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         }
 
         if (depth > depthLimit && utilityEstimator != null && utilityEstimator.canEstimate(tracker)) {
-            return utilityEstimator.estimate(tracker);
+            IUtilityEstimator.UtilityEstimate res = utilityEstimator.estimate(tracker);
+            visitedStates += res.visitedStates;
+            return res.p1Utility;
         }
         List<IAction> legalActions = s.getLegalActions();
         double rndProb = tracker.getRndProb();

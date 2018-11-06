@@ -45,6 +45,7 @@ public abstract class BaseCFRSolver {
     protected Strategy cumulativeStrat = new Strategy();
     protected IStrategyAccumulationFilter accumulationFilter;
     protected List<DepthLimitedCFRSolver.IListener> listeners = new ArrayList<>();
+    protected long visitedStates = 0;
 
     public BaseCFRSolver(IRegretMatching regretMatching, IStrategyAccumulationFilter accumulationFilter) {
         this.regretMatching = regretMatching;
@@ -78,5 +79,9 @@ public abstract class BaseCFRSolver {
                 return strat.getDefinedInformationSets();
             }
         };
+    }
+
+    public long getVisitedStates() {
+        return visitedStates;
     }
 }
