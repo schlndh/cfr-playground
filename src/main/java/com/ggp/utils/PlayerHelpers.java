@@ -23,6 +23,8 @@ public class PlayerHelpers {
 
     /**
      * Calls fn(P1, P2)
+     *
+     * Can also be used as cwop(myId, p1Val, p2Val, fn) -> fn(myVal, oppVal)
      * @param id
      * @param myParam
      * @param opponentParam
@@ -44,6 +46,8 @@ public class PlayerHelpers {
 
     /**
      * Calls fn(P1, P2)
+     *
+     * Can also be used as cwop(myId, p1Val, p2Val, fn) -> fn(myVal, oppVal)
      * @param id
      * @param myParam
      * @param opponentParam
