@@ -1,0 +1,8 @@
+# Incomplete Information Goofspiel
+ - each player has a deck of cards with values 0..N-1
+ - there is a sorted deck of public cards 1..N (1 is on top)
+ - at each turn players privately bid one of their cards on the current public card
+ - higher bid wins the card which is then removed from the public deck and both bet cards are discarded
+ - if both players bet the same amount then nobody gets the public card
+ - at the end the player with higher sum of public card values wins the game (+1/-1)
+ - otherwise it's a tie
