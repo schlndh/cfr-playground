@@ -23,9 +23,9 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
         @Override
         public ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
-                                       ICompleteInformationStateFactory cisFactory, ArrayList<IResolvingListener> resolvingListeners)
+                                       ArrayList<IResolvingListener> resolvingListeners)
         {
-            return new ExternalCFRResolver(myId, hiddenInfo, myRange, opponentCFV, cisFactory, resolvingListeners, solverFactory);
+            return new ExternalCFRResolver(myId, hiddenInfo, myRange, opponentCFV, resolvingListeners, solverFactory);
         }
 
         @Override
@@ -61,7 +61,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     }
 
     public ExternalCFRResolver(int myId, IInformationSet hiddenInfo, CISRange range, HashMap<IInformationSet, Double> opponentCFV,
-                               ICompleteInformationStateFactory cisFactory, ArrayList<IResolvingListener> resolvingListeners, BaseCFRSolver.Factory solverFactory)
+                               ArrayList<IResolvingListener> resolvingListeners, BaseCFRSolver.Factory solverFactory)
     {
         this.myId = myId;
         this.hiddenInfo = hiddenInfo;

@@ -7,5 +7,4 @@ public interface IGameDescription extends Serializable {
     default IInformationSet getInitialInformationSet(int role) {
         return getInitialState().getInfoSetForPlayer(role);
     }
-    ICompleteInformationStateFactory getCISFactory();
 }

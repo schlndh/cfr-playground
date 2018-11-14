@@ -21,7 +21,6 @@ public class GameDescription implements IGameDescription {
         return initialState;
     }
 
-    @Override
     public ICompleteInformationStateFactory getCISFactory() {
         return new ICompleteInformationStateFactory() {
             private boolean isCompatible(IInformationSet player1, IInformationSet player2, int actingPlayer) {

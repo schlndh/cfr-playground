@@ -9,7 +9,7 @@ import java.util.HashMap;
 public interface ISubgameResolver {
     interface Factory {
         ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
-                                ICompleteInformationStateFactory cisFactory, ArrayList<IResolvingListener> resolvingListeners);
+                                ArrayList<IResolvingListener> resolvingListeners);
         String getConfigString();
     }
 

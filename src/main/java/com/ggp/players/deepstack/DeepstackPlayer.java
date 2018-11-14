@@ -31,7 +31,6 @@ public class DeepstackPlayer implements IPlayer {
     private CISRange range;
     private IInformationSet hiddenInfo;
     private HashMap<IInformationSet, Double> opponentCFV;
-    private ICompleteInformationStateFactory cisFactory;
     private IGameDescription gameDesc;
     private IAction myLastAction;
     private IStrategy lastCumulativeStrategy;
@@ -42,7 +41,6 @@ public class DeepstackPlayer implements IPlayer {
     private RandomSampler sampler = new RandomSampler();
 
     private DeepstackPlayer(int id, CISRange range, IInformationSet hiddenInfo,
-                            ICompleteInformationStateFactory cisFactory,
                             IGameDescription gameDesc,
                             IAction myLastAction,
                             IStrategy lastCumulativeStrategy, ArrayList<IResolvingListener> resolvingListeners,
@@ -51,7 +49,6 @@ public class DeepstackPlayer implements IPlayer {
         this.opponentId = PlayerHelpers.getOpponentId(id);
         this.range = range;
         this.hiddenInfo = hiddenInfo;
-        this.cisFactory = cisFactory;
         this.gameDesc = gameDesc;
         this.myLastAction = myLastAction;
         this.lastCumulativeStrategy = lastCumulativeStrategy;
@@ -67,7 +64,6 @@ public class DeepstackPlayer implements IPlayer {
         this.opponentId = PlayerHelpers.getOpponentId(id);
         IInformationSet initialSet = gameDesc.getInitialInformationSet(id);
         hiddenInfo = initialSet;
-        cisFactory = gameDesc.getCISFactory();
         IInformationSet initialOpponentSet = gameDesc.getInitialInformationSet(opponentId);
         range = new CISRange(gameDesc.getInitialState());
         opponentCFV = new HashMap<>(1);
@@ -85,7 +81,7 @@ public class DeepstackPlayer implements IPlayer {
     }
 
     private ISubgameResolver createResolver() {
-        return resolverFactory.create(id, hiddenInfo, range, opponentCFV, cisFactory, resolvingListeners);
+        return resolverFactory.create(id, hiddenInfo, range, opponentCFV, resolvingListeners);
     }
 
     @Override
@@ -113,7 +109,7 @@ public class DeepstackPlayer implements IPlayer {
     }
 
     public DeepstackPlayer copy() {
-        return new DeepstackPlayer(id, range, hiddenInfo, cisFactory,
+        return new DeepstackPlayer(id, range, hiddenInfo,
                 gameDesc, myLastAction,
                 lastCumulativeStrategy, resolvingListeners, resolverFactory, subgameMap, nrt, opponentCFV);
     }

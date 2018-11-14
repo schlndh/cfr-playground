@@ -25,17 +25,4 @@ public class PerfectRecallGameDescriptionWrapper implements IGameDescription {
     public ICompleteInformationState getInitialState() {
         return initialState;
     }
-
-    @Override
-    public ICompleteInformationStateFactory getCISFactory() {
-        return new ICompleteInformationStateFactory() {
-            private ICompleteInformationStateFactory factory = gameDesc.getCISFactory();
-            @Override
-            public ICompleteInformationState make(IInformationSet player1, IInformationSet player2, int actingPlayer) {
-                PerfectRecallIS p1 = (PerfectRecallIS) player1;
-                PerfectRecallIS p2 = (PerfectRecallIS) player2;
-                return new PerfectRecallCIS(factory.make(p1.getOrigInfoSet(), p2.getOrigInfoSet(), actingPlayer), p1, p2);
-            }
-        };
-    }
 }

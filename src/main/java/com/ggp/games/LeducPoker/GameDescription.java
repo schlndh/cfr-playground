@@ -52,7 +52,6 @@ public class GameDescription implements IGameDescription {
         return true;
     }
 
-    @Override
     public ICompleteInformationStateFactory getCISFactory() {
         return new ICompleteInformationStateFactory() {
             @Override
