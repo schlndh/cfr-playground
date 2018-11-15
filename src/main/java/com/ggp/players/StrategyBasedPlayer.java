@@ -17,6 +17,11 @@ public class StrategyBasedPlayer implements IPlayer {
         public IPlayer create(IGameDescription game, int role) {
             return new StrategyBasedPlayer(role, game, strategy);
         }
+
+        @Override
+        public String getConfigString() {
+            return "StrategyBasedPlayer{}";
+        }
     }
 
     private int myId;

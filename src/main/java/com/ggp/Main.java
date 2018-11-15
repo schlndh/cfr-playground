@@ -1,6 +1,7 @@
 package com.ggp;
 
 import com.ggp.cli.MainCommand;
+import com.ggp.games.IIGoofspiel.IIGoofspielCommand;
 import com.ggp.games.LeducPoker.LeducPokerCommand;
 import com.ggp.games.RockPaperScissors.RPSCommand;
 import com.ggp.games.TicTacToe.TTTCommand;
@@ -15,6 +16,7 @@ public class Main {
         main.registerGameCommand(new RPSCommand());
         main.registerGameCommand(new LeducPokerCommand());
         main.registerGameCommand(new TTTCommand());
+        main.registerGameCommand(new IIGoofspielCommand());
 
         main.registerPlayerFactoryCommand(new RandomPlayerCommand());
         main.registerPlayerFactoryCommand(new DeepstackPlayerCommand());

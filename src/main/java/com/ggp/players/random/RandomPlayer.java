@@ -10,6 +10,11 @@ public class RandomPlayer implements IPlayer {
         public IPlayer create(IGameDescription game, int role) {
             return new RandomPlayer(game.getInitialInformationSet(role), role);
         }
+
+        @Override
+        public String getConfigString() {
+            return "Random{}";
+        }
     }
 
     private IInformationSet infoSet;

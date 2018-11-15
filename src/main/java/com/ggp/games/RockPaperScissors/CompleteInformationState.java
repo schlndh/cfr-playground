@@ -91,4 +91,8 @@ public class CompleteInformationState implements ICompleteInformationState {
     public IRandomNode getRandomNode() {
         return null;
     }
+
+    public int getSize() {
+        return player1IS.getSize();
+    }
 }

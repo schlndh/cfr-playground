@@ -25,4 +25,16 @@ public class PerfectRecallGameDescriptionWrapper implements IGameDescription {
     public ICompleteInformationState getInitialState() {
         return initialState;
     }
+
+    @Override
+    public String toString() {
+        return "PerfectRecall{" +
+                    gameDesc.getConfigString() +
+                '}';
+    }
+
+    @Override
+    public String getConfigString() {
+        return toString();
+    }
 }

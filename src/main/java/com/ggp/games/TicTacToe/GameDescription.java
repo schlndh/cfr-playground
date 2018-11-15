@@ -35,4 +35,14 @@ public class GameDescription implements IGameDescription {
             }
         };
     }
+
+    @Override
+    public String toString() {
+        return "KriegTicTacToe{N=5}";
+    }
+
+    @Override
+    public String getConfigString() {
+        return toString();
+    }
 }

@@ -24,6 +24,13 @@ public class DeepstackPlayer implements IPlayer {
             if (listener != null) ret.registerResolvingListener(listener);
             return ret;
         }
+
+        @Override
+        public String getConfigString() {
+            return "Deepstack{" +
+                        resolverFactory.getConfigString() +
+                    '}';
+        }
     }
 
     private int id;

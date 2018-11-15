@@ -44,4 +44,16 @@ public class GameDescription implements IGameDescription {
     public ExploitabilityEstimator getExploitabilityEstimator() {
         return new ExploitabilityEstimator(initialState);
     }
+
+    @Override
+    public String toString() {
+        return "RockPaperScissors{N=" +
+                    initialState.getSize() +
+                "}";
+    }
+
+    @Override
+    public String getConfigString() {
+        return toString();
+    }
 }

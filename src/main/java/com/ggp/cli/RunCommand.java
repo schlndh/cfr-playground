@@ -65,6 +65,7 @@ public class RunCommand implements Runnable {
 
         IPlayerFactory pl1 = getPlayerFactory(plCmd1, player1);
         IPlayerFactory pl2 = getPlayerFactory(plCmd2, player2);
+        System.out.println(String.format("%s: %s vs %s", gameDesc.getConfigString(), pl1.getConfigString(), pl2.getConfigString()));
 
         GameManager manager = new GameManager(pl1, pl2, gameDesc);
         if (visualizer != null) {

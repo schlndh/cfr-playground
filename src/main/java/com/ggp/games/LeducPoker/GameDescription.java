@@ -61,4 +61,17 @@ public class GameDescription implements IGameDescription {
             }
         };
     }
+
+    @Override
+    public String toString() {
+        return "LeducPoker{" +
+                "money1=" + startingMoney1 +
+                ",money2=" + startingMoney2 +
+                '}';
+    }
+
+    @Override
+    public String getConfigString() {
+        return toString();
+    }
 }
