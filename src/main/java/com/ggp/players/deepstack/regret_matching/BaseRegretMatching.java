@@ -10,6 +10,7 @@ import java.util.List;
 
 abstract class BaseRegretMatching implements IRegretMatching {
     protected HashMap<IInformationSet, double[]> regrets = new HashMap<>();
+    protected double totalRegret = 0;
 
     private double[] getOrCreateActionRegrets(IInformationSet is) {
         return regrets.computeIfAbsent(is, k -> new double[is.getLegalActions().size()]);
@@ -20,7 +21,9 @@ abstract class BaseRegretMatching implements IRegretMatching {
     @Override
     public void addActionRegret(IInformationSet is, int actionIdx, double regretDiff) {
         double[] actionRegrets = getOrCreateActionRegrets(is);
+        totalRegret -= Math.max(0, actionRegrets[actionIdx]);
         actionRegrets[actionIdx] = sumRegrets(actionRegrets[actionIdx], regretDiff);
+        totalRegret += Math.max(0, actionRegrets[actionIdx]);
     }
 
     @Override
@@ -55,5 +58,10 @@ abstract class BaseRegretMatching implements IRegretMatching {
     @Override
     public void initInfoSet(IInformationSet is) {
         getOrCreateActionRegrets(is);
+    }
+
+    @Override
+    public double getTotalRegret() {
+        return totalRegret;
     }
 }

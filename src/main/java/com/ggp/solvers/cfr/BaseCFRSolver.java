@@ -84,4 +84,8 @@ public abstract class BaseCFRSolver {
     public long getVisitedStates() {
         return visitedStates;
     }
+
+    public double getTotalRegret() {
+        return regretMatching.getTotalRegret();
+    }
 }
