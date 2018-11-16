@@ -38,7 +38,7 @@ public class GameDescription implements IGameDescription {
     @Override
     public String toString() {
         return "IIGoofspiel{" +
-                "N=" + initialState.getGameSize() +
+                    initialState.getGameSize() +
                 '}';
     }
 

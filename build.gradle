@@ -12,6 +12,8 @@ plugins {
 
     // Apply the application plugin to add support for building an application
     id 'application'
+    id 'antlr'
+    id 'idea'
 }
 
 // Define the main class for the application
@@ -27,6 +29,7 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.1.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.1.0'
     compile 'info.picocli:picocli:3.3.0'
+    antlr "org.antlr:antlr4:4.7"
 }
 
 // In this section you declare where to find the dependencies of your project
@@ -40,5 +43,16 @@ repositories {
 run {
     if (project.hasProperty("appArgs")) {
         args Eval.me(appArgs)
+    }
+}
+
+generateGrammarSource {
+    arguments += ['-package', 'com.ggp.parsers', '-visitor']
+    outputDirectory = new File("build/generated-src/antlr/main/com/ggp/parsers".toString())
+}
+
+idea {
+    module {
+        sourceDirs += file("build/generated-src/antlr/main")
     }
 }

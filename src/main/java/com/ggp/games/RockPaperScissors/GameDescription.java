@@ -49,7 +49,7 @@ public class GameDescription implements IGameDescription {
 
     @Override
     public String toString() {
-        return "RockPaperScissors{N=" +
+        return "RockPaperScissors{" +
                     initialState.getSize() +
                 "}";
     }

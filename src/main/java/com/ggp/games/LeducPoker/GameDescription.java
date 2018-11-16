@@ -67,8 +67,8 @@ public class GameDescription implements IGameDescription {
     @Override
     public String toString() {
         return "LeducPoker{" +
-                "money1=" + startingMoney1 +
-                ",money2=" + startingMoney2 +
+                    startingMoney1 +
+                    "," + startingMoney2 +
                 '}';
     }
 

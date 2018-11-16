@@ -41,7 +41,7 @@ public class GameDescription implements IGameDescription {
 
     @Override
     public String toString() {
-        return "KriegTicTacToe{N=5}";
+        return "KriegTicTacToe";
     }
 
     @Override
