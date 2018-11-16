@@ -1,6 +1,8 @@
 package com.ggp.cli;
 
 import com.ggp.*;
+import com.ggp.parsers.ParseUtils;
+import com.ggp.utils.DefaultStateVisualizer;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "run",
@@ -15,9 +17,6 @@ public class RunCommand implements Runnable {
 
     @CommandLine.Option(names={"-g", "--game"}, description="game to be played", required=true)
     private String game;
-
-    @CommandLine.Option(names={"--game-args"}, description="additional arguments for selected game")
-    private String gameArgs;
 
     @CommandLine.Option(names={"--player1"}, description="player 1", required=true)
     private String player1;
@@ -50,16 +49,11 @@ public class RunCommand implements Runnable {
 
     @Override
     public void run() {
-        IGameCommand gameCommand = mainCommand.getGameRegistry().getCommand(game);
-        if (gameCommand == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Unknown game '" + game + "'.", null, game);
-        }
-        CommandLine.populateCommand(gameCommand, CliHelper.splitArgString(gameArgs));
-        IGameDescription gameDesc = gameCommand.getGameDescription();
+        IGameDescription gameDesc = ParseUtils.parseGameDescription(game);
         if (gameDesc == null) {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
         }
-        IStateVisualizer visualizer = gameCommand.getStateVisualizer();
+        IStateVisualizer visualizer = new DefaultStateVisualizer();
         IPlayerFactoryCommand plCmd1 = getPlayerFactoryCommand(player1, player1Args);
         IPlayerFactoryCommand plCmd2 = getPlayerFactoryCommand(player2, player2Args);
 

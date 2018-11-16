@@ -52,16 +52,11 @@ public final class HelpCommand implements CommandLine.IHelpCommandInitializable,
         out.print(bld.toString());
     }
 
-    private void showGameList() {
-        showCommandSection(String.format("%nGames:%n"), mainCommand.getGameRegistry());
-    }
-
     private void showPlayerList() {
         showCommandSection(String.format("%nPlayers:%n"), mainCommand.getPlayerFactoryRegistry());
     }
 
     private void showGamesAndPlayerList() {
-        showGameList();
         showPlayerList();
     }
 
@@ -75,8 +70,6 @@ public final class HelpCommand implements CommandLine.IHelpCommandInitializable,
             if (subcommand != null) {
                 subcommand.usage(out, ansi);
                 showGamesAndPlayerList();
-            } else if ((gameCommand = mainCommand.getGameRegistry().getCommand(commands[0])) != null) {
-                CommandLine.usage(gameCommand, out, ansi);
             } else if((pfCommand = mainCommand.getPlayerFactoryRegistry().getCommand(commands[0])) != null) {
                 CommandLine.usage(pfCommand, out, ansi);
             }else {
