@@ -2,6 +2,8 @@ package com.ggp.games.RockPaperScissors;
 
 import com.ggp.*;
 
+import java.util.Objects;
+
 public class GameDescription implements IGameDescription {
     private static final long serialVersionUID = 1L;
     private CompleteInformationState initialState;
@@ -55,5 +57,18 @@ public class GameDescription implements IGameDescription {
     @Override
     public String getConfigString() {
         return toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GameDescription that = (GameDescription) o;
+        return Objects.equals(initialState, that.initialState);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(initialState);
     }
 }

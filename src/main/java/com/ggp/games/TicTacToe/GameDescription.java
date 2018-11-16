@@ -5,7 +5,10 @@ import com.ggp.ICompleteInformationStateFactory;
 import com.ggp.IGameDescription;
 import com.ggp.IInformationSet;
 
+import java.util.Objects;
+
 public class GameDescription implements IGameDescription {
+    private int size = 5;
     private static final long serialVersionUID = 1L;
     private static CompleteInformationState initialState;
     static {
@@ -44,5 +47,18 @@ public class GameDescription implements IGameDescription {
     @Override
     public String getConfigString() {
         return toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GameDescription that = (GameDescription) o;
+        return size == that.size;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(size);
     }
 }

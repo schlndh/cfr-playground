@@ -2,6 +2,8 @@ package com.ggp.utils.recall;
 
 import com.ggp.*;
 
+import java.util.Objects;
+
 /**
  * Makes a perfect-recall version of given game.
  */
@@ -36,5 +38,18 @@ public class PerfectRecallGameDescriptionWrapper implements IGameDescription {
     @Override
     public String getConfigString() {
         return toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PerfectRecallGameDescriptionWrapper that = (PerfectRecallGameDescriptionWrapper) o;
+        return Objects.equals(gameDesc, that.gameDesc);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(gameDesc);
     }
 }

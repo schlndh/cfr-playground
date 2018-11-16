@@ -5,6 +5,8 @@ import com.ggp.ICompleteInformationStateFactory;
 import com.ggp.IGameDescription;
 import com.ggp.IInformationSet;
 
+import java.util.Objects;
+
 public class GameDescription implements IGameDescription {
     private static final long serialVersionUID = 1L;
     private final int startingMoney1, startingMoney2;
@@ -73,5 +75,19 @@ public class GameDescription implements IGameDescription {
     @Override
     public String getConfigString() {
         return toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GameDescription that = (GameDescription) o;
+        return startingMoney1 == that.startingMoney1 &&
+                startingMoney2 == that.startingMoney2;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(startingMoney1, startingMoney2);
     }
 }
