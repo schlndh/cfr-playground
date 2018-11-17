@@ -8,6 +8,7 @@ import com.ggp.utils.IUtilityEstimator;
 import com.ggp.utils.random.RandomSampler;
 
 import java.util.List;
+import java.util.Objects;
 
 public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
     public static class Factory implements IUtilityEstimator.IFactory {
@@ -28,9 +29,22 @@ public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
 
         @Override
         public String getConfigString() {
-            return "rand{" +
-                    "i=" + iters +
+            return "Random{" +
+                        iters +
                     '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Factory factory = (Factory) o;
+            return iters == factory.iters;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(iters);
         }
     };
 

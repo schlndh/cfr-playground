@@ -7,14 +7,21 @@ import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.random.RandomSampler;
 
 import java.util.List;
+import java.util.Objects;
 
 public class MCCFRSolver extends BaseCFRSolver {
     public static class Factory extends BaseCFRSolver.Factory {
-        private final double explorationProb = 0.2;
-        private final double targetingProb = 0;
+        private final double explorationProb;
+        private final double targetingProb;
 
         public Factory(IRegretMatching.Factory rmFactory) {
+            this(rmFactory, 0.2, 0);
+        }
+
+        public Factory(IRegretMatching.Factory rmFactory, double explorationProb, double targetingProb) {
             super(rmFactory);
+            this.explorationProb = explorationProb;
+            this.targetingProb = targetingProb;
         }
 
         @Override
@@ -30,6 +37,20 @@ public class MCCFRSolver extends BaseCFRSolver {
                     ",e=" + explorationProb +
                     ",rm=" + rmFactory.getConfigString() +
                     '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Factory factory = (Factory) o;
+            return Double.compare(factory.explorationProb, explorationProb) == 0 &&
+                    Double.compare(factory.targetingProb, targetingProb) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(explorationProb, targetingProb);
         }
     }
     private final double explorationProb;

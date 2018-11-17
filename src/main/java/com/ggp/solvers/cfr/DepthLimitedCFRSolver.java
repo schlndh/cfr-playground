@@ -7,6 +7,7 @@ import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.utils.PlayerHelpers;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 public class DepthLimitedCFRSolver extends BaseCFRSolver {
@@ -36,6 +37,20 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
                     ", dl=" + depthLimit +
                     ", rm=" + rmFactory.getConfigString() +
                     '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Factory factory = (Factory) o;
+            return depthLimit == factory.depthLimit &&
+                    Objects.equals(ueFactory, factory.ueFactory);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(depthLimit, ueFactory);
         }
     }
 
