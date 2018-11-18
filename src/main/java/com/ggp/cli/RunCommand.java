@@ -2,6 +2,7 @@ package com.ggp.cli;
 
 import com.ggp.*;
 import com.ggp.parsers.ParseUtils;
+import com.ggp.parsers.exceptions.WrongConfigKeyException;
 import com.ggp.utils.DefaultStateVisualizer;
 import picocli.CommandLine;
 
@@ -21,26 +22,15 @@ public class RunCommand implements Runnable {
     @CommandLine.Option(names={"--player1"}, description="player 1", required=true)
     private String player1;
 
-    @CommandLine.Option(names={"--player1-args"}, description="additional arguments for player 1")
-    private String player1Args;
-
     @CommandLine.Option(names={"--player2"}, description="player 2", required=true)
     private String player2;
 
-    @CommandLine.Option(names={"--player2-args"}, description="additional arguments for player 2")
-    private String player2Args;
+    private IPlayerFactory getPlayerFactory(String player) {
+        IPlayerFactory pl = null;
+        try {
+            pl = (IPlayerFactory) mainCommand.getConfigurableFactory().create(IPlayerFactory.class, ParseUtils.parseConfigKey(player));
+        } catch (WrongConfigKeyException e) { }
 
-    private IPlayerFactoryCommand getPlayerFactoryCommand(String player, String args) {
-        IPlayerFactoryCommand plCmd = mainCommand.getPlayerFactoryRegistry().getCommand(player);
-        if (plCmd == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Unknown player '" + player + "'.", null, player);
-        }
-        CommandLine.populateCommand(plCmd, CliHelper.splitArgString(args));
-        return plCmd;
-    }
-
-    private IPlayerFactory getPlayerFactory(IPlayerFactoryCommand plCmd, String player) {
-        IPlayerFactory pl =  plCmd.getPlayerFactory();
         if (pl == null) {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup player '" + player + "'.", null, player);
         }
@@ -49,24 +39,24 @@ public class RunCommand implements Runnable {
 
     @Override
     public void run() {
-        IGameDescription gameDesc = ParseUtils.parseGameDescription(game);
+        IGameDescription gameDesc = null;
+        try {
+            gameDesc = (IGameDescription) mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigKey(game));
+        } catch (WrongConfigKeyException e) { }
+
         if (gameDesc == null) {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
         }
         IStateVisualizer visualizer = new DefaultStateVisualizer();
-        IPlayerFactoryCommand plCmd1 = getPlayerFactoryCommand(player1, player1Args);
-        IPlayerFactoryCommand plCmd2 = getPlayerFactoryCommand(player2, player2Args);
 
-        IPlayerFactory pl1 = getPlayerFactory(plCmd1, player1);
-        IPlayerFactory pl2 = getPlayerFactory(plCmd2, player2);
+        IPlayerFactory pl1 = getPlayerFactory(player1);
+        IPlayerFactory pl2 = getPlayerFactory(player2);
         System.out.println(String.format("%s: %s vs %s", gameDesc.getConfigString(), pl1.getConfigString(), pl2.getConfigString()));
 
         GameManager manager = new GameManager(pl1, pl2, gameDesc);
         if (visualizer != null) {
             manager.registerGameListener(new GamePlayVisualizer(visualizer));
         }
-        manager.registerGameListener(plCmd1.getGameListener());
-        manager.registerGameListener(plCmd2.getGameListener());
 
         manager.run(1000, 1000);
         System.out.println("Result 1:" + manager.getPayoff(1) + ", 2:" + manager.getPayoff(2));

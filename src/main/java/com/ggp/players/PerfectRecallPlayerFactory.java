@@ -11,6 +11,10 @@ import com.ggp.utils.recall.PerfectRecallGameDescriptionWrapper;
 public class PerfectRecallPlayerFactory implements IPlayerFactory {
     private IPlayerFactory playerFactory;
 
+    public PerfectRecallPlayerFactory(IPlayerFactory playerFactory) {
+        this.playerFactory = playerFactory;
+    }
+
     @Override
     public IPlayer create(IGameDescription game, int role) {
         return playerFactory.create(new PerfectRecallGameDescriptionWrapper(game), role);

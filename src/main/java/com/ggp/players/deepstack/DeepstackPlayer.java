@@ -1,7 +1,9 @@
 package com.ggp.players.deepstack;
 
 import com.ggp.*;
+import com.ggp.players.deepstack.resolvers.ExternalCFRResolver;
 import com.ggp.players.deepstack.utils.*;
+import com.ggp.solvers.cfr.BaseCFRSolver;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.random.RandomSampler;
 
@@ -12,6 +14,14 @@ public class DeepstackPlayer implements IPlayer {
         private static final long serialVersionUID = 1L;
         private ISubgameResolver.Factory resolverFactory;
         private IResolvingListener listener;
+
+        public Factory(ISubgameResolver.Factory resolverFactory) {
+            this.resolverFactory = resolverFactory;
+        }
+
+        public Factory(BaseCFRSolver.Factory cfrSolverFactory) {
+            this(new ExternalCFRResolver.Factory(cfrSolverFactory));
+        }
 
         public Factory(ISubgameResolver.Factory resolverFactory, IResolvingListener listener) {
             this.resolverFactory = resolverFactory;

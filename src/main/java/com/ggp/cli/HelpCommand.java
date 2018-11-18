@@ -45,15 +45,15 @@ public final class HelpCommand implements CommandLine.IHelpCommandInitializable,
         return textTable.toString();
     }
 
-    private <T> void showCommandSection(String heading, CommandRegistry<T> registry) {
+    /*private <T> void showCommandSection(String heading, CommandRegistry<T> registry) {
         StringBuilder bld = new StringBuilder();
         bld.append(heading);
         bld.append(commandList(registry.getCommands()));
         out.print(bld.toString());
-    }
+    }*/
 
     private void showPlayerList() {
-        showCommandSection(String.format("%nPlayers:%n"), mainCommand.getPlayerFactoryRegistry());
+        //showCommandSection(String.format("%nPlayers:%n"), mainCommand.getPlayerFactoryRegistry());
     }
 
     private void showGamesAndPlayerList() {
@@ -70,9 +70,9 @@ public final class HelpCommand implements CommandLine.IHelpCommandInitializable,
             if (subcommand != null) {
                 subcommand.usage(out, ansi);
                 showGamesAndPlayerList();
-            } else if((pfCommand = mainCommand.getPlayerFactoryRegistry().getCommand(commands[0])) != null) {
+            }/* else if((pfCommand = mainCommand.getPlayerFactoryRegistry().getCommand(commands[0])) != null) {
                 CommandLine.usage(pfCommand, out, ansi);
-            }else {
+            }*/ else {
                 throw new CommandLine.ParameterException(parent, "Unknown subcommand '" + commands[0] + "'.", null, commands[0]);
             }
         } else {

@@ -43,4 +43,16 @@ class ParseUtilsTest {
     void testParseGameDescription_whitespaces() {
         assertEquals(GameRepository.leducPoker(5, 9), ParseUtils.parseGameDescription("LeducPoker \t\n{5\n\n , 9 } \t\n\r"));
     }
+
+    @Test
+    void testParseConfigKey() throws Exception {
+        ConfigKey key = ParseUtils.parseConfigKey("Test{1,\"a\\t \\\" \\\\\", a = true, b=null, c=A{1}}");
+        assertEquals("Test", key.getName());
+        assertEquals(1, key.getPositionalParams().get(0).getInt());
+        assertEquals("a\t \" \\", key.getPositionalParams().get(1).getString());
+        assertEquals(true, key.getKvParams().get("a").getBool());
+        assertEquals(null, key.getKvParams().get("b").getConfigKey());
+        assertEquals("A", key.getKvParams().get("c").getConfigKey().getName());
+        assertEquals(1, key.getKvParams().get("c").getConfigKey().getPositionalParams().get(0).getInt());
+    }
 }

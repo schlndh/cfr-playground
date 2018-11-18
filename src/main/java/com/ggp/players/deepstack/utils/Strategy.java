@@ -72,7 +72,7 @@ public class Strategy implements IStrategy {
         HashMap<IAction, Double> sStrategy = getOrCreateSetStragety(s, legalActions.size());
         for(IAction a: legalActions) {
             double p = probMap.apply(a);
-            sStrategy.put(a, p + sStrategy.getOrDefault(a,  0d));
+            sStrategy.merge(a, p, (oldV, newV) -> oldV + newV);
         }
     }
 

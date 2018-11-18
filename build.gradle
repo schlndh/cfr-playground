@@ -47,7 +47,7 @@ run {
 }
 
 generateGrammarSource {
-    arguments += ['-package', 'com.ggp.parsers', '-visitor']
+    arguments += ['-package', 'com.ggp.parsers', '-visitor', '-no-listener']
     outputDirectory = new File("build/generated-src/antlr/main/com/ggp/parsers".toString())
 }
 

@@ -29,7 +29,7 @@ public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
 
         @Override
         public String getConfigString() {
-            return "Random{" +
+            return "RandomPlayout{" +
                         iters +
                     '}';
         }

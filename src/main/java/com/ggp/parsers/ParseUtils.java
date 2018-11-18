@@ -1,6 +1,7 @@
 package com.ggp.parsers;
 
 import com.ggp.IGameDescription;
+import com.ggp.parsers.visitors.ConfigKeyVisitor;
 import com.ggp.utils.GameRepository;
 import com.ggp.utils.recall.PerfectRecallGameDescriptionWrapper;
 import org.antlr.v4.runtime.*;
@@ -50,6 +51,22 @@ public class ParseUtils {
             GamesParser.GameContext gameCtx = gp.game();
             return gamesVisitor.visit(gameCtx);
         } catch (ParseCancellationException e) {
+        }
+        return null;
+    }
+
+    public static ConfigKey parseConfigKey(String str) {
+        CharStream inputStream = CharStreams.fromString(str);
+        ConfigKeyLexer lexer = new ConfigKeyLexer(inputStream);
+        CommonTokenStream tokenStream = new CommonTokenStream(lexer);
+        ConfigKeyParser parser = new ConfigKeyParser(tokenStream);
+        parser.setErrorHandler(new BailErrorStrategy());
+
+        ConfigKeyVisitor visitor = new ConfigKeyVisitor();
+        try {
+            return visitor.visit(parser.configKey());
+        } catch (ParseCancellationException e) {
+
         }
         return null;
     }

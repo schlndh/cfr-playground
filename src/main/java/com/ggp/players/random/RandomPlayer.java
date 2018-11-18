@@ -13,7 +13,7 @@ public class RandomPlayer implements IPlayer {
 
         @Override
         public String getConfigString() {
-            return "Random{}";
+            return "RandomPlayer";
         }
     }
 
