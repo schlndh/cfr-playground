@@ -29,7 +29,7 @@ public class RunCommand implements Runnable {
     private IPlayerFactory getPlayerFactory(String player) {
         IPlayerFactory pl = null;
         try {
-            pl = (IPlayerFactory) mainCommand.getConfigurableFactory().create(IPlayerFactory.class, ParseUtils.parseConfigExpression(player));
+            pl = mainCommand.getConfigurableFactory().create(IPlayerFactory.class, ParseUtils.parseConfigExpression(player));
         } catch (ConfigAssemblyException e) { }
 
         if (pl == null) {
@@ -42,7 +42,7 @@ public class RunCommand implements Runnable {
     public void run() {
         IGameDescription gameDesc = null;
         try {
-            gameDesc = (IGameDescription) mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
+            gameDesc = mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
         } catch (ConfigAssemblyException e) { }
 
         if (gameDesc == null) {

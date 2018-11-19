@@ -1,5 +1,6 @@
 package com.ggp.parsers;
 
+import com.ggp.parsers.exceptions.ConfigAssemblyException;
 import com.ggp.parsers.exceptions.WrongConfigKeyException;
 import com.ggp.parsers.exceptions.WrongExpressionTypeException;
 
@@ -34,7 +35,15 @@ public class ConfigurableFactory {
         });
     }
 
-    public Object create(Class<?> type, ConfigKey key) throws WrongConfigKeyException {
+    public <T> T create(Class<T> type, ConfigKey key) throws ConfigAssemblyException {
+        return (T) doCreate(type, key);
+    }
+
+    public <T> T create(Class<T> type, ConfigExpression expr) throws ConfigAssemblyException {
+        return (T) doCreate(type, expr);
+    }
+
+    private Object doCreate(Class<?> type, ConfigKey key) throws ConfigAssemblyException {
         if (key == null) return null;
         HashMap<String, ArrayList<ParameterList>> typeRegistry = registry.getOrDefault(type, null);
         if (typeRegistry == null) return null;
@@ -56,7 +65,7 @@ public class ConfigurableFactory {
         throw new WrongConfigKeyException();
     }
 
-    public Object create(Class<?> type, ConfigExpression s) throws WrongConfigKeyException, WrongExpressionTypeException {
+    private Object doCreate(Class<?> type, ConfigExpression s) throws ConfigAssemblyException {
         if (s.getType() == ConfigExpression.Type.NUMBER) {
             if (Integer.class.equals(type) || int.class.equals(type)) {
                 return s.getInt();
@@ -72,7 +81,7 @@ public class ConfigurableFactory {
             Object arr = Array.newInstance(arrClass.getComponentType(), arrValues.size());
             int i = 0;
             for (ConfigExpression expr: arrValues) {
-                Array.set(arr, i++, create(arrClass.getComponentType(), expr));
+                Array.set(arr, i++, doCreate(arrClass.getComponentType(), expr));
             }
             return arr;
         } else if (s.getType() == ConfigExpression.Type.BOOL && (Boolean.class.equals(type) || boolean.class.equals(type))) {
@@ -80,7 +89,7 @@ public class ConfigurableFactory {
         } else if (s.getType() == ConfigExpression.Type.STRING && String.class.equals(type)) {
             return s.getString();
         } else if (s.getType() == ConfigExpression.Type.CONFIG_KEY) {
-            return create(type, s.getConfigKey());
+            return doCreate(type, s.getConfigKey());
         }
         throw new WrongExpressionTypeException();
     }
@@ -93,8 +102,8 @@ public class ConfigurableFactory {
             ConfigExpression s = source.get(i);
             Parameter t = target.get(i);
             try {
-                res.add(create(t.getType(), s));
-            } catch (WrongExpressionTypeException | WrongConfigKeyException e) {
+                res.add(doCreate(t.getType(), s));
+            } catch (ConfigAssemblyException e) {
                 return null;
             }
         }
@@ -117,8 +126,8 @@ public class ConfigurableFactory {
                 res.put(key, t.getDefaultValue());
             } else {
                 try {
-                    res.put(key, create(t.getType(), s));
-                } catch (WrongExpressionTypeException | WrongConfigKeyException e) {
+                    res.put(key, doCreate(t.getType(), s));
+                } catch (ConfigAssemblyException e) {
                     return null;
                 }
             }

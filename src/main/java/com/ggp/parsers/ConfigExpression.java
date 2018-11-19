@@ -1,5 +1,6 @@
 package com.ggp.parsers;
 
+import com.ggp.parsers.exceptions.ConfigAssemblyException;
 import com.ggp.parsers.exceptions.WrongConfigKeyException;
 import com.ggp.parsers.exceptions.WrongExpressionTypeException;
 
@@ -120,13 +121,13 @@ public class ConfigExpression {
      * @return
      * @throws WrongExpressionTypeException
      */
-    public Object getPrimitiveArray(Class<?> arrType) throws WrongExpressionTypeException {
+    public <T> T getPrimitiveArray(Class<T> arrType) throws WrongExpressionTypeException {
         if (type != Type.ARRAY) {
             throw new WrongExpressionTypeException();
         }
         try {
             return (new ConfigurableFactory()).create(arrType, this);
-        } catch (WrongConfigKeyException e) {
+        } catch (ConfigAssemblyException e) {
             throw new WrongExpressionTypeException();
         }
     }

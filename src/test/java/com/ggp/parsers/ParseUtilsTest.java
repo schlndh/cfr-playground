@@ -18,6 +18,6 @@ class ParseUtilsTest {
         assertEquals(null, key.getKvParams().get("b").getConfigKey());
         assertEquals("A", key.getKvParams().get("c").getConfigKey().getName());
         assertEquals(1, key.getKvParams().get("c").getConfigKey().getPositionalParams().get(0).getInt());
-        assertArrayEquals(new int[] {1,2,3,4}, (int[]) key.getKvParams().get("d").getPrimitiveArray(int[].class));
+        assertArrayEquals(new int[] {1,2,3,4}, key.getKvParams().get("d").getPrimitiveArray(int[].class));
     }
 }

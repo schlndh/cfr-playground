@@ -135,11 +135,11 @@ class ConfigurableFactoryTest {
     void testCreate_topLevelExpressions() throws Exception {
         ConfigurableFactory factory = createFactory();
         assertTrue(Arrays.deepEquals(new int[][]{{1,2,3},{4,5}},
-                (int[][]) factory.create(int[][].class, ParseUtils.parseConfigExpression("[[1,2,3],[4,5]]"))));
+                factory.create(int[][].class, ParseUtils.parseConfigExpression("[[1,2,3],[4,5]]"))));
         assertArrayEquals(new IntA[] {new A1(5, 7, null), new A2(1, 2, null)},
-                (IntA[]) factory.create(IntA[].class, ParseUtils.parseConfigExpression("[A1{5,7,null},A2{1,2,null}]")));
-        assertEquals(100, factory.create(int.class, ParseUtils.parseConfigExpression("100")));
-        assertEquals(100L, factory.create(long.class, ParseUtils.parseConfigExpression("100")));
+                factory.create(IntA[].class, ParseUtils.parseConfigExpression("[A1{5,7,null},A2{1,2,null}]")));
+        assertEquals(100, (int) factory.create(int.class, ParseUtils.parseConfigExpression("100")));
+        assertEquals(100L, (long) factory.create(long.class, ParseUtils.parseConfigExpression("100")));
         assertEquals("abc", factory.create(String.class, ParseUtils.parseConfigExpression("\"abc\"")));
         assertEquals(true, factory.create(Boolean.class, ParseUtils.parseConfigExpression("true")));
         assertEquals(null, factory.create(A1.class, ParseUtils.parseConfigExpression("null")));
