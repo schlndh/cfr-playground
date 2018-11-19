@@ -1,20 +1,20 @@
 package com.ggp.parsers;
 
-import com.ggp.parsers.visitors.ConfigKeyVisitor;
+import com.ggp.parsers.visitors.ConfigExpressionVisitor;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 public class ParseUtils {
-    public static ConfigKey parseConfigKey(String str) {
+    public static ConfigExpression parseConfigExpression(String str) {
         CharStream inputStream = CharStreams.fromString(str);
         ConfigKeyLexer lexer = new ConfigKeyLexer(inputStream);
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
         ConfigKeyParser parser = new ConfigKeyParser(tokenStream);
         parser.setErrorHandler(new BailErrorStrategy());
 
-        ConfigKeyVisitor visitor = new ConfigKeyVisitor();
+        ConfigExpressionVisitor visitor = new ConfigExpressionVisitor();
         try {
-            return visitor.visit(parser.configKey());
+            return visitor.visit(parser.expr());
         } catch (ParseCancellationException e) {
 
         }

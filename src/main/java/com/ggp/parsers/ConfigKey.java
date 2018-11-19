@@ -4,19 +4,13 @@ import java.util.*;
 
 public class ConfigKey {
     private String name;
-    private ArrayList<ConfigExpression> positionalParams = new ArrayList<>();
-    private HashMap<String, ConfigExpression> kvParams = new HashMap<>();
+    private List<ConfigExpression> positionalParams;
+    private Map<String, ConfigExpression> kvParams;
 
-    public ConfigKey(String name) {
+    public ConfigKey(String name, List<ConfigExpression> posParams, Map<String, ConfigExpression> kvParams) {
         this.name = name;
-    }
-
-    public void addPositionalParam(ConfigExpression param) {
-        positionalParams.add(param);
-    }
-
-    public void addKVParam(String key, ConfigExpression value) {
-        kvParams.put(key, value);
+        this.positionalParams = posParams;
+        this.kvParams = kvParams;
     }
 
     public String getName() {

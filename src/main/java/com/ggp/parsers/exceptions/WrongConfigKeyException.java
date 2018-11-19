@@ -1,4 +1,4 @@
 package com.ggp.parsers.exceptions;
 
-public class WrongConfigKeyException extends Exception {
+public class WrongConfigKeyException extends ConfigAssemblyException {
 }

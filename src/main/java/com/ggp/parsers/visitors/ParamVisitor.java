@@ -2,28 +2,35 @@ package com.ggp.parsers.visitors;
 
 import com.ggp.parsers.*;
 
-public class ParamVisitor extends ConfigKeyBaseVisitor<ConfigKey> {
-    private ConfigKey configKey;
+import java.util.ArrayList;
+import java.util.HashMap;
 
-    public ParamVisitor(ConfigKey configKey) {
-        this.configKey = configKey;
-    }
-
+public class ParamVisitor extends ConfigKeyBaseVisitor<Void> {
+    private ArrayList<ConfigExpression> posParams = new ArrayList<>();
+    private HashMap<String, ConfigExpression> kvParams = new HashMap<>();
 
     @Override
-    public ConfigKey visitPosParam(ConfigKeyParser.PosParamContext ctx) {
+    public Void visitPosParam(ConfigKeyParser.PosParamContext ctx) {
         ConfigExpressionVisitor visitor = new ConfigExpressionVisitor();
         ConfigExpression expr = visitor.visit(ctx.expr());
-        if (expr != null) configKey.addPositionalParam(expr);
-        return configKey;
+        if (expr != null) posParams.add(expr);
+        return null;
     }
 
     @Override
-    public ConfigKey visitKvParam(ConfigKeyParser.KvParamContext ctx) {
+    public Void visitKvParam(ConfigKeyParser.KvParamContext ctx) {
         ConfigExpressionVisitor visitor = new ConfigExpressionVisitor();
         ConfigExpression expr = visitor.visit(ctx.kvVal().expr());
         String key = ctx.kvKey().getText();
-        if (expr != null) configKey.addKVParam(key, expr);
-        return configKey;
+        if (expr != null) kvParams.put(key, expr);
+        return null;
+    }
+
+    public ArrayList<ConfigExpression> getPosParams() {
+        return posParams;
+    }
+
+    public HashMap<String, ConfigExpression> getKvParams() {
+        return kvParams;
     }
 }

@@ -67,6 +67,27 @@ class ConfigurableFactoryTest {
         }
     }
 
+    private static class B2 implements IntB {
+        private int[] x;
+
+        public B2(int[] x) {
+            this.x = x;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            B2 b2 = (B2) o;
+            return Arrays.equals(x, b2.x);
+        }
+
+        @Override
+        public int hashCode() {
+            return Arrays.hashCode(x);
+        }
+    }
+
     private ConfigurableFactory createFactory() throws NoSuchMethodException {
         ConfigurableFactory factory = new ConfigurableFactory();
         factory.register(IntA.class, "A1", ConfigurableFactory.createPositionalParameterList(A1.class.getConstructor(int.class, int.class, IntB.class)));
@@ -93,19 +114,36 @@ class ConfigurableFactoryTest {
             factory.register(IntB.class, "B1", new ParameterList(null, params,
                     (pos, kv) -> new B1((int) kv.get("x"), (int) kv.get("y"))));
         }
+        factory.register(IntB.class, "B2", ConfigurableFactory.createPositionalParameterList(B2.class.getConstructor(int[].class)));
         return factory;
     }
 
     @Test
     void testCreate_correct() throws Exception {
         ConfigurableFactory factory = createFactory();
+        assertEquals(new A1(5, 7, null), factory.create(IntA.class, ParseUtils.parseConfigExpression("A1{5, 7, null}")));
+        assertEquals(new A1(5, 9, null), factory.create(IntA.class, ParseUtils.parseConfigExpression("A1{5}")));
+        assertEquals(new A2(5, 7, null), factory.create(IntA.class, ParseUtils.parseConfigExpression("A2{5, 7, null}")));
+        assertEquals(new A1(5, 7, new B1(1, 2)), factory.create(IntA.class, ParseUtils.parseConfigExpression("A1{5, 7, B1{x=1,y=2}}")));
+        assertEquals(new A1(5, 7, new B1(1, 2)), factory.create(IntA.class, ParseUtils.parseConfigExpression("A1{5, 7, B1}")));
+        assertEquals(new A1(5, 7, new B1(1, 2)), factory.create(IntA.class, ParseUtils.parseConfigExpression("A1{5, 7, b=B1{x=1,y=2}}")));
+        assertEquals(new A1(5, 9, new B1(1, 2)), factory.create(IntA.class, ParseUtils.parseConfigExpression("A1{5, b=B1{x=1,y=2}}")));
+        assertEquals(new A1(5, 7, new B2(new int[]{1,2,3})), factory.create(IntA.class, ParseUtils.parseConfigExpression("A1{5, 7, B2{[1,2,3]}}")));
+    }
 
-        assertEquals(new A1(5, 7, null), factory.create(IntA.class, ParseUtils.parseConfigKey("A1{5, 7, null}")));
-        assertEquals(new A1(5, 9, null), factory.create(IntA.class, ParseUtils.parseConfigKey("A1{5}")));
-        assertEquals(new A2(5, 7, null), factory.create(IntA.class, ParseUtils.parseConfigKey("A2{5, 7, null}")));
-        assertEquals(new A1(5, 7, new B1(1, 2)), factory.create(IntA.class, ParseUtils.parseConfigKey("A1{5, 7, B1{x=1,y=2}}")));
-        assertEquals(new A1(5, 7, new B1(1, 2)), factory.create(IntA.class, ParseUtils.parseConfigKey("A1{5, 7, B1}")));
-        assertEquals(new A1(5, 7, new B1(1, 2)), factory.create(IntA.class, ParseUtils.parseConfigKey("A1{5, 7, b=B1{x=1,y=2}}")));
-        assertEquals(new A1(5, 9, new B1(1, 2)), factory.create(IntA.class, ParseUtils.parseConfigKey("A1{5, b=B1{x=1,y=2}}")));
+    @Test
+    void testCreate_topLevelExpressions() throws Exception {
+        ConfigurableFactory factory = createFactory();
+        assertTrue(Arrays.deepEquals(new int[][]{{1,2,3},{4,5}},
+                (int[][]) factory.create(int[][].class, ParseUtils.parseConfigExpression("[[1,2,3],[4,5]]"))));
+        assertArrayEquals(new IntA[] {new A1(5, 7, null), new A2(1, 2, null)},
+                (IntA[]) factory.create(IntA[].class, ParseUtils.parseConfigExpression("[A1{5,7,null},A2{1,2,null}]")));
+        assertEquals(100, factory.create(int.class, ParseUtils.parseConfigExpression("100")));
+        assertEquals(100L, factory.create(long.class, ParseUtils.parseConfigExpression("100")));
+        assertEquals("abc", factory.create(String.class, ParseUtils.parseConfigExpression("\"abc\"")));
+        assertEquals(true, factory.create(Boolean.class, ParseUtils.parseConfigExpression("true")));
+        assertEquals(null, factory.create(A1.class, ParseUtils.parseConfigExpression("null")));
+        // null should work even for unregistered classes
+        assertEquals(null, factory.create((new Object() {private int x = 5;}).getClass(), ParseUtils.parseConfigExpression("null")));
     }
 }

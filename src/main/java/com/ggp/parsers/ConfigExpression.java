@@ -1,30 +1,39 @@
 package com.ggp.parsers;
 
+import com.ggp.parsers.exceptions.WrongConfigKeyException;
 import com.ggp.parsers.exceptions.WrongExpressionTypeException;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 public class ConfigExpression {
     public enum Type {
-        CONFIG_KEY, NUMBER, BOOL, STRING
+        CONFIG_KEY, NUMBER, BOOL, STRING, ARRAY
     };
 
-    private Type type;
-    private ConfigKey configKey;
-    private String strValue;
+    private final Type type;
+    private final ConfigKey configKey;
+    private final String strValue;
+    private final List<ConfigExpression> arrayValues;
 
-    private ConfigExpression(Type type, ConfigKey configKey, String strValue) {
+    private ConfigExpression(Type type, ConfigKey configKey, String strValue, List<ConfigExpression> arrayValues) {
         this.type = type;
         this.configKey = configKey;
         this.strValue = strValue;
+        this.arrayValues = arrayValues;
     }
 
     public static ConfigExpression createConfigKey(ConfigKey configKey) {
-        return new ConfigExpression(Type.CONFIG_KEY, configKey, null);
+        return new ConfigExpression(Type.CONFIG_KEY, configKey, null, null);
+    }
+
+    public static ConfigExpression createArray(List<ConfigExpression> configExpressions) {
+        return new ConfigExpression(Type.ARRAY, null, null, Collections.unmodifiableList(configExpressions));
     }
 
     public static ConfigExpression createValueType(Type type, String value) {
-        return new ConfigExpression(type, null, value);
+        return new ConfigExpression(type, null, value, null);
     }
 
     public static Type intToType(int type) {
@@ -99,5 +108,26 @@ public class ConfigExpression {
             throw new WrongExpressionTypeException();
         }
         return configKey;
+    }
+
+    public List<ConfigExpression> getArrayValues() {
+        return arrayValues;
+    }
+
+    /**
+     * Get resulting array of primitive type (int, long, double, boolean and String)
+     * @param arrType
+     * @return
+     * @throws WrongExpressionTypeException
+     */
+    public Object getPrimitiveArray(Class<?> arrType) throws WrongExpressionTypeException {
+        if (type != Type.ARRAY) {
+            throw new WrongExpressionTypeException();
+        }
+        try {
+            return (new ConfigurableFactory()).create(arrType, this);
+        } catch (WrongConfigKeyException e) {
+            throw new WrongExpressionTypeException();
+        }
     }
 }

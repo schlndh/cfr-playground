@@ -25,8 +25,12 @@ public class ConfigExpressionVisitor extends ConfigKeyBaseVisitor<ConfigExpressi
                 }
                 expr = ConfigExpression.createValueType(ConfigExpression.intToType(token.getType()), strValue);
             }
-        } else {
+        } else if (ctx.configKey() != null) {
             expr = ConfigExpression.createConfigKey(new ConfigKeyVisitor().visit(ctx.configKey()));
+        } else if (ctx.array() != null) {
+            ParamVisitor visitor = new ParamVisitor();
+            visitor.visit(ctx.array());
+            expr = ConfigExpression.createArray(visitor.getPosParams());
         }
         return expr;
     }

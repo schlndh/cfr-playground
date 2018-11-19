@@ -2,6 +2,7 @@ package com.ggp.cli;
 
 import com.ggp.*;
 import com.ggp.parsers.ParseUtils;
+import com.ggp.parsers.exceptions.ConfigAssemblyException;
 import com.ggp.parsers.exceptions.WrongConfigKeyException;
 import com.ggp.utils.DefaultStateVisualizer;
 import picocli.CommandLine;
@@ -28,8 +29,8 @@ public class RunCommand implements Runnable {
     private IPlayerFactory getPlayerFactory(String player) {
         IPlayerFactory pl = null;
         try {
-            pl = (IPlayerFactory) mainCommand.getConfigurableFactory().create(IPlayerFactory.class, ParseUtils.parseConfigKey(player));
-        } catch (WrongConfigKeyException e) { }
+            pl = (IPlayerFactory) mainCommand.getConfigurableFactory().create(IPlayerFactory.class, ParseUtils.parseConfigExpression(player));
+        } catch (ConfigAssemblyException e) { }
 
         if (pl == null) {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup player '" + player + "'.", null, player);
@@ -41,8 +42,8 @@ public class RunCommand implements Runnable {
     public void run() {
         IGameDescription gameDesc = null;
         try {
-            gameDesc = (IGameDescription) mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigKey(game));
-        } catch (WrongConfigKeyException e) { }
+            gameDesc = (IGameDescription) mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
+        } catch (ConfigAssemblyException e) { }
 
         if (gameDesc == null) {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);

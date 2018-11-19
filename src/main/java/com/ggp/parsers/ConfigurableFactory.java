@@ -3,6 +3,7 @@ package com.ggp.parsers;
 import com.ggp.parsers.exceptions.WrongConfigKeyException;
 import com.ggp.parsers.exceptions.WrongExpressionTypeException;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -55,25 +56,33 @@ public class ConfigurableFactory {
         throw new WrongConfigKeyException();
     }
 
-    private static class MismatchedTypeException extends Exception {}
-
-    private Object createMatchingObject(ConfigExpression s, Parameter t) throws WrongConfigKeyException, WrongExpressionTypeException, MismatchedTypeException {
+    public Object create(Class<?> type, ConfigExpression s) throws WrongConfigKeyException, WrongExpressionTypeException {
         if (s.getType() == ConfigExpression.Type.NUMBER) {
-            if (Integer.class.equals(t.getType()) || int.class.equals(t.getType())) {
+            if (Integer.class.equals(type) || int.class.equals(type)) {
                 return s.getInt();
-            } else if (Long.class.equals(t.getType()) || long.class.equals(t.getType())) {
+            } else if (Long.class.equals(type) || long.class.equals(type)) {
                 return s.getLong();
-            } else if (Double.class.equals(t.getType()) || double.class.equals(t.getType())) {
+            } else if (Double.class.equals(type) || double.class.equals(type)) {
                 return s.getDouble();
             }
-        } else if (s.getType() == ConfigExpression.Type.BOOL && (Boolean.class.equals(t.getType()) || boolean.class.equals(t.getType()))) {
+        } else if (s.getType() == ConfigExpression.Type.ARRAY) {
+            Class<?> arrClass = type;
+            if (!arrClass.isArray()) return null;
+            List<ConfigExpression> arrValues = s.getArrayValues();
+            Object arr = Array.newInstance(arrClass.getComponentType(), arrValues.size());
+            int i = 0;
+            for (ConfigExpression expr: arrValues) {
+                Array.set(arr, i++, create(arrClass.getComponentType(), expr));
+            }
+            return arr;
+        } else if (s.getType() == ConfigExpression.Type.BOOL && (Boolean.class.equals(type) || boolean.class.equals(type))) {
             return s.getBool();
-        } else if (s.getType() == ConfigExpression.Type.STRING && String.class.equals(t.getType())) {
+        } else if (s.getType() == ConfigExpression.Type.STRING && String.class.equals(type)) {
             return s.getString();
         } else if (s.getType() == ConfigExpression.Type.CONFIG_KEY) {
-            return create(t.getType(), s.getConfigKey());
+            return create(type, s.getConfigKey());
         }
-        throw new MismatchedTypeException();
+        throw new WrongExpressionTypeException();
     }
 
     private List<Object> matchPositionalParameters(List<ConfigExpression> source, List<Parameter> target) {
@@ -84,8 +93,8 @@ public class ConfigurableFactory {
             ConfigExpression s = source.get(i);
             Parameter t = target.get(i);
             try {
-                res.add(createMatchingObject(s, t));
-            } catch (WrongExpressionTypeException | WrongConfigKeyException | MismatchedTypeException e) {
+                res.add(create(t.getType(), s));
+            } catch (WrongExpressionTypeException | WrongConfigKeyException e) {
                 return null;
             }
         }
@@ -108,12 +117,8 @@ public class ConfigurableFactory {
                 res.put(key, t.getDefaultValue());
             } else {
                 try {
-                    res.put(key, createMatchingObject(s, t));
-                } catch (WrongExpressionTypeException e) {
-                    return null;
-                } catch (WrongConfigKeyException e) {
-                    return null;
-                } catch (MismatchedTypeException e) {
+                    res.put(key, create(t.getType(), s));
+                } catch (WrongExpressionTypeException | WrongConfigKeyException e) {
                     return null;
                 }
             }

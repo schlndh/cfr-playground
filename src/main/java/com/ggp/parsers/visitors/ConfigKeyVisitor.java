@@ -8,10 +8,10 @@ public class ConfigKeyVisitor extends ConfigKeyBaseVisitor<ConfigKey> {
     @Override
     public ConfigKey visitConfigKey(ConfigKeyParser.ConfigKeyContext ctx) {
         String name = ctx.objectName().getText();
-        ConfigKey ck = new ConfigKey(name);
-        ParamVisitor visitor = new ParamVisitor(ck);
+        ParamVisitor visitor = new ParamVisitor();
         ConfigKeyParser.ParamsContext paramsCtx = ctx.params();
         visitor.visit(paramsCtx);
+        ConfigKey ck = new ConfigKey(name, visitor.getPosParams(), visitor.getKvParams());
         return ck;
     }
 }

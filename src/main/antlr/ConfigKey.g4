@@ -9,7 +9,12 @@ ID : [_a-zA-Z] [-+_a-zA-Z0-9]* ;
 
 objectName : ID ;
 
+array: '[' ']'
+    | '[' posParams ']'
+    ;
+
 expr : configKey
+    | array
     | NULL
     | FLOAT
     | INT
