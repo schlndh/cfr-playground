@@ -3,6 +3,7 @@ package com.ggp.solvers.cfr;
 import com.ggp.*;
 import com.ggp.players.deepstack.IRegretMatching;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
+import com.ggp.solvers.cfr.baselines.NoBaseline;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.random.RandomSampler;
 
@@ -11,8 +12,8 @@ import java.util.Objects;
 
 public class MCCFRSolver extends BaseCFRSolver {
     public static class Factory extends BaseCFRSolver.Factory {
-        private final double explorationProb;
-        private final double targetingProb;
+        protected final double explorationProb;
+        protected final double targetingProb;
 
         public Factory(IRegretMatching.Factory rmFactory) {
             this(rmFactory, 0.2, 0);
@@ -57,22 +58,30 @@ public class MCCFRSolver extends BaseCFRSolver {
     private final double targetingProb;
     private RandomSampler sampler = new RandomSampler();
     private int iterationCounter = 0;
+    private IBaseline baseline1, baseline2;
 
     public MCCFRSolver(IRegretMatching regretMatching, IStrategyAccumulationFilter accumulationFilter, double explorationProb, double targetingProb) {
+        this(regretMatching, accumulationFilter, explorationProb, targetingProb, new NoBaseline.Factory());
+    }
+
+    public MCCFRSolver(IRegretMatching regretMatching, IStrategyAccumulationFilter accumulationFilter, double explorationProb,
+                       double targetingProb, IBaseline.IFactory baselineFactory) {
         super(regretMatching, accumulationFilter);
         this.explorationProb = explorationProb;
         this.targetingProb = targetingProb;
+        this.baseline1 = baselineFactory.create();
+        this.baseline2 = baselineFactory.create();
     }
 
     private static class CFRResult {
         public double suffixReachProb;
         public double sampleProb;
-        public double payoff;
+        public double utility;
 
-        public CFRResult(double suffixReachProb, double sampleProb, double payoff) {
+        public CFRResult(double suffixReachProb, double sampleProb, double utility) {
             this.suffixReachProb = suffixReachProb;
             this.sampleProb = sampleProb;
-            this.payoff = payoff;
+            this.utility = utility;
         }
     }
 
@@ -127,12 +136,34 @@ public class MCCFRSolver extends BaseCFRSolver {
         return new CFRResult(suffixProb, prefixProb * suffixProb, s.getPayoff(player));
     }
 
+    private static class RandomActionWrapper implements IAction {
+        private IAction action;
+
+        public RandomActionWrapper(IAction action) {
+            this.action = action;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            RandomActionWrapper that = (RandomActionWrapper) o;
+            return Objects.equals(action, that.action);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(action);
+        }
+    }
+
     private CFRResult cfr(IGameTraversalTracker tracker, double playerProb, double opponentProb,
                           double targetedSampleProb, double untargetedSampleProb, int player) {
         ICompleteInformationState s = tracker.getCurrentState();
         Info info = PlayerHelpers.callWithOrderedParams(player, playerProb, opponentProb, (prob1, prob2) -> new Info(prob1, prob2, tracker.getRndProb()));
         visitedStates++;
         listeners.forEach(listener -> listener.enteringState(tracker, info));
+        IBaseline baseline = PlayerHelpers.selectByPlayerId(player, baseline1, baseline2);
 
         double totalSampleProb = targetingProb * targetedSampleProb + (1-targetingProb) * untargetedSampleProb;
         if (s.isTerminal()) {
@@ -144,6 +175,23 @@ public class MCCFRSolver extends BaseCFRSolver {
             CFRResult res = cfr(tracker.next(sample.action), playerProb, opponentProb,
                     sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb, player);
             res.suffixReachProb *= sample.untargetedProb;
+            double utility = 0;
+            for (IRandomNode.IRandomNodeAction rna: s.getRandomNode()) {
+                IAction a = rna.getAction();
+                double actionProb = rna.getProb();
+                // wrapper is used to distinguish random actions from regular actions in case IS is the same before and after the random action
+                IAction wrappedAction = new RandomActionWrapper(a);
+                double baselineValue = baseline.getValue(s.getInfoSetForPlayer(player), wrappedAction);
+                if (a.equals(sample.action)) {
+                    double actionUtil = (baselineValue + (res.utility - baselineValue)/sample.untargetedProb);
+                    utility += actionProb * actionUtil;
+                    baseline.update(s.getInfoSetForPlayer(player), wrappedAction, res.utility);
+                } else {
+                    utility += actionProb * baselineValue;
+                }
+            }
+
+            res.utility = utility;
             return res;
         }
 
@@ -169,28 +217,38 @@ public class MCCFRSolver extends BaseCFRSolver {
         } else {
             ret = playout(s.next(sampledAction.action), (totalSampleProb)/legalActions.size(), player);
         }
+        double utility = 0;
+        for (IAction a: legalActions) {
+            double prob = strat.getProbability(actingPlayerInfoSet, a);
+            double baselineValue = baseline.getValue(actingPlayerInfoSet, a);
+            double actionUtil = baselineValue;
+            if (a.equals(sampledAction.action)) {
+                actionUtil = (baselineValue + (ret.utility - baselineValue) / sampledAction.untargetedProb);
+                baseline.update(actingPlayerInfoSet, a, ret.utility);
+            }
+            utility += prob * actionUtil;
+        }
 
         double probWithoutPlayer = opponentProb * tracker.getRndProb();
         double newSuffixReachProb = actionProb * ret.suffixReachProb;
         int actingPlayer = s.getActingPlayerId();
-        double w = ret.payoff * probWithoutPlayer / ret.sampleProb;
-        double cfv = w * newSuffixReachProb;
-        double sampledActionCfv = w * ret.suffixReachProb;
+        double cfv = probWithoutPlayer * utility / totalSampleProb;
 
-        final double p1Utility = PlayerHelpers.selectByPlayerId(player, 1, -1)
-                * ret.payoff * newSuffixReachProb / ret.sampleProb;
+        final double p1Utility = PlayerHelpers.selectByPlayerId(player, 1, -1) * utility;
         listeners.forEach(listener -> listener.leavingState(tracker, info, p1Utility));
 
         if (actingPlayer == player) {
             int actionIdx = 0;
             for (IAction a: legalActions) {
-                double regretDiff;
+                double baselineValue = baseline.getValue(actingPlayerInfoSet, a);
+                double actionUtil;
                 if (a.equals(sampledAction.action)) {
-                    regretDiff = sampledActionCfv - cfv;
+                    actionUtil = baselineValue + (ret.utility - baselineValue)/sampledAction.untargetedProb;
                 } else {
-                    regretDiff = -cfv;
+                    actionUtil = baselineValue;
                 }
-                regretMatching.addActionRegret(actingPlayerInfoSet, actionIdx, regretDiff);
+                double actionCFV = probWithoutPlayer * actionUtil / totalSampleProb;
+                regretMatching.addActionRegret(actingPlayerInfoSet, actionIdx, actionCFV - cfv);
                 actionIdx++;
             }
         } else {
@@ -200,6 +258,7 @@ public class MCCFRSolver extends BaseCFRSolver {
             }
         }
         ret.suffixReachProb = newSuffixReachProb;
+        ret.utility = utility;
         return ret;
     }
 

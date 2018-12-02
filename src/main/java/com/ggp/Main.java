@@ -13,9 +13,9 @@ import com.ggp.players.deepstack.regret_matching.RegretMatching;
 import com.ggp.players.deepstack.regret_matching.RegretMatchingPlus;
 import com.ggp.players.random.RandomPlayer;
 import com.ggp.players.random.RandomPlayerCommand;
-import com.ggp.solvers.cfr.BaseCFRSolver;
-import com.ggp.solvers.cfr.DepthLimitedCFRSolver;
-import com.ggp.solvers.cfr.MCCFRSolver;
+import com.ggp.solvers.cfr.*;
+import com.ggp.solvers.cfr.baselines.ExponentiallyDecayingAverageBaseline;
+import com.ggp.solvers.cfr.baselines.NoBaseline;
 import com.ggp.utils.GameRepository;
 import com.ggp.utils.IUtilityEstimator;
 import com.ggp.utils.estimators.RandomPlayoutUtilityEstimator;
@@ -36,6 +36,7 @@ public class Main {
         registerUtilityEstimators(factory);
         registerCFRSolvers(factory);
         registerPlayers(factory);
+        registerBaselines(factory);
 
         CommandLine cli = new CommandLine(main);
         cli.run(main, args);
@@ -97,6 +98,21 @@ public class Main {
                     )
             ));
         }
+        {
+            HashMap<String, Parameter> params = new HashMap<>();
+            params.put("rm", new Parameter(IRegretMatching.Factory.class, null, true));
+            params.put("bl", new Parameter(IBaseline.IFactory.class, null, true));
+            params.put("e", new Parameter(double.class, 0.2d, false));
+            params.put("t", new Parameter(double.class, 0d, false));
+            factory.register(BaseCFRSolver.Factory.class, "VR-MCCFR", new ParameterList(null, params,
+                    (posParams, kvParams) -> new VRMCCFRSolverFactory(
+                            (IRegretMatching.Factory) kvParams.get("rm"),
+                            (double) kvParams.get("e"),
+                            (double) kvParams.get("t"),
+                            (IBaseline.IFactory) kvParams.get("bl")
+                    )
+            ));
+        }
     }
 
     private static void registerPlayers(ConfigurableFactory factory) throws NoSuchMethodException {
@@ -125,5 +141,15 @@ public class Main {
         factory.register(IUtilityEstimator.IFactory.class, "RandomPlayout",
                 new ParameterList(Arrays.asList(new Parameter(int.class, null, true)), null,
                         (posParams, kvParams) -> new RandomPlayoutUtilityEstimator.Factory((int)posParams.get(0))));
+    }
+
+    private static void registerBaselines(ConfigurableFactory factory) throws NoSuchMethodException {
+        factory.register(IBaseline.IFactory.class, "ExpAvg",
+                ConfigurableFactory.createPositionalParameterList(
+                        ExponentiallyDecayingAverageBaseline.Factory.class.getConstructor(double.class)
+                )
+        );
+        factory.register(IBaseline.IFactory.class, "None",
+                new ParameterList(null, null, (a, b) -> new NoBaseline.Factory()));
     }
 }
