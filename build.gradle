@@ -31,6 +31,7 @@ dependencies {
     compile 'info.picocli:picocli:3.3.0'
     antlr "org.antlr:antlr4:4.7"
     implementation 'org.apache.commons:commons-csv:1.6'
+    implementation 'org.apache.commons:commons-math3:3.6.1'
 }
 
 // In this section you declare where to find the dependencies of your project
