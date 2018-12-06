@@ -1,12 +1,11 @@
 package com.ggp.players.deepstack.regret_matching;
 
-import com.ggp.IAction;
 import com.ggp.IInformationSet;
 import com.ggp.players.deepstack.IRegretMatching;
-import com.ggp.players.deepstack.utils.Strategy;
+import com.ggp.utils.strategy.InfoSetStrategy;
+import com.ggp.utils.strategy.Strategy;
 
 import java.util.HashMap;
-import java.util.List;
 
 abstract class BaseRegretMatching implements IRegretMatching {
     protected HashMap<IInformationSet, double[]> regrets = new HashMap<>();
@@ -34,18 +33,9 @@ abstract class BaseRegretMatching implements IRegretMatching {
     @Override
     public void getRegretMatchedStrategy(IInformationSet is, Strategy strat) {
         double[] actionRegrets = getOrCreateActionRegrets(is);
-        double totalRegret = 0;
-        for (int i = 0; i < actionRegrets.length; ++i) totalRegret += Math.max(0, actionRegrets[i]);
-        int actionIdx = 0;
-        List<IAction> legalActions = is.getLegalActions();
-        if (totalRegret > 0) {
-            for (IAction a: legalActions) {
-                strat.setProbability(is, a, Math.max(0, actionRegrets[actionIdx])/totalRegret);
-                actionIdx++;
-            }
-        } else {
-            strat.setProbabilities(is, (action) -> 1d/legalActions.size());
-        }
+        InfoSetStrategy isStrat = strat.getInfoSetStrategy(is);
+        isStrat.setProbabilities(actionIdx -> Math.max(0, actionRegrets[actionIdx]));
+        isStrat.normalize();
     }
 
     @Override

@@ -4,8 +4,9 @@ import com.ggp.*;
 import com.ggp.players.deepstack.DeepstackPlayer;
 import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.players.deepstack.debug.StrategyAggregatorListener;
-import com.ggp.players.deepstack.utils.Strategy;
+import com.ggp.utils.strategy.InfoSetStrategy;
 import com.ggp.utils.CompleteInformationStateWrapper;
+import com.ggp.IInfoSetStrategy;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.recall.PerfectRecallGameDescriptionWrapper;
 
@@ -109,14 +110,15 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
         ISubgameResolver.ActResult actResult = cacheEntry.actResult;
         for (int i = 0; i < entries.size(); ++i) {
             EvaluatorEntry cachedEntry = cacheEntry.entries.get(i);
-            Strategy cachedStrat = cachedEntry.getAggregatedStrat();
+            InfoSetStrategy cachedStrat = cachedEntry.getAggregatedStrat().getInfoSetStrategy(is);
             entries.get(i).addTime(cachedEntry.getEntryTimeMs(), playerReachProb);
-            entries.get(i).getAggregatedStrat().addProbabilities(is, a -> playerReachProb * cachedStrat.getProbability(is, a));
+            entries.get(i).getAggregatedStrat().addProbabilities(is, actionIdx -> playerReachProb * cachedStrat.getProbability(actionIdx));
         }
 
         int actionIdx = 0;
+        IInfoSetStrategy isStrat = actResult.cumulativeStrategy.getInfoSetStrategy(is);
         for (IAction a: legalActions) {
-            double actionProb = actResult.cumulativeStrategy.getProbability(is, a);
+            double actionProb = isStrat.getProbability(actionIdx);
             double nrp1 = reachProb1, nrp2 = reachProb2;
             DeepstackPlayer npl1 = null, npl2 = null;
             if (s.getActingPlayerId() == 1) {

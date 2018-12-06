@@ -1,8 +1,7 @@
 package com.ggp.players.deepstack;
 
 import com.ggp.IInformationSet;
-import com.ggp.IStrategy;
-import com.ggp.players.deepstack.utils.Strategy;
+import com.ggp.utils.strategy.Strategy;
 
 public interface IRegretMatching {
     interface Factory {

@@ -1,6 +1,7 @@
 package com.ggp.utils;
 
 import com.ggp.IAction;
+import com.ggp.IInfoSetStrategy;
 import com.ggp.IInformationSet;
 import com.ggp.IStrategy;
 import com.ggp.utils.random.RandomSampler;
@@ -93,6 +94,7 @@ public class PlayerHelpers {
     }
 
     public static IAction sampleAction(RandomSampler sampler, IInformationSet is, IStrategy strategy) {
-        return sampler.select(is.getLegalActions(), action -> strategy.getProbability(is, action)).getResult();
+        IInfoSetStrategy isStrat = strategy.getInfoSetStrategy(is);
+        return sampler.selectByIdx(is.getLegalActions(), actionIdx -> isStrat.getProbability(actionIdx)).getResult();
     }
 }

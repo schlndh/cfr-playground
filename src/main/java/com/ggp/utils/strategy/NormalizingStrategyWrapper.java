@@ -1,6 +1,6 @@
-package com.ggp.utils;
+package com.ggp.utils.strategy;
 
-import com.ggp.IAction;
+import com.ggp.IInfoSetStrategy;
 import com.ggp.IInformationSet;
 import com.ggp.IStrategy;
 
@@ -15,7 +15,7 @@ import java.util.HashMap;
 public class NormalizingStrategyWrapper implements IStrategy {
     private static final long serialVersionUID = 1L;
     private IStrategy unnormalizedStrategy;
-    private HashMap<IInformationSet, Double> norms = new HashMap<>();
+    private HashMap<IInformationSet, IInfoSetStrategy> isStrats = new HashMap<>();
 
     /**
      * Constructor
@@ -25,24 +25,18 @@ public class NormalizingStrategyWrapper implements IStrategy {
         this.unnormalizedStrategy = unnormalizedStrategy;
     }
 
-    private double getNorm(IInformationSet is) {
-        return norms.computeIfAbsent(is, k -> {
-            double norm = 0;
-            for (IAction a: k.getLegalActions()) {
-                norm += unnormalizedStrategy.getProbability(k, a);
-            }
-            if (norm == 0) norm = 1;
-            return norm;
-        });
-    }
-
-    @Override
-    public double getProbability(IInformationSet s, IAction a) {
-        return unnormalizedStrategy.getProbability(s, a) / getNorm(s);
-    }
-
     @Override
     public Iterable<IInformationSet> getDefinedInformationSets() {
         return unnormalizedStrategy.getDefinedInformationSets();
+    }
+
+    @Override
+    public boolean isDefined(IInformationSet is) {
+        return unnormalizedStrategy.isDefined(is);
+    }
+
+    @Override
+    public IInfoSetStrategy getInfoSetStrategy(IInformationSet is) {
+        return isStrats.computeIfAbsent(is, k -> new NormalizingInfoSetStrategyWrapper(unnormalizedStrategy.getInfoSetStrategy(is)));
     }
 }

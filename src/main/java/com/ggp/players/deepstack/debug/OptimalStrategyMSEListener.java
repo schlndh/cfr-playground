@@ -1,7 +1,7 @@
 package com.ggp.players.deepstack.debug;
 
 import com.ggp.players.deepstack.IResolvingInfo;
-import com.ggp.players.deepstack.utils.Strategy;
+import com.ggp.utils.strategy.Strategy;
 import com.ggp.utils.Metrics;
 
 public class OptimalStrategyMSEListener extends BaseListener {

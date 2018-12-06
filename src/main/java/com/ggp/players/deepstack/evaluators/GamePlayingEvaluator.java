@@ -6,9 +6,9 @@ import com.ggp.IPlayerFactory;
 import com.ggp.players.deepstack.DeepstackPlayer;
 import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.players.deepstack.debug.StrategyAggregatorListener;
-import com.ggp.players.deepstack.utils.Strategy;
+import com.ggp.utils.strategy.Strategy;
 import com.ggp.players.random.RandomPlayer;
-import com.ggp.utils.NormalizingStrategyWrapper;
+import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 import com.ggp.utils.recall.ImperfectRecallExploitability;
 
 import java.util.List;

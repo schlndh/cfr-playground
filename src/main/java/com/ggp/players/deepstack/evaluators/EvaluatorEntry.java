@@ -1,6 +1,6 @@
 package com.ggp.players.deepstack.evaluators;
 
-import com.ggp.players.deepstack.utils.Strategy;
+import com.ggp.utils.strategy.Strategy;
 
 public class EvaluatorEntry {
     private double intendedTimeMs;

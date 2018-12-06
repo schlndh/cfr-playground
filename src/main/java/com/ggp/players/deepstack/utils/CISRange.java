@@ -4,9 +4,11 @@ import com.ggp.IAction;
 import com.ggp.ICompleteInformationState;
 import com.ggp.IInformationSet;
 import com.ggp.IStrategy;
+import com.ggp.IInfoSetStrategy;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,11 +26,14 @@ public class CISRange implements Serializable {
             double stateReachProb = 0;
             for (Map.Entry<IInformationSet, ? extends Map<IAction, Double>> paths: nrt.getNextTurnStatePaths(s).entrySet()) {
                 IInformationSet origIs = paths.getKey();
+                IInfoSetStrategy origIsStrat = (origIs == null) ? null : lastCumulativeStrategy.getInfoSetStrategy(origIs);
+                List<IAction> legalActions = (origIs == null) ? null : origIs.getLegalActions();
                 for (Map.Entry<IAction, Double> actionToRndProb: paths.getValue().entrySet()) {
                     double pathProb = actionToRndProb.getValue();
                     IAction a = actionToRndProb.getKey();
                     if (a != null) {
-                        double actionProb = lastCumulativeStrategy.getProbability(origIs, actionToRndProb.getKey());
+                        int actionIdx = legalActions.indexOf(a);
+                        double actionProb = origIsStrat.getProbability(actionIdx);
                         pathProb *= actionProb;
                     }
 

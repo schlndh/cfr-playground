@@ -2,6 +2,7 @@ package com.ggp.solvers.cfr;
 
 import com.ggp.*;
 import com.ggp.players.deepstack.IRegretMatching;
+import com.ggp.IInfoSetStrategy;
 import com.ggp.utils.IUtilityEstimator;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.utils.PlayerHelpers;
@@ -93,49 +94,53 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         List<IAction> legalActions = s.getLegalActions();
         double rndProb = tracker.getRndProb();
 
-        BiFunction<ICompleteInformationState, IAction, Double> callCfr = (x, a) -> {
+        BiFunction<ICompleteInformationState, Integer, Double> callCfr = (x, actionIdx) -> {
             double np1 = reachProb1, np2 = reachProb2;
+            IInfoSetStrategy isStrat = strat.getInfoSetStrategy(s.getInfoSetForActingPlayer());
             if (s.getActingPlayerId() == 1) {
-                np1 *= strat.getProbability(s.getInfoSetForActingPlayer(), a);
+                np1 *= isStrat.getProbability(actionIdx);
             } else if (s.getActingPlayerId() == 2) {
-                np2 *= strat.getProbability(s.getInfoSetForActingPlayer(), a);
+                np2 *= isStrat.getProbability(actionIdx);
             }
+            IAction a = legalActions.get(actionIdx);
             return cfr(tracker.next(a), player, depth+1, np1, np2);
         };
 
         if (s.isRandomNode()) {
             IRandomNode rndNode = s.getRandomNode();
             double ret = 0;
+            int actionIdx = 0;
             for (IRandomNode.IRandomNodeAction rndAction: rndNode) {
-                IAction a = rndAction.getAction();
                 double actionProb = rndAction.getProb();
-                ret += actionProb * callCfr.apply(s, a);
+                ret += actionProb * callCfr.apply(s, actionIdx++);
             }
             return ret;
         }
 
         IInformationSet is = s.getInfoSetForActingPlayer();
+        IInfoSetStrategy isStrat = strat.getInfoSetStrategy(is);
         double utility = 0;
         double[] actionUtility = new double[legalActions.size()];
-        int i = 0;
 
+
+        int actionIdx = 0;
         for (IAction a: legalActions) {
-            double actionProb = strat.getProbability(is, a);
-            double res = callCfr.apply(s, a);
-            actionUtility[i] = res;
-            utility = utility + actionProb*actionUtility[i];
-            i++;
+            double actionProb = isStrat.getProbability(actionIdx);
+            double res = callCfr.apply(s, actionIdx);
+            actionUtility[actionIdx] = res;
+            utility = utility + actionProb*actionUtility[actionIdx];
+            actionIdx++;
         }
         final double finUtility =  utility;
         listeners.forEach(listener -> listener.leavingState(tracker, info, finUtility));
 
-        i = 0;
+        actionIdx = 0;
         double probWithoutActingPlayer = rndProb * PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), reachProb2, reachProb1); // reachProb_{-i}
         int pid = s.getActingPlayerId();
         for (IAction a: legalActions) {
             double playerMul = PlayerHelpers.selectByPlayerId(pid, 1, -1);
-            regretMatching.addActionRegret(is, i, probWithoutActingPlayer * playerMul * (actionUtility[i] - utility));
-            i++;
+            regretMatching.addActionRegret(is, actionIdx, probWithoutActingPlayer * playerMul * (actionUtility[actionIdx] - utility));
+            actionIdx++;
         }
 
         return utility;
@@ -145,7 +150,8 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
     public void runIteration(IGameTraversalTracker tracker) {
         cfr(tracker, 1, 0, 1, 1);
         for (IInformationSet is: accumulationFilter.getAccumulated()) {
-            cumulativeStrat.addProbabilities(is, (action) -> strat.getProbability(is, action));
+            IInfoSetStrategy isStrat = strat.getInfoSetStrategy(is);
+            cumulativeStrat.addProbabilities(is, (actionIdx) -> isStrat.getProbability(actionIdx));
         }
         regretMatching.getRegretMatchedStrategy(strat);
     }

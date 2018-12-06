@@ -4,7 +4,8 @@ import com.ggp.IInformationSet;
 import com.ggp.IStrategy;
 import com.ggp.players.deepstack.IResolvingInfo;
 import com.ggp.players.deepstack.evaluators.EvaluatorEntry;
-import com.ggp.players.deepstack.utils.Strategy;
+import com.ggp.utils.strategy.Strategy;
+import com.ggp.IInfoSetStrategy;
 import com.ggp.utils.time.TimedCounter;
 
 import java.util.ArrayList;
@@ -37,7 +38,8 @@ public class StrategyAggregatorListener extends BaseListener {
         entry.addTime(timedCounter.getLiveDurationMs(), 1);
         Strategy target = entry.getAggregatedStrat();
         for (IInformationSet is: strat.getDefinedInformationSets()) {
-            target.addProbabilities(is, a -> strat.getProbability(is, a));
+            IInfoSetStrategy isStrat = strat.getInfoSetStrategy(is);
+            target.addProbabilities(is, actionIdx -> isStrat.getProbability(actionIdx));
         }
     }
 
