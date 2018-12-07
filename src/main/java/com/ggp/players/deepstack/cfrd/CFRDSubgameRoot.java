@@ -45,47 +45,7 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
 
     @Override
     public IInformationSet getInfoSetForPlayer(int player) {
-        return new IInformationSet() {
-            private int owner = player;
-            @Override
-            public IInformationSet next(IAction a) {
-                return null;
-            }
-
-            @Override
-            public IInformationSet applyPercept(IPercept p) {
-                if (!isValid(p)) return null;
-                ISSelectedPercept per = (ISSelectedPercept) p;
-                if (owner != opponentId) {
-                    return per.getInformationSet();
-                } else {
-                    return new OpponentsChoiceIS(opponentId, per.getInformationSet());
-                }
-            }
-
-            @Override
-            public List<IAction> getLegalActions() {
-                return null;
-            }
-
-            @Override
-            public boolean isLegal(IAction a) {
-                return false;
-            }
-
-            @Override
-            public boolean isValid(IPercept p) {
-                if (p == null || p.getClass() != ISSelectedPercept.class) return false;
-                ISSelectedPercept per = (ISSelectedPercept) p;
-                if (per.getInformationSet().getOwnerId() != owner) return false;
-                return true;
-            }
-
-            @Override
-            public int getOwnerId() {
-                return owner;
-            }
-        };
+        return new CFRDRootIS(player, this);
     }
 
     @Override
@@ -153,5 +113,9 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
     @Override
     public int hashCode() {
         return Objects.hash(range, opponentCFV, opponentId);
+    }
+
+    int getOpponentId() {
+        return opponentId;
     }
 }
