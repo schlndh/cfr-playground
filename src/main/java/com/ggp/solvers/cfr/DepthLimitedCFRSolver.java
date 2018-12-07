@@ -1,8 +1,8 @@
 package com.ggp.solvers.cfr;
 
 import com.ggp.*;
-import com.ggp.players.deepstack.IRegretMatching;
 import com.ggp.IInfoSetStrategy;
+import com.ggp.solvers.cfr.is_info.BaseCFRISInfo;
 import com.ggp.utils.IUtilityEstimator;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.utils.PlayerHelpers;
@@ -16,11 +16,11 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         private int depthLimit = 0;
         private IUtilityEstimator.IFactory ueFactory;
 
-        public Factory(IRegretMatching.Factory rmFactory) {
+        public Factory(IRegretMatching.IFactory rmFactory) {
             super(rmFactory);
         }
 
-        public Factory(IRegretMatching.Factory rmFactory, int depthLimit, IUtilityEstimator.IFactory ueFactory) {
+        public Factory(IRegretMatching.IFactory rmFactory, int depthLimit, IUtilityEstimator.IFactory ueFactory) {
             super(rmFactory);
             this.depthLimit = depthLimit;
             this.ueFactory = ueFactory;
@@ -28,7 +28,7 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
 
         @Override
         public BaseCFRSolver create(IStrategyAccumulationFilter accumulationFilter) {
-            return new DepthLimitedCFRSolver(rmFactory.create(), accumulationFilter, depthLimit, (ueFactory == null ? null : ueFactory.create()));
+            return new DepthLimitedCFRSolver(rmFactory, accumulationFilter, depthLimit, (ueFactory == null ? null : ueFactory.create()));
         }
 
         @Override
@@ -58,9 +58,9 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
     private int depthLimit = 0;
     private IUtilityEstimator utilityEstimator;
 
-    public DepthLimitedCFRSolver(IRegretMatching regretMatching, IStrategyAccumulationFilter accumulationFilter,
+    public DepthLimitedCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter,
                                  int depthLimit, IUtilityEstimator utilityEstimator) {
-        super(regretMatching, accumulationFilter);
+        super(rmFactory, accumulationFilter);
         this.depthLimit = depthLimit;
         this.utilityEstimator = utilityEstimator;
     }
@@ -94,38 +94,36 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         List<IAction> legalActions = s.getLegalActions();
         double rndProb = tracker.getRndProb();
 
-        BiFunction<ICompleteInformationState, Integer, Double> callCfr = (x, actionIdx) -> {
-            double np1 = reachProb1, np2 = reachProb2;
-            IInfoSetStrategy isStrat = strat.getInfoSetStrategy(s.getInfoSetForActingPlayer());
-            if (s.getActingPlayerId() == 1) {
-                np1 *= isStrat.getProbability(actionIdx);
-            } else if (s.getActingPlayerId() == 2) {
-                np2 *= isStrat.getProbability(actionIdx);
-            }
-            IAction a = legalActions.get(actionIdx);
-            return cfr(tracker.next(a), player, depth+1, np1, np2);
-        };
-
         if (s.isRandomNode()) {
             IRandomNode rndNode = s.getRandomNode();
             double ret = 0;
-            int actionIdx = 0;
             for (IRandomNode.IRandomNodeAction rndAction: rndNode) {
                 double actionProb = rndAction.getProb();
-                ret += actionProb * callCfr.apply(s, actionIdx++);
+                ret += actionProb * cfr(tracker.next(rndAction.getAction()), player, depth+1, reachProb1, reachProb2);
             }
             return ret;
         }
 
         IInformationSet is = s.getInfoSetForActingPlayer();
-        IInfoSetStrategy isStrat = strat.getInfoSetStrategy(is);
+        BaseCFRISInfo isInfo = getIsInfo(is);
         double utility = 0;
         double[] actionUtility = new double[legalActions.size()];
+
+        BiFunction<ICompleteInformationState, Integer, Double> callCfr = (x, actionIdx) -> {
+            double np1 = reachProb1, np2 = reachProb2;
+            if (s.getActingPlayerId() == 1) {
+                np1 *= isInfo.getStrat()[actionIdx];
+            } else if (s.getActingPlayerId() == 2) {
+                np2 *= isInfo.getStrat()[actionIdx];
+            }
+            IAction a = legalActions.get(actionIdx);
+            return cfr(tracker.next(a), player, depth+1, np1, np2);
+        };
 
 
         int actionIdx = 0;
         for (IAction a: legalActions) {
-            double actionProb = isStrat.getProbability(actionIdx);
+            double actionProb = isInfo.getStrat()[actionIdx];
             double res = callCfr.apply(s, actionIdx);
             actionUtility[actionIdx] = res;
             utility = utility + actionProb*actionUtility[actionIdx];
@@ -139,7 +137,7 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         int pid = s.getActingPlayerId();
         for (IAction a: legalActions) {
             double playerMul = PlayerHelpers.selectByPlayerId(pid, 1, -1);
-            regretMatching.addActionRegret(is, actionIdx, probWithoutActingPlayer * playerMul * (actionUtility[actionIdx] - utility));
+            addRegret(isInfo, actionIdx, probWithoutActingPlayer * playerMul * (actionUtility[actionIdx] - utility));
             actionIdx++;
         }
 
@@ -150,9 +148,13 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
     public void runIteration(IGameTraversalTracker tracker) {
         cfr(tracker, 1, 0, 1, 1);
         for (IInformationSet is: accumulationFilter.getAccumulated()) {
-            IInfoSetStrategy isStrat = strat.getInfoSetStrategy(is);
-            cumulativeStrat.addProbabilities(is, (actionIdx) -> isStrat.getProbability(actionIdx));
+            BaseCFRISInfo isInfo = getIsInfo(is);
+            double[] strat = isInfo.getStrat();
+            double[] cumulativeStrat = isInfo.getCumulativeStrat();
+            for (int a = 0; a < strat.length; ++a) {
+                cumulativeStrat[a] += strat[a];
+            }
         }
-        regretMatching.getRegretMatchedStrategy(strat);
+        isInfos.forEach((is, isInfo) -> isInfo.doRegretMatching());
     }
 }

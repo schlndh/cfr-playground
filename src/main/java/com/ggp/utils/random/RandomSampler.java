@@ -91,21 +91,20 @@ public class RandomSampler {
 
     /**
      * Sample option index with given probability map
-     * @param options
+     * @param size
      * @param probMap optionIdx -> probability (must sum to 1 over all options)
      * @return
      */
-    public SampleResult<Integer> selectIdx(Iterable<?> options, Function<Integer, Double> probMap) {
-        if (options == null) return null;
+    public SampleResult<Integer> selectIdx(int size, Function<Integer, Double> probMap) {
+        if (size == 0) return null;
         double sample = rng.nextDouble();
         double p = 0d;
-        int idx = 0;
-        for (Object it: options) {
-            p = probMap.apply(idx);
+        int i = 0;
+        for (; i < size; ++i) {
+            p = probMap.apply(i);
             if (sample < p) break;
             sample -= p;
-            idx++;
         }
-        return new SampleResult<>(idx, p);
+        return new SampleResult<>(i, p);
     }
 }

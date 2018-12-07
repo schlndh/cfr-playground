@@ -61,4 +61,8 @@ public class Strategy implements IStrategy {
         if (is == null) return null;
         return strategy.computeIfAbsent(is, k -> new InfoSetStrategy(is));
     }
+
+    public void setInfoSetStrategy(IInformationSet is, InfoSetStrategy isStrat) {
+        strategy.put(is, isStrat);
+    }
 }

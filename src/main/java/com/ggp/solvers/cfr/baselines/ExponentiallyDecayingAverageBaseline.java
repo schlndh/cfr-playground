@@ -1,10 +1,6 @@
 package com.ggp.solvers.cfr.baselines;
 
-import com.ggp.IAction;
-import com.ggp.IInformationSet;
 import com.ggp.solvers.cfr.IBaseline;
-
-import java.util.HashMap;
 
 public class ExponentiallyDecayingAverageBaseline implements IBaseline {
     public static class Factory implements IFactory {
@@ -15,8 +11,8 @@ public class ExponentiallyDecayingAverageBaseline implements IBaseline {
         }
 
         @Override
-        public IBaseline create() {
-            return new ExponentiallyDecayingAverageBaseline(alpha);
+        public IBaseline create(int actionSize) {
+            return new ExponentiallyDecayingAverageBaseline(alpha, actionSize);
         }
 
         @Override
@@ -32,20 +28,21 @@ public class ExponentiallyDecayingAverageBaseline implements IBaseline {
         }
     }
     private final double alpha;
-    private final HashMap<IInformationSet, HashMap<IAction, Double>> baselineValues = new HashMap<>();
+    private double[] baselineValues;
 
-    public ExponentiallyDecayingAverageBaseline(double alpha) {
+    public ExponentiallyDecayingAverageBaseline(double alpha, int actionSize) {
         this.alpha = alpha;
+        this.baselineValues = new double[actionSize];
     }
 
     @Override
-    public double getValue(IInformationSet is, IAction a) {
-        return baselineValues.computeIfAbsent(is, k -> new HashMap<>()).computeIfAbsent(a, k-> 0d);
+    public double getValue(int actionIdx) {
+        if (actionIdx < 0 || actionIdx >= baselineValues.length) return 0;
+        return baselineValues[actionIdx];
     }
 
     @Override
-    public void update(IInformationSet is, IAction a, double utilityEstimate) {
-        baselineValues.computeIfAbsent(is, k -> new HashMap<>()).merge(a, utilityEstimate,
-                (oldV, newV) -> (1-alpha)*(oldV == null ? 0 : oldV) + alpha * newV);
+    public void update(int actionIdx, double utilityEstimate) {
+        baselineValues[actionIdx] = (1-alpha)*baselineValues[actionIdx] + alpha * utilityEstimate;
     }
 }

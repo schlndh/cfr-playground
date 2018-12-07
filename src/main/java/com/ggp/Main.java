@@ -6,13 +6,11 @@ import com.ggp.parsers.Parameter;
 import com.ggp.parsers.ParameterList;
 import com.ggp.players.PerfectRecallPlayerFactory;
 import com.ggp.players.deepstack.DeepstackPlayer;
-import com.ggp.players.deepstack.DeepstackPlayerCommand;
-import com.ggp.players.deepstack.IRegretMatching;
+import com.ggp.solvers.cfr.IRegretMatching;
 import com.ggp.players.deepstack.ISubgameResolver;
-import com.ggp.players.deepstack.regret_matching.RegretMatching;
-import com.ggp.players.deepstack.regret_matching.RegretMatchingPlus;
+import com.ggp.solvers.cfr.regret_matching.RegretMatching;
+import com.ggp.solvers.cfr.regret_matching.RegretMatchingPlus;
 import com.ggp.players.random.RandomPlayer;
-import com.ggp.players.random.RandomPlayerCommand;
 import com.ggp.solvers.cfr.*;
 import com.ggp.solvers.cfr.baselines.ExponentiallyDecayingAverageBaseline;
 import com.ggp.solvers.cfr.baselines.NoBaseline;
@@ -24,7 +22,6 @@ import picocli.CommandLine;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.function.Consumer;
 
 public class Main {
 
@@ -74,12 +71,12 @@ public class Main {
     private static void registerCFRSolvers(ConfigurableFactory factory) {
         {
             HashMap<String, Parameter> params = new HashMap<>();
-            params.put("rm", new Parameter(IRegretMatching.Factory.class, null, true));
+            params.put("rm", new Parameter(IRegretMatching.IFactory.class, null, true));
             params.put("ue", new Parameter(IUtilityEstimator.IFactory.class, null, false));
             params.put("dl", new Parameter(int.class, 0, false));
             factory.register(BaseCFRSolver.Factory.class, "CFR", new ParameterList(null, params,
                     (posParams, kvParams) -> new DepthLimitedCFRSolver.Factory(
-                            (IRegretMatching.Factory) kvParams.get("rm"),
+                            (IRegretMatching.IFactory) kvParams.get("rm"),
                             (int) kvParams.get("dl"),
                             (IUtilityEstimator.IFactory) kvParams.get("ue")
                     )
@@ -87,12 +84,12 @@ public class Main {
         }
         {
             HashMap<String, Parameter> params = new HashMap<>();
-            params.put("rm", new Parameter(IRegretMatching.Factory.class, null, true));
+            params.put("rm", new Parameter(IRegretMatching.IFactory.class, null, true));
             params.put("e", new Parameter(double.class, 0.2d, false));
             params.put("t", new Parameter(double.class, 0d, false));
             factory.register(BaseCFRSolver.Factory.class, "MC-CFR", new ParameterList(null, params,
                     (posParams, kvParams) -> new MCCFRSolver.Factory(
-                            (IRegretMatching.Factory) kvParams.get("rm"),
+                            (IRegretMatching.IFactory) kvParams.get("rm"),
                             (double) kvParams.get("e"),
                             (double) kvParams.get("t")
                     )
@@ -100,13 +97,13 @@ public class Main {
         }
         {
             HashMap<String, Parameter> params = new HashMap<>();
-            params.put("rm", new Parameter(IRegretMatching.Factory.class, null, true));
+            params.put("rm", new Parameter(IRegretMatching.IFactory.class, null, true));
             params.put("bl", new Parameter(IBaseline.IFactory.class, null, true));
             params.put("e", new Parameter(double.class, 0.2d, false));
             params.put("t", new Parameter(double.class, 0d, false));
             factory.register(BaseCFRSolver.Factory.class, "VR-MCCFR", new ParameterList(null, params,
                     (posParams, kvParams) -> new VRMCCFRSolverFactory(
-                            (IRegretMatching.Factory) kvParams.get("rm"),
+                            (IRegretMatching.IFactory) kvParams.get("rm"),
                             (double) kvParams.get("e"),
                             (double) kvParams.get("t"),
                             (IBaseline.IFactory) kvParams.get("bl")
@@ -131,9 +128,9 @@ public class Main {
     }
 
     private static void registerRegretMatchings(ConfigurableFactory factory) {
-        factory.register(IRegretMatching.Factory.class, "RM",
+        factory.register(IRegretMatching.IFactory.class, "RM",
                 new ParameterList(null, null, (a, b) -> new RegretMatching.Factory()));
-        factory.register(IRegretMatching.Factory.class, "RM+",
+        factory.register(IRegretMatching.IFactory.class, "RM+",
                 new ParameterList(null, null, (a, b) -> new RegretMatchingPlus.Factory()));
     }
 

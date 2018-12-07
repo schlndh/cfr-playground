@@ -1,14 +1,11 @@
 package com.ggp.solvers.cfr;
 
-import com.ggp.IAction;
-import com.ggp.IInformationSet;
-
 public interface IBaseline {
     interface IFactory {
-        IBaseline create();
+        IBaseline create(int actionSize);
         String getConfigString();
     }
 
-    double getValue(IInformationSet is, IAction a);
-    void update(IInformationSet is, IAction a, double utilityEstimate);
+    double getValue(int actionIdx);
+    void update(int actionIdx, double utilityEstimate);
 }

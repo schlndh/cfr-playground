@@ -1,13 +1,11 @@
 package com.ggp.solvers.cfr.baselines;
 
-import com.ggp.IAction;
-import com.ggp.IInformationSet;
 import com.ggp.solvers.cfr.IBaseline;
 
 public class NoBaseline implements IBaseline {
     public static class Factory implements IFactory {
         @Override
-        public IBaseline create() {
+        public IBaseline create(int actionSize) {
             return new NoBaseline();
         }
 
@@ -18,11 +16,11 @@ public class NoBaseline implements IBaseline {
     }
 
     @Override
-    public double getValue(IInformationSet is, IAction a) {
+    public double getValue(int actionIdx) {
         return 0;
     }
 
     @Override
-    public void update(IInformationSet is, IAction a, double utilityEstimate) {
+    public void update(int actionIdx, double utilityEstimate) {
     }
 }

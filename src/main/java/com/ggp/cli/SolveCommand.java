@@ -107,7 +107,7 @@ public class SolveCommand implements Runnable {
                 timer.start();
             }
             if (saveStrategy && strategyExp < bestStrategyExp) {
-                bestStrategy = cfrSolver.getCumulativeStrat();
+                bestStrategy = cfrSolver.getFinalCumulativeStrat();
                 bestStrategyExp = strategyExp;
             }
         }

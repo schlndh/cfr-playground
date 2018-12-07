@@ -1,18 +1,22 @@
 package com.ggp.solvers.cfr;
 
+import com.ggp.IInfoSetStrategy;
 import com.ggp.IInformationSet;
-import com.ggp.players.deepstack.IRegretMatching;
+import com.ggp.IStrategy;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
-import com.ggp.players.deepstack.utils.Strategy;
+import com.ggp.solvers.cfr.is_info.BaseCFRISInfo;
+import com.ggp.utils.strategy.InfoSetStrategy;
+import com.ggp.utils.strategy.Strategy;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public abstract class BaseCFRSolver {
     public static abstract class Factory {
-        protected IRegretMatching.Factory rmFactory;
+        protected IRegretMatching.IFactory rmFactory;
 
-        public Factory(IRegretMatching.Factory rmFactory) {
+        public Factory(IRegretMatching.IFactory rmFactory) {
             this.rmFactory = rmFactory;
         }
 
@@ -40,15 +44,15 @@ public abstract class BaseCFRSolver {
         Iterable<IInformationSet> getAccumulated();
     }
 
-    protected IRegretMatching regretMatching;
-    protected Strategy strat = new Strategy();
-    protected Strategy cumulativeStrat = new Strategy();
+    protected IRegretMatching.IFactory rmFactory;
+    protected HashMap<IInformationSet, BaseCFRISInfo> isInfos = new HashMap<>();
     protected IStrategyAccumulationFilter accumulationFilter;
     protected List<DepthLimitedCFRSolver.IListener> listeners = new ArrayList<>();
     protected long visitedStates = 0;
+    private double totalRegret = 0;
 
-    public BaseCFRSolver(IRegretMatching regretMatching, IStrategyAccumulationFilter accumulationFilter) {
-        this.regretMatching = regretMatching;
+    public BaseCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter) {
+        this.rmFactory = rmFactory;
         if (accumulationFilter == null) accumulationFilter = getDefaultStrategyAccumulationFilter();
         this.accumulationFilter = accumulationFilter;
     }
@@ -59,24 +63,92 @@ public abstract class BaseCFRSolver {
      */
     public abstract void runIteration(IGameTraversalTracker tracker);
 
+    protected boolean isInMemory(IInformationSet is) {
+        return isInfos.containsKey(is);
+    }
+
+    protected BaseCFRISInfo initIsInfo(IInformationSet is) {
+        return new BaseCFRISInfo(rmFactory, is.getLegalActions().size());
+    }
+
+    protected BaseCFRISInfo getIsInfo(IInformationSet is) {
+        return isInfos.computeIfAbsent(is, k -> initIsInfo(is));
+    }
+
+    protected void addRegret(BaseCFRISInfo isInfo, int actionIdx, double regretDiff) {
+        IRegretMatching rm = isInfo.getRegretMatching();
+        totalRegret -= Math.max(0, rm.getRegret(actionIdx));
+        rm.addActionRegret(actionIdx, regretDiff);
+        totalRegret += Math.max(0, rm.getRegret(actionIdx));
+    }
+
     public void registerListener(DepthLimitedCFRSolver.IListener listener) {
         if (listener != null) listeners.add(listener);
     }
 
-    public Strategy getCumulativeStrat() {
-        return cumulativeStrat;
+    /**
+     * Get runtime cumulative strategy
+     *
+     * Use this to obtain current cumulative strategy during solving.
+     * @return
+     */
+    public IStrategy getCumulativeStrat() {
+        return new IStrategy() {
+            @Override
+            public Iterable<IInformationSet> getDefinedInformationSets() {
+                return isInfos.keySet();
+            }
+
+            @Override
+            public boolean isDefined(IInformationSet is) {
+                return isInfos.containsKey(is);
+            }
+
+            @Override
+            public IInfoSetStrategy getInfoSetStrategy(IInformationSet is) {
+                int actionSize = is.getLegalActions().size();
+                BaseCFRISInfo info = isInfos.getOrDefault(is, null);
+                double[] probs = (info == null ? null : info.getCumulativeStrat());
+                return new IInfoSetStrategy() {
+                    @Override
+                    public double getProbability(int actionIdx) {
+                        if (actionIdx < 0 || actionIdx >= actionSize) return 0;
+                        if (probs == null) return 1d/actionSize;
+                        return probs[actionIdx];
+                    }
+
+                    @Override
+                    public int size() {
+                        return actionSize;
+                    }
+                };
+            }
+        };
+    }
+
+    /**
+     * Get final cumulative strategy
+     *
+     * Use this to obtain cumulative strategy after solving is done. Doesn't reference IS infos.
+     * @return
+     */
+    public Strategy getFinalCumulativeStrat() {
+        Strategy ret = new Strategy();
+        accumulationFilter.getAccumulated().forEach(is ->
+                ret.setInfoSetStrategy(is, InfoSetStrategy.fromArrayReference(getIsInfo(is).getCumulativeStrat())));
+        return ret;
     }
 
     public IStrategyAccumulationFilter getDefaultStrategyAccumulationFilter() {
         return new IStrategyAccumulationFilter() {
             @Override
             public boolean isAccumulated(IInformationSet is) {
-                return strat.hasInformationSet(is);
+                return isInfos.containsKey(is);
             }
 
             @Override
             public Iterable<IInformationSet> getAccumulated() {
-                return strat.getDefinedInformationSets();
+                return isInfos.keySet();
             }
         };
     }
@@ -86,6 +158,6 @@ public abstract class BaseCFRSolver {
     }
 
     public double getTotalRegret() {
-        return regretMatching.getTotalRegret();
+        return totalRegret;
     }
 }

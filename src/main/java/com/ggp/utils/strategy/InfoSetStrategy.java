@@ -11,8 +11,8 @@ public class InfoSetStrategy implements IInfoSetStrategy {
     private final double[] probabilities;
 
 
-    public InfoSetStrategy(double[] probabilities) {
-        this.probabilities = Arrays.copyOf(probabilities, probabilities.length);
+    private InfoSetStrategy(double[] probabilities) {
+        this.probabilities = probabilities;
     }
 
     public InfoSetStrategy(int actionSize) {
@@ -22,6 +22,14 @@ public class InfoSetStrategy implements IInfoSetStrategy {
 
     public InfoSetStrategy(IInformationSet is) {
         this(is.getLegalActions().size());
+    }
+
+    public static InfoSetStrategy fromArrayCopy(double[] probabilities) {
+        return new InfoSetStrategy(Arrays.copyOf(probabilities, probabilities.length));
+    }
+
+    public static InfoSetStrategy fromArrayReference(double[] probabilites) {
+        return new InfoSetStrategy(probabilites);
     }
 
     @Override
@@ -47,7 +55,7 @@ public class InfoSetStrategy implements IInfoSetStrategy {
     }
 
     public InfoSetStrategy copy() {
-        return new InfoSetStrategy(probabilities);
+        return InfoSetStrategy.fromArrayCopy(probabilities);
     }
 
     /**

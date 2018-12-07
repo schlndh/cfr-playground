@@ -4,7 +4,7 @@ import com.ggp.IGameListener;
 import com.ggp.IPlayerFactory;
 import com.ggp.cli.IPlayerFactoryCommand;
 import com.ggp.players.deepstack.debug.ResolvingListener;
-import com.ggp.players.deepstack.regret_matching.RegretMatchingPlus;
+import com.ggp.solvers.cfr.regret_matching.RegretMatchingPlus;
 import com.ggp.players.deepstack.resolvers.ExternalCFRResolver;
 import com.ggp.solvers.cfr.DepthLimitedCFRSolver;
 import picocli.CommandLine;
