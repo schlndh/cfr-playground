@@ -6,6 +6,7 @@ import com.ggp.solvers.cfr.baselines.NoBaseline;
 import com.ggp.IInfoSetStrategy;
 import com.ggp.solvers.cfr.is_info.BaseCFRISInfo;
 import com.ggp.solvers.cfr.is_info.MCCFRISInfo;
+import com.ggp.solvers.cfr.utils.RandomNodeIS;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.random.RandomSampler;
 
@@ -137,7 +138,7 @@ public class MCCFRSolver extends BaseCFRSolver {
     }
 
     private CFRResult cfr(IGameTraversalTracker tracker, double playerProb, double opponentProb,
-                          double targetedSampleProb, double untargetedSampleProb, int player) {
+                          double targetedSampleProb, double untargetedSampleProb, int player, int depth) {
         ICompleteInformationState s = tracker.getCurrentState();
         Info info = PlayerHelpers.callWithOrderedParams(player, playerProb, opponentProb, (prob1, prob2) -> new Info(prob1, prob2, tracker.getRndProb()));
         visitedStates++;
@@ -153,11 +154,11 @@ public class MCCFRSolver extends BaseCFRSolver {
         List<IAction> legalActions = s.getLegalActions();
         if (legalActions == null || legalActions.isEmpty()) return null;
         if (s.isRandomNode()) {
-            MCCFRISInfo isInfo = (MCCFRISInfo) getIsInfo(s.getInfoSetForPlayer(player));
-            IBaseline baseline = isInfo.getChanceBaseline(player);
+            MCCFRISInfo isInfo = (MCCFRISInfo) getIsInfo(new RandomNodeIS(depth, legalActions));
+            IBaseline baseline = isInfo.getBaseline(player);
             SampleResult sample = sampleRandom(s);
             CFRResult res = cfr(tracker.next(legalActions.get(sample.actionIdx)), playerProb, opponentProb,
-                    sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb, player);
+                    sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb, player, depth+1);
             res.suffixReachProb *= sample.untargetedProb;
             double utility = 0;
             int actionIdx = 0;
@@ -198,7 +199,7 @@ public class MCCFRSolver extends BaseCFRSolver {
             }
             ret = cfr(tracker.next(legalActions.get(sampledAction.actionIdx)), newPlayerProb, newOpponentProb,
                     sampledAction.targetedProb * targetedSampleProb,
-                    sampledAction.untargetedProb * untargetedSampleProb, player);
+                    sampledAction.untargetedProb * untargetedSampleProb, player, depth+1);
         } else {
             ret = playout(s.next(legalActions.get(sampledAction.actionIdx)), (totalSampleProb)/legalActions.size(), player);
         }
@@ -253,7 +254,7 @@ public class MCCFRSolver extends BaseCFRSolver {
     @Override
     public void runIteration(IGameTraversalTracker tracker) {
         iterationCounter++;
-        cfr(tracker, 1, 1, 1, 1, (iterationCounter % 2) + 1);
+        cfr(tracker, 1, 1, 1, 1, (iterationCounter % 2) + 1, 0);
     }
 
     @Override
