@@ -132,6 +132,8 @@ public class SolveCommand implements Runnable {
                 csvOut.printRecord(time, (long)iterations, (long)states, expStats.getMean(), regretStats.getMean(),
                         expStats.getPercentile(5), expStats.getPercentile(95), regretStats.getPercentile(5),
                         regretStats.getPercentile(95));
+                System.out.println(String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret)",
+                        time, (long) iterations, (long) states, expStats.getMean(), regretStats.getMean()));
             }
             csvOut.close();
         } catch (IOException e) {
