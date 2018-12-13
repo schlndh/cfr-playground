@@ -74,11 +74,13 @@ public class Main {
             params.put("rm", new Parameter(IRegretMatching.IFactory.class, null, true));
             params.put("ue", new Parameter(IUtilityEstimator.IFactory.class, null, false));
             params.put("dl", new Parameter(int.class, 0, false));
+            params.put("au", new Parameter(boolean.class, true, false));
             factory.register(BaseCFRSolver.Factory.class, "CFR", new ParameterList(null, params,
                     (posParams, kvParams) -> new DepthLimitedCFRSolver.Factory(
                             (IRegretMatching.IFactory) kvParams.get("rm"),
                             (int) kvParams.get("dl"),
-                            (IUtilityEstimator.IFactory) kvParams.get("ue")
+                            (IUtilityEstimator.IFactory) kvParams.get("ue"),
+                            (boolean) kvParams.get("au")
                     )
             ));
         }

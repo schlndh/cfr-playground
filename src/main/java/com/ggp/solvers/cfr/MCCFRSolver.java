@@ -61,7 +61,7 @@ public class MCCFRSolver extends BaseCFRSolver {
     private final double explorationProb;
     private final double targetingProb;
     private RandomSampler sampler = new RandomSampler();
-    private int iterationCounter = 0;
+    private long iterationCounter = 0;
     private IBaseline.IFactory baselineFactory;
 
     public MCCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter, double explorationProb, double targetingProb) {
@@ -254,7 +254,7 @@ public class MCCFRSolver extends BaseCFRSolver {
     @Override
     public void runIteration(IGameTraversalTracker tracker) {
         iterationCounter++;
-        cfr(tracker, 1, 1, 1, 1, (iterationCounter % 2) + 1, 0);
+        cfr(tracker, 1, 1, 1, 1, (int)(iterationCounter % 2) + 1, 0);
     }
 
     @Override

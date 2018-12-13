@@ -14,29 +14,32 @@ import java.util.function.BiFunction;
 public class DepthLimitedCFRSolver extends BaseCFRSolver {
     public static class Factory extends BaseCFRSolver.Factory {
         private int depthLimit = 0;
+        private boolean alternatingUpdates = true;
         private IUtilityEstimator.IFactory ueFactory;
 
         public Factory(IRegretMatching.IFactory rmFactory) {
             super(rmFactory);
         }
 
-        public Factory(IRegretMatching.IFactory rmFactory, int depthLimit, IUtilityEstimator.IFactory ueFactory) {
+        public Factory(IRegretMatching.IFactory rmFactory, int depthLimit, IUtilityEstimator.IFactory ueFactory, boolean alternatingUpdates) {
             super(rmFactory);
             this.depthLimit = depthLimit;
             this.ueFactory = ueFactory;
+            this.alternatingUpdates = alternatingUpdates;
         }
 
         @Override
         public BaseCFRSolver create(IStrategyAccumulationFilter accumulationFilter) {
-            return new DepthLimitedCFRSolver(rmFactory, accumulationFilter, depthLimit, (ueFactory == null ? null : ueFactory.create()));
+            return new DepthLimitedCFRSolver(rmFactory, accumulationFilter, depthLimit, (ueFactory == null ? null : ueFactory.create()), alternatingUpdates);
         }
 
         @Override
         public String getConfigString() {
             return "CFR{" +
                     "ue=" + ((ueFactory == null) ? "null" : ueFactory.getConfigString()) +
-                    ", dl=" + depthLimit +
-                    ", rm=" + rmFactory.getConfigString() +
+                    ",dl=" + depthLimit +
+                    ",rm=" + rmFactory.getConfigString() +
+                    ",au=" + alternatingUpdates +
                     '}';
         }
 
@@ -57,12 +60,16 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
 
     private int depthLimit = 0;
     private IUtilityEstimator utilityEstimator;
+    private long iterationCounter = 0;
+    private final boolean alternatingUpdates;
+    private boolean[] updatePlayer = new boolean[]{false, true, true};
 
     public DepthLimitedCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter,
-                                 int depthLimit, IUtilityEstimator utilityEstimator) {
+                                 int depthLimit, IUtilityEstimator utilityEstimator, boolean alternatingUpdates) {
         super(rmFactory, accumulationFilter);
         this.depthLimit = depthLimit;
         this.utilityEstimator = utilityEstimator;
+        this.alternatingUpdates = alternatingUpdates;
     }
 
     /**
@@ -135,19 +142,31 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         actionIdx = 0;
         double probWithoutActingPlayer = rndProb * PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), reachProb2, reachProb1); // reachProb_{-i}
         int pid = s.getActingPlayerId();
-        for (IAction a: legalActions) {
-            double playerMul = PlayerHelpers.selectByPlayerId(pid, 1, -1);
-            addRegret(isInfo, actionIdx, probWithoutActingPlayer * playerMul * (actionUtility[actionIdx] - utility));
-            actionIdx++;
+        if (updatePlayer[pid]) {
+            for (IAction a: legalActions) {
+                double playerMul = PlayerHelpers.selectByPlayerId(pid, 1, -1);
+                addRegret(isInfo, actionIdx, probWithoutActingPlayer * playerMul * (actionUtility[actionIdx] - utility));
+                actionIdx++;
+            }
         }
+
 
         return utility;
     }
 
     @Override
     public void runIteration(IGameTraversalTracker tracker) {
-        cfr(tracker, 1, 0, 1, 1);
+        iterationCounter++;
+        int player = (int)(iterationCounter % 2) + 1;
+        if (alternatingUpdates) {
+            updatePlayer[player] = true;
+            updatePlayer[PlayerHelpers.getOpponentId(player)] = false;
+        }
+
+        cfr(tracker, player, 0, 1, 1);
+        isInfos.forEach((is, isInfo) -> {if (updatePlayer[is.getOwnerId()]) isInfo.doRegretMatching();});
         for (IInformationSet is: accumulationFilter.getAccumulated()) {
+            if (!updatePlayer[is.getOwnerId()]) continue;
             BaseCFRISInfo isInfo = getIsInfo(is);
             double[] strat = isInfo.getStrat();
             double[] cumulativeStrat = isInfo.getCumulativeStrat();
@@ -155,6 +174,6 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
                 cumulativeStrat[a] += strat[a];
             }
         }
-        isInfos.forEach((is, isInfo) -> isInfo.doRegretMatching());
+
     }
 }
