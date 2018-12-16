@@ -18,10 +18,6 @@ public class MCCFRSolver extends BaseCFRSolver {
         protected final double explorationProb;
         protected final double targetingProb;
 
-        public Factory(IRegretMatching.IFactory rmFactory) {
-            this(rmFactory, 0.2, 0);
-        }
-
         public Factory(IRegretMatching.IFactory rmFactory, double explorationProb, double targetingProb) {
             super(rmFactory);
             this.explorationProb = explorationProb;

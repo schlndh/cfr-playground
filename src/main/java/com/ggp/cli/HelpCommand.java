@@ -66,7 +66,6 @@ public final class HelpCommand implements CommandLine.IHelpCommandInitializable,
         if (commands.length > 0) {
             CommandLine subcommand = parent.getSubcommands().get(commands[0]);
             IGameCommand gameCommand = null;
-            IPlayerFactoryCommand pfCommand = null;
             if (subcommand != null) {
                 subcommand.usage(out, ansi);
                 showGamesAndPlayerList();

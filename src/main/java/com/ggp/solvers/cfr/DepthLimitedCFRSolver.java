@@ -1,7 +1,6 @@
 package com.ggp.solvers.cfr;
 
 import com.ggp.*;
-import com.ggp.IInfoSetStrategy;
 import com.ggp.solvers.cfr.is_info.BaseCFRISInfo;
 import com.ggp.utils.IUtilityEstimator;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
@@ -16,10 +15,6 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         private int depthLimit = 0;
         private boolean alternatingUpdates = true;
         private IUtilityEstimator.IFactory ueFactory;
-
-        public Factory(IRegretMatching.IFactory rmFactory) {
-            super(rmFactory);
-        }
 
         public Factory(IRegretMatching.IFactory rmFactory, int depthLimit, IUtilityEstimator.IFactory ueFactory, boolean alternatingUpdates) {
             super(rmFactory);
