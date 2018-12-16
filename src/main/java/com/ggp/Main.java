@@ -28,17 +28,20 @@ public class Main {
 
     public static void main(String[] args) throws NoSuchMethodException {
         MainCommand main = new MainCommand();
-        ConfigurableFactory factory = main.getConfigurableFactory();
+        registerClassesToFactory(main.getConfigurableFactory());
+
+        CommandLine cli = new CommandLine(main);
+        cli.run(main, args);
+
+    }
+
+    public static void registerClassesToFactory(ConfigurableFactory factory) throws NoSuchMethodException {
         registerGames(factory);
         registerRegretMatchings(factory);
         registerUtilityEstimators(factory);
         registerCFRSolvers(factory);
         registerPlayers(factory);
         registerBaselines(factory);
-
-        CommandLine cli = new CommandLine(main);
-        cli.run(main, args);
-
     }
 
     private static void registerGames(ConfigurableFactory factory) throws NoSuchMethodException {
