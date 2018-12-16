@@ -79,12 +79,14 @@ public class Main {
             params.put("ue", new Parameter(IUtilityEstimator.IFactory.class, null, false));
             params.put("dl", new Parameter(int.class, 0, false));
             params.put("au", new Parameter(boolean.class, true, false));
+            params.put("cse", new Parameter(double.class, 0d, false));
             factory.register(BaseCFRSolver.Factory.class, "CFR", new ParameterList(null, params,
                     (posParams, kvParams) -> new DepthLimitedCFRSolver.Factory(
                             (IRegretMatching.IFactory) kvParams.get("rm"),
                             (int) kvParams.get("dl"),
                             (IUtilityEstimator.IFactory) kvParams.get("ue"),
-                            (boolean) kvParams.get("au")
+                            (boolean) kvParams.get("au"),
+                            (double) kvParams.get("cse")
                     )
             ));
         }
@@ -93,11 +95,13 @@ public class Main {
             params.put("rm", new Parameter(IRegretMatching.IFactory.class, null, true));
             params.put("e", new Parameter(double.class, 0.2d, false));
             params.put("t", new Parameter(double.class, 0d, false));
+            params.put("cse", new Parameter(double.class, 0d, false));
             factory.register(BaseCFRSolver.Factory.class, "MC-CFR", new ParameterList(null, params,
                     (posParams, kvParams) -> new MCCFRSolver.Factory(
                             (IRegretMatching.IFactory) kvParams.get("rm"),
                             (double) kvParams.get("e"),
-                            (double) kvParams.get("t")
+                            (double) kvParams.get("t"),
+                            (double) kvParams.get("cse")
                     )
             ));
         }
@@ -107,11 +111,13 @@ public class Main {
             params.put("bl", new Parameter(IBaseline.IFactory.class, null, true));
             params.put("e", new Parameter(double.class, 0.2d, false));
             params.put("t", new Parameter(double.class, 0d, false));
+            params.put("cse", new Parameter(double.class, 0d, false));
             factory.register(BaseCFRSolver.Factory.class, "VR-MCCFR", new ParameterList(null, params,
                     (posParams, kvParams) -> new VRMCCFRSolverFactory(
                             (IRegretMatching.IFactory) kvParams.get("rm"),
                             (double) kvParams.get("e"),
                             (double) kvParams.get("t"),
+                            (double) kvParams.get("cse"),
                             (IBaseline.IFactory) kvParams.get("bl")
                     )
             ));

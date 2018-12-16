@@ -17,16 +17,18 @@ public class MCCFRSolver extends BaseCFRSolver {
     public static class Factory extends BaseCFRSolver.Factory {
         protected final double explorationProb;
         protected final double targetingProb;
+        protected final double cumulativeStratExp;
 
-        public Factory(IRegretMatching.IFactory rmFactory, double explorationProb, double targetingProb) {
+        public Factory(IRegretMatching.IFactory rmFactory, double explorationProb, double targetingProb, double cumulativeStratExp) {
             super(rmFactory);
             this.explorationProb = explorationProb;
             this.targetingProb = targetingProb;
+            this.cumulativeStratExp = cumulativeStratExp;
         }
 
         @Override
         public BaseCFRSolver create(IStrategyAccumulationFilter accumulationFilter) {
-            return new MCCFRSolver(rmFactory, accumulationFilter, explorationProb, targetingProb);
+            return new MCCFRSolver(rmFactory, accumulationFilter, explorationProb, targetingProb, cumulativeStratExp);
         }
 
 
@@ -36,21 +38,8 @@ public class MCCFRSolver extends BaseCFRSolver {
                     "t=" + targetingProb +
                     ",e=" + explorationProb +
                     ",rm=" + rmFactory.getConfigString() +
+                    ",cse=" + cumulativeStratExp +
                     '}';
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Factory factory = (Factory) o;
-            return Double.compare(factory.explorationProb, explorationProb) == 0 &&
-                    Double.compare(factory.targetingProb, targetingProb) == 0;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(explorationProb, targetingProb);
         }
     }
 
@@ -59,16 +48,19 @@ public class MCCFRSolver extends BaseCFRSolver {
     private RandomSampler sampler = new RandomSampler();
     private long iterationCounter = 0;
     private IBaseline.IFactory baselineFactory;
+    private final double cumulativeStratExp;
 
-    public MCCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter, double explorationProb, double targetingProb) {
-        this(rmFactory, accumulationFilter, explorationProb, targetingProb, new NoBaseline.Factory());
+    public MCCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter,
+                       double explorationProb, double targetingProb, double cumulativeStratExp) {
+        this(rmFactory, accumulationFilter, explorationProb, targetingProb, cumulativeStratExp, new NoBaseline.Factory());
     }
 
     public MCCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter, double explorationProb,
-                       double targetingProb, IBaseline.IFactory baselineFactory) {
+                       double targetingProb, double cumulativeStratExp, IBaseline.IFactory baselineFactory) {
         super(rmFactory, accumulationFilter);
         this.explorationProb = explorationProb;
         this.targetingProb = targetingProb;
+        this.cumulativeStratExp = cumulativeStratExp;
         this.baselineFactory = baselineFactory;
     }
 
@@ -236,12 +228,15 @@ public class MCCFRSolver extends BaseCFRSolver {
             }
         } else {
             if (accumulationFilter.isAccumulated(actingPlayerInfoSet)) {
+                double[] strat = isInfo.getStrat();
                 double[] cumulativeStrat = isInfo.getCumulativeStrat();
+                double mul = Math.pow(((double) isInfo.getLastVisitedAtIteration()) / iterationCounter, cumulativeStratExp);
                 for (int a = 0; a < legalActions.size(); ++a) {
-                    cumulativeStrat[a] += probWithoutPlayer*isInfo.getStrat()[a]/totalSampleProb;
+                    cumulativeStrat[a] = mul * cumulativeStrat[a] + probWithoutPlayer*strat[a]/totalSampleProb;
                 }
             }
         }
+        isInfo.setLastVisitedAtIteration(iterationCounter);
         ret.suffixReachProb = newSuffixReachProb;
         ret.utility = utility;
         return ret;

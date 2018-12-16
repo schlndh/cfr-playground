@@ -12,20 +12,24 @@ import java.util.function.BiFunction;
 
 public class DepthLimitedCFRSolver extends BaseCFRSolver {
     public static class Factory extends BaseCFRSolver.Factory {
-        private int depthLimit = 0;
-        private boolean alternatingUpdates = true;
+        private int depthLimit;
+        private boolean alternatingUpdates;
         private IUtilityEstimator.IFactory ueFactory;
+        private final double cumulativeStratExp;
 
-        public Factory(IRegretMatching.IFactory rmFactory, int depthLimit, IUtilityEstimator.IFactory ueFactory, boolean alternatingUpdates) {
+        public Factory(IRegretMatching.IFactory rmFactory, int depthLimit, IUtilityEstimator.IFactory ueFactory,
+                       boolean alternatingUpdates, double cumulativeStratExp) {
             super(rmFactory);
             this.depthLimit = depthLimit;
             this.ueFactory = ueFactory;
             this.alternatingUpdates = alternatingUpdates;
+            this.cumulativeStratExp = cumulativeStratExp;
         }
 
         @Override
         public BaseCFRSolver create(IStrategyAccumulationFilter accumulationFilter) {
-            return new DepthLimitedCFRSolver(rmFactory, accumulationFilter, depthLimit, (ueFactory == null ? null : ueFactory.create()), alternatingUpdates);
+            return new DepthLimitedCFRSolver(rmFactory, accumulationFilter, depthLimit,
+                    (ueFactory == null ? null : ueFactory.create()), alternatingUpdates, cumulativeStratExp);
         }
 
         @Override
@@ -37,34 +41,22 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
                     ",au=" + alternatingUpdates +
                     '}';
         }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Factory factory = (Factory) o;
-            return depthLimit == factory.depthLimit &&
-                    Objects.equals(ueFactory, factory.ueFactory);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(depthLimit, ueFactory);
-        }
     }
 
     private int depthLimit = 0;
     private IUtilityEstimator utilityEstimator;
     private long iterationCounter = 0;
     private final boolean alternatingUpdates;
+    private final double cumulativeStratExp;
     private boolean[] updatePlayer = new boolean[]{false, true, true};
 
     public DepthLimitedCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter,
-                                 int depthLimit, IUtilityEstimator utilityEstimator, boolean alternatingUpdates) {
+                                 int depthLimit, IUtilityEstimator utilityEstimator, boolean alternatingUpdates, double cumulativeStratExp) {
         super(rmFactory, accumulationFilter);
         this.depthLimit = depthLimit;
         this.utilityEstimator = utilityEstimator;
         this.alternatingUpdates = alternatingUpdates;
+        this.cumulativeStratExp = cumulativeStratExp;
     }
 
     /**
@@ -148,8 +140,9 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
                 double playerReachProb = rndProb * PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), reachProb1, reachProb2);
                 double[] strat = isInfo.getStrat();
                 double[] cumulativeStrat = isInfo.getCumulativeStrat();
+                double mul = Math.pow(((double) iterationCounter) / (iterationCounter + 1), cumulativeStratExp);
                 for (int a = 0; a < strat.length; ++a) {
-                    cumulativeStrat[a] += playerReachProb * strat[a];
+                    cumulativeStrat[a] = mul * cumulativeStrat[a] + playerReachProb * strat[a];
                 }
             }
         }

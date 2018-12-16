@@ -3,14 +3,15 @@ package com.ggp.solvers.cfr;
 public class VRMCCFRSolverFactory extends MCCFRSolver.Factory {
     private IBaseline.IFactory baselineFactory;
 
-    public VRMCCFRSolverFactory(IRegretMatching.IFactory rmFactory, double explorationProb, double targetingProb, IBaseline.IFactory baselineFactory) {
-        super(rmFactory, explorationProb, targetingProb);
+    public VRMCCFRSolverFactory(IRegretMatching.IFactory rmFactory, double explorationProb, double targetingProb,
+                                double cumulativeStratExp, IBaseline.IFactory baselineFactory) {
+        super(rmFactory, explorationProb, targetingProb, cumulativeStratExp);
         this.baselineFactory = baselineFactory;
     }
 
     @Override
     public BaseCFRSolver create(BaseCFRSolver.IStrategyAccumulationFilter accumulationFilter) {
-        return new MCCFRSolver(rmFactory, accumulationFilter, explorationProb, targetingProb, baselineFactory);
+        return new MCCFRSolver(rmFactory, accumulationFilter, explorationProb, targetingProb, cumulativeStratExp, baselineFactory);
     }
 
     @Override
@@ -19,6 +20,7 @@ public class VRMCCFRSolverFactory extends MCCFRSolver.Factory {
                 "t=" + targetingProb +
                 ",e=" + explorationProb +
                 ",rm=" + rmFactory.getConfigString() +
+                ",cse=" + cumulativeStratExp +
                 ",bl=" + baselineFactory.getConfigString() +
                 '}';
     }
