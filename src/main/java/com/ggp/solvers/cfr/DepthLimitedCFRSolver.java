@@ -148,6 +148,15 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
                 addRegret(isInfo, actionIdx, probWithoutActingPlayer * playerMul * (actionUtility[actionIdx] - utility));
                 actionIdx++;
             }
+
+            if (accumulationFilter.isAccumulated(is)) {
+                double playerReachProb = rndProb * PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), reachProb1, reachProb2);
+                double[] strat = isInfo.getStrat();
+                double[] cumulativeStrat = isInfo.getCumulativeStrat();
+                for (int a = 0; a < strat.length; ++a) {
+                    cumulativeStrat[a] += playerReachProb * strat[a];
+                }
+            }
         }
 
 
@@ -165,15 +174,5 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
 
         cfr(tracker, player, 0, 1, 1);
         isInfos.forEach((is, isInfo) -> {if (updatePlayer[is.getOwnerId()]) isInfo.doRegretMatching();});
-        for (IInformationSet is: accumulationFilter.getAccumulated()) {
-            if (!updatePlayer[is.getOwnerId()]) continue;
-            BaseCFRISInfo isInfo = getIsInfo(is);
-            double[] strat = isInfo.getStrat();
-            double[] cumulativeStrat = isInfo.getCumulativeStrat();
-            for (int a = 0; a < strat.length; ++a) {
-                cumulativeStrat[a] += strat[a];
-            }
-        }
-
     }
 }
