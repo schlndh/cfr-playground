@@ -5,7 +5,9 @@ INT : ([-+])?[0-9]+ ;
 FLOAT :  INT ('.' [0-9]+)? ([Ee] ([-+])? [0-9]+)? ;
 BOOL : 'true' | 'false' ;
 NULL : 'null' ;
+INFINITY : '-'? 'Infinity' ;
 ID : [_a-zA-Z] [-+_a-zA-Z0-9]* ;
+
 
 objectName : ID ;
 
@@ -20,6 +22,7 @@ expr : configKey
     | INT
     | STRING
     | BOOL
+    | INFINITY
     ;
 
 posParam : expr ;

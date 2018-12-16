@@ -145,5 +145,8 @@ class ConfigurableFactoryTest {
         assertEquals(null, factory.create(A1.class, ParseUtils.parseConfigExpression("null")));
         // null should work even for unregistered classes
         assertEquals(null, factory.create((new Object() {private int x = 5;}).getClass(), ParseUtils.parseConfigExpression("null")));
+
+        assertEquals(Double.NEGATIVE_INFINITY, (double) factory.create(double.class, ParseUtils.parseConfigExpression("-Infinity")));
+        assertEquals(Double.POSITIVE_INFINITY, (double) factory.create(double.class, ParseUtils.parseConfigExpression("Infinity")));
     }
 }

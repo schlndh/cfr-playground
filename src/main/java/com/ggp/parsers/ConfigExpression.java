@@ -41,6 +41,7 @@ public class ConfigExpression {
         switch (type) {
             case ConfigKeyLexer.FLOAT:
             case ConfigKeyLexer.INT:
+            case ConfigKeyLexer.INFINITY:
                 return Type.NUMBER;
             case ConfigKeyLexer.BOOL:
                 return Type.BOOL;
