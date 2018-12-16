@@ -8,6 +8,7 @@ import com.ggp.players.PerfectRecallPlayerFactory;
 import com.ggp.players.deepstack.DeepstackPlayer;
 import com.ggp.solvers.cfr.IRegretMatching;
 import com.ggp.players.deepstack.ISubgameResolver;
+import com.ggp.solvers.cfr.regret_matching.DiscountedRegretMatching;
 import com.ggp.solvers.cfr.regret_matching.RegretMatching;
 import com.ggp.solvers.cfr.regret_matching.RegretMatchingPlus;
 import com.ggp.players.random.RandomPlayer;
@@ -129,11 +130,14 @@ public class Main {
         ));
     }
 
-    private static void registerRegretMatchings(ConfigurableFactory factory) {
+    private static void registerRegretMatchings(ConfigurableFactory factory) throws NoSuchMethodException {
         factory.register(IRegretMatching.IFactory.class, "RM",
                 new ParameterList(null, null, (a, b) -> new RegretMatching.Factory()));
         factory.register(IRegretMatching.IFactory.class, "RM+",
                 new ParameterList(null, null, (a, b) -> new RegretMatchingPlus.Factory()));
+        factory.register(IRegretMatching.IFactory.class, "DRM", ConfigurableFactory.createPositionalParameterList(
+                DiscountedRegretMatching.Factory.class.getConstructor(double.class, double.class)
+        ));
     }
 
     private static void registerUtilityEstimators(ConfigurableFactory factory) {

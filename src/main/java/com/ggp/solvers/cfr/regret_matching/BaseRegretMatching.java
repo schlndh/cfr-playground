@@ -10,7 +10,7 @@ abstract class BaseRegretMatching implements IRegretMatching {
         this.actionRegrets = new double[actionSize];
     }
 
-    protected abstract double sumRegrets(double r1, double r2);
+    protected abstract double sumRegrets(double oldRegret, double regretDiff);
 
     @Override
     public void addActionRegret(int actionIdx, double regretDiff) {
