@@ -7,7 +7,6 @@ import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.utils.PlayerHelpers;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
 
 public class DepthLimitedCFRSolver extends BaseCFRSolver {
@@ -39,6 +38,7 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
                     ",dl=" + depthLimit +
                     ",rm=" + rmFactory.getConfigString() +
                     ",au=" + alternatingUpdates +
+                    ",cse=" + cumulativeStratExp +
                     '}';
         }
     }
