@@ -16,15 +16,15 @@ public class InformationSet implements IInformationSet {
     private static final long serialVersionUID = 1L;
     private final GameDescription gameDesc;
     private final int owner;
-    private final Cards privateCard;
-    private final Cards publicCard;
+    private final Integer privateCard;
+    private final Integer publicCard;
     private final int potSize;
     private final int remainingMoney;
     private final Rounds round;
     private final int raisesUsedThisRound;
     private final int foldedByPlayer;
 
-    public InformationSet(GameDescription gameDesc, int owner, Cards privateCard, Cards publicCard, int potSize, int remainingMoney,
+    public InformationSet(GameDescription gameDesc, int owner, Integer privateCard, Integer publicCard, int potSize, int remainingMoney,
                           Rounds round, int raisesUsedThisRound, int foldedByPlayer
     ) {
         this.gameDesc = gameDesc;
@@ -110,11 +110,11 @@ public class InformationSet implements IInformationSet {
         return round == Rounds.End;
     }
 
-    public Cards getPrivateCard() {
+    public Integer getPrivateCard() {
         return privateCard;
     }
 
-    public Cards getPublicCard() {
+    public Integer getPublicCard() {
         return publicCard;
     }
 
@@ -211,8 +211,8 @@ public class InformationSet implements IInformationSet {
     public String toString() {
         return "InformationSet{" +
                 "owner=" + owner +
-                ", private=" + privateCard +
-                ", public=" + publicCard +
+                ", private=" + Objects.toString(privateCard) +
+                ", public=" + Objects.toString(publicCard) +
                 ", pot=" + potSize +
                 ", remainingMoney=" + remainingMoney +
                 ", startingMoney=" + gameDesc.getStartingMoney(owner) +

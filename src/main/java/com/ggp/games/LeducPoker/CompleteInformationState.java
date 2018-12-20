@@ -23,25 +23,20 @@ public class CompleteInformationState implements ICompleteInformationState {
     private void initLegalDealActions() {
         Rounds round = player2IS.getRound();
         if (round == Rounds.PrivateCard || round == Rounds.PublicCard) {
-            legalDealActions = new ArrayList<>(3);
-            int[] availableCards = {2,2,2};
-            if (player1IS.getPrivateCard() != null) {
-                availableCards[player1IS.getPrivateCard().ordinal()]--;
-            }
-            if (player2IS.getPrivateCard() != null) {
-                availableCards[player2IS.getPrivateCard().ordinal()]--;
-            }
-            // public card doesnt have to be considered, because if its not null, then PublicCard round is already over
+            int cardsPerSuite = player1IS.getGameDesc().getCardsPerSuite();
+            legalDealActions = new ArrayList<>(cardsPerSuite);
+
             int player;
             if (round == Rounds.PublicCard) {
                 player = 0;
             } else {
                 player = player1IS.getPrivateCard() == null ? 1 : 2;
             }
-            for (Cards c: Cards.values()) {
-                if (availableCards[c.ordinal()] > 0) {
-                    legalDealActions.add(new DealCardAction(c, player));
-                }
+            for (int i = 0; i < cardsPerSuite; ++i ){
+                legalDealActions.add(new DealCardAction(i, player));
+            }
+            if (round == Rounds.PublicCard && player1IS.getPrivateCard() == player2IS.getPrivateCard()) {
+                legalDealActions.remove(player1IS.getPrivateCard());
             }
         }
     }
@@ -72,19 +67,20 @@ public class CompleteInformationState implements ICompleteInformationState {
     public double getPayoff(int player) {
         if (!isTerminal() || (player != 1 && player != 2)) return 0;
         int winner = 0;
-        Cards publicCard = player1IS.getPublicCard();
-        Cards c1 = player1IS.getPrivateCard(), c2 = player2IS.getPrivateCard();
-        if (c1 == publicCard) {
-            winner = 1;
-        } else if (c2 == publicCard) {
-            winner = 2;
-        } else if (c1.ordinal() > c2.ordinal()) {
-            winner = 1;
-        } else if (c2.ordinal() > c1.ordinal()) {
-            winner = 2;
-        }
         if (player1IS.getFoldedByPlayer() != 0) {
             winner = player1IS.getFoldedByPlayer() == 1 ? 2 : 1;
+        } else {
+            int publicCard = player1IS.getPublicCard();
+            int c1 = player1IS.getPrivateCard(), c2 = player2IS.getPrivateCard();
+            if (c1 == publicCard) {
+                winner = 1;
+            } else if (c2 == publicCard) {
+                winner = 2;
+            } else if (c1 > c2) {
+                winner = 1;
+            } else if (c2 > c1) {
+                winner = 2;
+            }
         }
 
         InformationSet playerIS = (player == 1) ? player1IS : player2IS;

@@ -3,8 +3,9 @@
 Parameters:
  - M1, M2 - starting money for player 1, 2
  - B - number of possible bets per betting round
+ - C - number of cards per suite
 
-2 players, 2x3 cards (J, J, Q, Q, K, K).
+2 players, 2 suites of C cards
 ## 1 hand = 5 rounds:
  1. each player gets 1 private card
  2. betting round
@@ -12,7 +13,7 @@ Parameters:
  4. betting round
  5. winner is determined and takes the pot:
   - player with the same private card as the public card wins
-  - player with higher card wins (J < Q < K)
+  - player with higher card wins
   - draw (bets are returned)
 
 ## Betting:

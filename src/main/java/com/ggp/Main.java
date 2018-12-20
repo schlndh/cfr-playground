@@ -52,7 +52,7 @@ public class Main {
         );
         factory.register(IGameDescription.class, "LeducPoker",
                 ConfigurableFactory.createPositionalParameterList(
-                        GameRepository.leducPoker(7).getClass().getConstructor(int.class, int.class, int.class)
+                        GameRepository.leducPoker(7).getClass().getConstructor(int.class, int.class, int.class, int.class)
                 )
         );
         factory.register(IGameDescription.class, "IIGoofspiel",

@@ -1,17 +1,16 @@
 package com.ggp.games.LeducPoker.percepts;
 
 import com.ggp.IPercept;
-import com.ggp.games.LeducPoker.Cards;
 
 import java.util.Objects;
 
 public class CardRevealedPercept implements IPercept {
     private static final long serialVersionUID = 1L;
     private final int owner;
-    private final Cards card;
+    private final int card;
     private final boolean isPublic;
 
-    public CardRevealedPercept(int owner, Cards card, boolean isPublic) {
+    public CardRevealedPercept(int owner, int card, boolean isPublic) {
         this.owner = owner;
         this.card = card;
         this.isPublic = isPublic;
@@ -22,7 +21,7 @@ public class CardRevealedPercept implements IPercept {
         return owner;
     }
 
-    public Cards getCard() {
+    public int getCard() {
         return card;
     }
 

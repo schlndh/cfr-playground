@@ -1,7 +1,6 @@
 package com.ggp.utils.recall;
 
 import com.ggp.ICompleteInformationState;
-import com.ggp.games.LeducPoker.Cards;
 import com.ggp.games.LeducPoker.GameDescription;
 import com.ggp.games.LeducPoker.actions.CallAction;
 import com.ggp.games.LeducPoker.actions.DealCardAction;
@@ -18,18 +17,18 @@ class PerfectRecallGameDescriptionWrapperTest {
         ICompleteInformationState initialState = (new PerfectRecallGameDescriptionWrapper(new GameDescription(7))).getInitialState();
         ICompleteInformationState s1, s2;
         s1 = GameUtils.applyActionSequnce(initialState,
-                new DealCardAction(Cards.J, 1),
-                new DealCardAction(Cards.Q, 2),
+                new DealCardAction(0, 1),
+                new DealCardAction(1, 2),
                 CallAction.instance,
                 RaiseAction.instance,
                 CallAction.instance,
-                new DealCardAction(Cards.K));
+                new DealCardAction(2));
         s2 = GameUtils.applyActionSequnce(initialState,
-                new DealCardAction(Cards.J, 1),
-                new DealCardAction(Cards.Q, 2),
+                new DealCardAction(0, 1),
+                new DealCardAction(1, 2),
                 RaiseAction.instance,
                 CallAction.instance,
-                new DealCardAction(Cards.K));
+                new DealCardAction(2));
 
         // both action arrive to same CIS in original game, but they have different action sequence
         // and therefore should be different in perfect-recall game.

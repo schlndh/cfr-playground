@@ -1,26 +1,25 @@
 package com.ggp.games.LeducPoker.actions;
 
 import com.ggp.IAction;
-import com.ggp.games.LeducPoker.Cards;
 
 import java.util.Objects;
 
 public class DealCardAction implements IAction {
     private static final long serialVersionUID = 1L;
-    private final Cards card;
+    private final int card;
     private final int player; // 0 -> public
 
-    public DealCardAction(Cards card) {
+    public DealCardAction(int card) {
         this.card = card;
         this.player = 0;
     }
 
-    public DealCardAction(Cards card, int player) {
+    public DealCardAction(int card, int player) {
         this.card = card;
         this.player = player;
     }
 
-    public Cards getCard() {
+    public int getCard() {
         return card;
     }
 

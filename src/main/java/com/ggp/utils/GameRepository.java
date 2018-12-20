@@ -7,8 +7,8 @@ public class GameRepository {
         return new com.ggp.games.LeducPoker.GameDescription(money);
     }
 
-    public static IGameDescription leducPoker(int money1, int money2, int betsPerRound) {
-        return new com.ggp.games.LeducPoker.GameDescription(money1, money2, betsPerRound);
+    public static IGameDescription leducPoker(int money1, int money2, int betsPerRound, int cardsPerSuite) {
+        return new com.ggp.games.LeducPoker.GameDescription(money1, money2, betsPerRound, cardsPerSuite);
     }
 
     public static IGameDescription iiGoofspiel(int n) {

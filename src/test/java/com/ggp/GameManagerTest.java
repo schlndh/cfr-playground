@@ -1,6 +1,5 @@
 package com.ggp;
 
-import com.ggp.games.LeducPoker.Cards;
 import com.ggp.games.LeducPoker.GameDescription;
 import com.ggp.games.LeducPoker.actions.CallAction;
 import com.ggp.games.LeducPoker.actions.DealCardAction;
@@ -22,12 +21,12 @@ class GameManagerTest {
         GameManager gameManager = new GameManager(new RandomPlayer.Factory(), new RandomPlayer.Factory(), new GameDescription(7));
         ArrayList<IAction> actions = new ArrayList<>();
         List<IAction> forcedActions = Arrays.asList(
-                new DealCardAction(Cards.J, 1),
-                new DealCardAction(Cards.Q, 2),
+                new DealCardAction(0, 1),
+                new DealCardAction(1, 2),
                 CallAction.instance,
                 RaiseAction.instance,
                 CallAction.instance,
-                new DealCardAction(Cards.K),
+                new DealCardAction(2),
                 CallAction.instance,
                 RaiseAction.instance,
                 FoldAction.instance
