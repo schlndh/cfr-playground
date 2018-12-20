@@ -133,7 +133,8 @@ public class CompleteInformationState implements ICompleteInformationState {
                 is2 = is2.applyPercept(p);
             }
         }
-        Rounds nextRound = ((InformationSet)is2).getRound();
+        Rounds r1 = ((InformationSet)is1).getRound(), r2 = ((InformationSet)is2).getRound();
+        Rounds nextRound = r1.ordinal() < r2.ordinal() ? r1 : r2;
         int newActingPlayer = 0;
 
         switch (nextRound) {
@@ -161,21 +162,24 @@ public class CompleteInformationState implements ICompleteInformationState {
             ret.add(new OpponentFoldedPercept(otherPlayer.getOwner()));
             return ret;
         } else if (a.getClass() == RaiseAction.class) {
+            int newPot = otherPlayer.getPotSize();
+            if (otherPlayer.getRaisesUsedThisRound() > 0) newPot += otherPlayer.getRaiseAmount();
+
             int diff = otherPlayer.getRaiseAmount() - otherPlayer.getRemainingMoney();
             int increase = otherPlayer.getRaiseAmount();
             if (diff > 0) {
                 ret.add(new ReturnedMoneyPercept(actingPlayer, diff));
-                increase =  otherPlayer.getRemainingMoney();
-
+                increase = otherPlayer.getRemainingMoney();
             }
-            ret.add(new PotUpdatePercept(otherPlayer.getOwner(), otherPlayer.getPotSize() + increase));
+            ret.add(new PotUpdatePercept(otherPlayer.getOwner(), newPot + increase));
             return ret;
         } else if (a.getClass() == CallAction.class) {
-            boolean wasRaised = player1IS.wasRaised();
+            InformationSet player = (InformationSet) getInfoSetForActingPlayer();
+            boolean wasRaised = player.getRaisesUsedThisRound() > 0;
+            // end betting round only if this is not the first action of the betting round
             if (actingPlayer == 2 || wasRaised) {
-                InformationSet player = (InformationSet) getInfoSetForActingPlayer();
                 if (wasRaised) {
-                    ret.add(new PotUpdatePercept(actingPlayer == 1 ? 2 : 1, otherPlayer.getPotSize() + Math.min(player.getRaiseAmount(), player.getRemainingMoney())));
+                    ret.add(new PotUpdatePercept(otherPlayer.getOwner(), otherPlayer.getPotSize() + Math.min(player.getRaiseAmount(), player.getRemainingMoney())));
                 }
                 ret.add(new BettingRoundEndedPercept(1));
                 ret.add(new BettingRoundEndedPercept(2));
@@ -221,5 +225,14 @@ public class CompleteInformationState implements ICompleteInformationState {
     public IRandomNode getRandomNode() {
         if (!isRandomNode()) return null;
         return new UniformRandomNode(getLegalActions());
+    }
+
+    @Override
+    public String toString() {
+        InformationSet is1 = player1IS, is2 = player2IS;
+        return String.format("[%s] %d: 1(%s, %d/%d), 2(%s, %d/%d), Public(%s), Pot = %d, Bets = %d/%d",
+                is2.getRound(), actingPlayer, is1.getPrivateCard(), is1.getRemainingMoney(),
+                is1.getStartingMoney(), is2.getPrivateCard(), is2.getRemainingMoney(), is2.getStartingMoney(),
+                is1.getPublicCard(), is1.getPotSize(), is1.getRaisesUsedThisRound(), is1.getGameDesc().getBetsPerRound());
     }
 }

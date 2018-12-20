@@ -14,27 +14,27 @@ import java.util.Objects;
 
 public class InformationSet implements IInformationSet {
     private static final long serialVersionUID = 1L;
+    private final GameDescription gameDesc;
     private final int owner;
     private final Cards privateCard;
     private final Cards publicCard;
     private final int potSize;
     private final int remainingMoney;
-    private final int startingMoney;
     private final Rounds round;
-    private final boolean wasRaised;
+    private final int raisesUsedThisRound;
     private final int foldedByPlayer;
 
-    public InformationSet(int owner, Cards privateCard, Cards publicCard, int potSize, int remainingMoney,
-                          int startingMoney, Rounds round, boolean wasRaised, int foldedByPlayer
+    public InformationSet(GameDescription gameDesc, int owner, Cards privateCard, Cards publicCard, int potSize, int remainingMoney,
+                          Rounds round, int raisesUsedThisRound, int foldedByPlayer
     ) {
+        this.gameDesc = gameDesc;
         this.owner = owner;
         this.privateCard = privateCard;
         this.publicCard = publicCard;
         this.potSize = potSize;
         this.remainingMoney = remainingMoney;
-        this.startingMoney = startingMoney;
         this.round = round;
-        this.wasRaised = wasRaised;
+        this.raisesUsedThisRound = raisesUsedThisRound;
         this.foldedByPlayer = foldedByPlayer;
     }
 
@@ -42,14 +42,15 @@ public class InformationSet implements IInformationSet {
     public IInformationSet next(IAction a) {
         if (!isLegal(a)) return null;
         if (a.getClass() == FoldAction.class) {
-            return new InformationSet(owner, privateCard, publicCard, potSize, remainingMoney, startingMoney, Rounds.End, false, owner);
+            return new InformationSet(gameDesc, owner, privateCard, publicCard, potSize, remainingMoney, Rounds.End, 0, owner);
         } else if (a.getClass() == CallAction.class) {
-            int potUpdate = wasRaised ? getRaiseAmount() : 0;
+            int potUpdate = raisesUsedThisRound > 0 ? getRaiseAmount() : 0;
             potUpdate = Math.min(remainingMoney, potUpdate);
-            return new InformationSet(owner, privateCard, publicCard, potSize + potUpdate, remainingMoney - potUpdate, startingMoney, round, false, foldedByPlayer);
+            return new InformationSet(gameDesc, owner, privateCard, publicCard, potSize + potUpdate, remainingMoney - potUpdate, round, raisesUsedThisRound, foldedByPlayer);
         } else if (a.getClass() == RaiseAction.class) {
             int potUpdate = getRaiseAmount();
-            return new InformationSet(owner, privateCard, publicCard, potSize + potUpdate, remainingMoney - potUpdate, startingMoney, round, true, foldedByPlayer);
+            if (raisesUsedThisRound > 0) potUpdate *= 2;
+            return new InformationSet(gameDesc, owner, privateCard, publicCard, potSize + potUpdate, remainingMoney - potUpdate, round, raisesUsedThisRound + 1, foldedByPlayer);
         }
         return null;
     }
@@ -61,22 +62,20 @@ public class InformationSet implements IInformationSet {
         if (p.getClass() == CardRevealedPercept.class) {
             CardRevealedPercept crp = (CardRevealedPercept) p;
             if (crp.isPublic() && publicCard == null) {
-                return new InformationSet(owner, privateCard, crp.getCard(), potSize, remainingMoney, startingMoney, round.next(), false, foldedByPlayer);
+                return new InformationSet(gameDesc, owner, privateCard, crp.getCard(), potSize, remainingMoney, round.next(), 0, foldedByPlayer);
             } else if (!crp.isPublic() && privateCard == null) {
-                return new InformationSet(owner, crp.getCard(), publicCard, potSize, remainingMoney, startingMoney, round.next(), false, foldedByPlayer);
-            } else {
-                return null;
+                return new InformationSet(gameDesc, owner, crp.getCard(), publicCard, potSize, remainingMoney, round.next(), 0, foldedByPlayer);
             }
         } else if (p.getClass() == PotUpdatePercept.class) {
             PotUpdatePercept pup = (PotUpdatePercept) p;
-            return new InformationSet(owner, privateCard, publicCard, pup.getNewPotSize(), remainingMoney, startingMoney, round, true, foldedByPlayer);
+            return new InformationSet(gameDesc, owner, privateCard, publicCard, pup.getNewPotSize(), remainingMoney, round, raisesUsedThisRound + 1, foldedByPlayer);
         } else if (p.getClass() == ReturnedMoneyPercept.class) {
             ReturnedMoneyPercept rmp = (ReturnedMoneyPercept) p;
-            return new InformationSet(owner, privateCard, publicCard, potSize - rmp.getAmount(), remainingMoney + rmp.getAmount(), startingMoney, round, wasRaised, foldedByPlayer);
+            return new InformationSet(gameDesc, owner, privateCard, publicCard, potSize - rmp.getAmount(), remainingMoney + rmp.getAmount(), round, raisesUsedThisRound, foldedByPlayer);
         } else if (p.getClass() == BettingRoundEndedPercept.class) {
-            return new InformationSet(owner, privateCard, publicCard, potSize, remainingMoney, startingMoney, round.next(), false, foldedByPlayer);
+            return new InformationSet(gameDesc, owner, privateCard, publicCard, potSize, remainingMoney, round.next(), 0, foldedByPlayer);
         } else if (p.getClass() == OpponentFoldedPercept.class) {
-            return new InformationSet(owner, privateCard, publicCard, potSize, remainingMoney, startingMoney, Rounds.End, false, owner == 1 ? 2 : 1);
+            return new InformationSet(gameDesc, owner, privateCard, publicCard, potSize, remainingMoney, Rounds.End, 0, owner == 1 ? 2 : 1);
         }
         return null;
     }
@@ -97,7 +96,7 @@ public class InformationSet implements IInformationSet {
     public boolean isLegal(IAction a) {
         if (isTerminal() || a == null) return false; // terminal
         if (a.getClass() == FoldAction.class || a.getClass() == CallAction.class) return true;
-        if (a.getClass() == RaiseAction.class) return !wasRaised && remainingMoney >= getRaiseAmount();
+        if (a.getClass() == RaiseAction.class) return raisesUsedThisRound < gameDesc.getBetsPerRound() && remainingMoney >= getRaiseAmount() * (raisesUsedThisRound == 0 ? 1 : 2);
         return false;
     }
 
@@ -127,20 +126,12 @@ public class InformationSet implements IInformationSet {
         return remainingMoney;
     }
 
-    public int getStartingMoney() {
-        return startingMoney;
-    }
-
     public Rounds getRound() {
         return round;
     }
 
-    public boolean wasRaised() {
-        return wasRaised;
-    }
-
     public int getMyBets() {
-        return startingMoney - remainingMoney;
+        return gameDesc.getStartingMoney(owner) - remainingMoney;
     }
 
     public int getOwner() {
@@ -151,6 +142,22 @@ public class InformationSet implements IInformationSet {
         return foldedByPlayer;
     }
 
+    public int getRaisesUsedThisRound() {
+        return raisesUsedThisRound;
+    }
+
+    public int getStartingMoney() {
+        return gameDesc.getStartingMoney(owner);
+    }
+
+    public GameDescription getGameDesc() {
+        return gameDesc;
+    }
+
+    public boolean wasRaised() {
+        return raisesUsedThisRound > 0;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -159,17 +166,17 @@ public class InformationSet implements IInformationSet {
         return owner == that.owner &&
                 potSize == that.potSize &&
                 remainingMoney == that.remainingMoney &&
-                startingMoney == that.startingMoney &&
-                wasRaised == that.wasRaised &&
+                raisesUsedThisRound == that.raisesUsedThisRound &&
+                foldedByPlayer == that.foldedByPlayer &&
+                Objects.equals(gameDesc, that.gameDesc) &&
                 privateCard == that.privateCard &&
                 publicCard == that.publicCard &&
-                round == that.round &&
-                foldedByPlayer == that.foldedByPlayer;
+                round == that.round;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(owner, privateCard, publicCard, potSize, remainingMoney, startingMoney, round, wasRaised, foldedByPlayer);
+        return Objects.hash(gameDesc, owner, privateCard, publicCard, potSize, remainingMoney, round, raisesUsedThisRound, foldedByPlayer);
     }
 
     @Override
@@ -181,9 +188,9 @@ public class InformationSet implements IInformationSet {
         } else if (p.getClass() == PotUpdatePercept.class) {
             PotUpdatePercept pup = (PotUpdatePercept) p;
             // the other player may not have enough money to add full raise amount
-            return (round == Rounds.Bet1 || round == Rounds.Bet2) && pup.getNewPotSize() <= potSize + getRaiseAmount() && pup.getNewPotSize() >= potSize;
+            return (round == Rounds.Bet1 || round == Rounds.Bet2) && pup.getNewPotSize() <= potSize + 2*getRaiseAmount() && pup.getNewPotSize() >= potSize;
         } else if (p.getClass() == ReturnedMoneyPercept.class) {
-            if (!wasRaised) return false;
+            if (raisesUsedThisRound == 0) return false;
             if (round != Rounds.Bet1 && round != Rounds.Bet2) return false;
             ReturnedMoneyPercept rmp = (ReturnedMoneyPercept) p;
             return rmp.getAmount() > 0 && rmp.getAmount() < getRaiseAmount();
@@ -208,9 +215,9 @@ public class InformationSet implements IInformationSet {
                 ", public=" + publicCard +
                 ", pot=" + potSize +
                 ", remainingMoney=" + remainingMoney +
-                ", startingMoney=" + startingMoney +
+                ", startingMoney=" + gameDesc.getStartingMoney(owner) +
                 ", round=" + round +
-                ", raised=" + wasRaised +
+                ", raises=" + raisesUsedThisRound +
                 ", folded=" + foldedByPlayer +
                 '}';
     }

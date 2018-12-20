@@ -47,7 +47,12 @@ public class Main {
     private static void registerGames(ConfigurableFactory factory) throws NoSuchMethodException {
         factory.register(IGameDescription.class, "LeducPoker",
                 ConfigurableFactory.createPositionalParameterList(
-                        GameRepository.leducPoker(7,7).getClass().getConstructor(int.class, int.class)
+                        GameRepository.leducPoker(7).getClass().getConstructor(int.class)
+                )
+        );
+        factory.register(IGameDescription.class, "LeducPoker",
+                ConfigurableFactory.createPositionalParameterList(
+                        GameRepository.leducPoker(7).getClass().getConstructor(int.class, int.class, int.class)
                 )
         );
         factory.register(IGameDescription.class, "IIGoofspiel",

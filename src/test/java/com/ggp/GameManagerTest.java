@@ -19,7 +19,7 @@ class GameManagerTest {
 
     @Test
     void testForcedRun() {
-        GameManager gameManager = new GameManager(new RandomPlayer.Factory(), new RandomPlayer.Factory(), new GameDescription(7, 7));
+        GameManager gameManager = new GameManager(new RandomPlayer.Factory(), new RandomPlayer.Factory(), new GameDescription(7));
         ArrayList<IAction> actions = new ArrayList<>();
         List<IAction> forcedActions = Arrays.asList(
                 new DealCardAction(Cards.J, 1),

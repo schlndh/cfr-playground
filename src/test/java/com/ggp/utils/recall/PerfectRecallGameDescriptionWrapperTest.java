@@ -15,7 +15,7 @@ class PerfectRecallGameDescriptionWrapperTest {
 
     @Test
     void testLeducPoker() {
-        ICompleteInformationState initialState = (new PerfectRecallGameDescriptionWrapper(new GameDescription(7,7))).getInitialState();
+        ICompleteInformationState initialState = (new PerfectRecallGameDescriptionWrapper(new GameDescription(7))).getInitialState();
         ICompleteInformationState s1, s2;
         s1 = GameUtils.applyActionSequnce(initialState,
                 new DealCardAction(Cards.J, 1),

@@ -3,8 +3,12 @@ package com.ggp.utils;
 import com.ggp.IGameDescription;
 
 public class GameRepository {
-    public static IGameDescription leducPoker(int money1, int money2) {
-        return new com.ggp.games.LeducPoker.GameDescription(money1, money2);
+    public static IGameDescription leducPoker(int money) {
+        return new com.ggp.games.LeducPoker.GameDescription(money);
+    }
+
+    public static IGameDescription leducPoker(int money1, int money2, int betsPerRound) {
+        return new com.ggp.games.LeducPoker.GameDescription(money1, money2, betsPerRound);
     }
 
     public static IGameDescription iiGoofspiel(int n) {
