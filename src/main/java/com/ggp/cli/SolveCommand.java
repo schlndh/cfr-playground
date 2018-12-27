@@ -1,7 +1,6 @@
 package com.ggp.cli;
 
 import com.ggp.*;
-import com.ggp.benchmark.BenchmarkResultEntry;
 import com.ggp.parsers.ParseUtils;
 import com.ggp.parsers.exceptions.ConfigAssemblyException;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
@@ -13,7 +12,6 @@ import com.ggp.utils.time.StopWatch;
 import com.ggp.utils.recall.ImperfectRecallExploitability;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import picocli.CommandLine;
 
 import java.io.*;
@@ -47,6 +45,10 @@ public class SolveCommand implements Runnable {
     @CommandLine.Option(names={"--save-strategy"}, description="Save computed strategy", defaultValue = "false")
     private boolean saveStrategy;
 
+    private String getDateKey() {
+        return String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
+    }
+
     @Override
     public void run() {
         IGameDescription gameDesc = null;
@@ -67,78 +69,57 @@ public class SolveCommand implements Runnable {
         if (usedSolverFactory == null) {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup solver '" + solver + "'.", null, solver);
         }
-        String resDir = "results/" + gameDesc.getConfigString();
-        new File(resDir).mkdirs();
-        String dateKey = String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
-        String csvFileName = resDir + "/" + String.format("%s-%s.csv", usedSolverFactory.getConfigString(), dateKey);
-        System.out.println(String.format("Solving %s with %s logged to %s.", gameDesc.getConfigString(), usedSolverFactory.getConfigString(), csvFileName));
+        String gameDir = "results/" + gameDesc.getConfigString();
+        String solverDir =  gameDir + "/" + usedSolverFactory.getConfigString();
+        new File(solverDir).mkdirs();
+        System.out.println(String.format("Solving %s with %s logged to %s.", gameDesc.getConfigString(), usedSolverFactory.getConfigString(), solverDir));
         Strategy bestStrategy = null;
         double bestStrategyExp = Double.MAX_VALUE;
         final int evalEntriesCount = (int)(timeLimit*1000/evalFreq);
-        BenchmarkResultEntry[][] benchmarkResultEntries = new BenchmarkResultEntry[evalEntriesCount][count];
         for (int i = 0; i < count; ++i) {
-            BaseCFRSolver cfrSolver = usedSolverFactory.create(null);
-            IGameTraversalTracker tracker = SimpleTracker.createRoot(gameDesc.getInitialState());
-            int entryIdx = 0;
-            final long evaluateAfterMs = evalFreq;
-            StopWatch timer = new StopWatch(), evaluationTimer = new StopWatch();
-            timer.start();
-            evaluationTimer.start();
-            long iter = 0;
-            double strategyExp = 0;
-            while (entryIdx < evalEntriesCount) {
-                while (evaluationTimer.getLiveDurationMs() < evaluateAfterMs) {
-                    iter++;
-                    cfrSolver.runIteration(tracker);
-                }
-
-                timer.stop();
-                long visitedStates = cfrSolver.getVisitedStates();
-                double exp = ImperfectRecallExploitability.computeExploitability(new NormalizingStrategyWrapper(cfrSolver.getCumulativeStrat()), gameDesc);
-                strategyExp = exp;
-                double avgRegret = cfrSolver.getTotalRegret() / iter;
-                benchmarkResultEntries[entryIdx][i] = new BenchmarkResultEntry(timer.getDurationMs(), iter, visitedStates, exp, avgRegret);
-                if (count == 1) {
-                    System.out.println(String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret)",
-                            timer.getDurationMs(), iter, visitedStates, exp, avgRegret));
-                }
-                entryIdx++;
-                evaluationTimer.reset();
+            String csvFileName = solverDir + "/" + getDateKey() + ".csv";
+            CSVPrinter csvOut;
+            try {
+                csvOut = new CSVPrinter(new FileWriter(csvFileName),
+                        CSVFormat.EXCEL.withHeader("intended_time", "time", "iterations", "states", "exp", "avg_regret"));
+                BaseCFRSolver cfrSolver = usedSolverFactory.create(null);
+                IGameTraversalTracker tracker = SimpleTracker.createRoot(gameDesc.getInitialState());
+                int entryIdx = 0;
+                final long evaluateAfterMs = evalFreq;
+                StopWatch timer = new StopWatch(), evaluationTimer = new StopWatch();
                 timer.start();
-            }
-            if (saveStrategy && strategyExp < bestStrategyExp) {
-                bestStrategy = cfrSolver.getFinalCumulativeStrat();
-                bestStrategyExp = strategyExp;
-            }
-        }
+                evaluationTimer.start();
+                long iter = 0;
+                double strategyExp = 0;
+                while (entryIdx < evalEntriesCount) {
+                    while (evaluationTimer.getLiveDurationMs() < evaluateAfterMs) {
+                        iter++;
+                        cfrSolver.runIteration(tracker);
+                    }
 
-
-
-        try {
-            CSVPrinter csvOut = new CSVPrinter(new FileWriter(csvFileName),
-                    CSVFormat.EXCEL.withHeader("time", "iterations", "states", "exp", "avg_regret", "exp_per_5", "exp_per_95", "avg_regret_per_5", "avg_regret_per_95"));
-            for (int i = 0; i < evalEntriesCount; ++i) {
-                DescriptiveStatistics expStats = new DescriptiveStatistics(count), regretStats = new DescriptiveStatistics(count);
-                double denom = count;
-                double time = 0, iterations = 0, states = 0;
-                for (int j = 0; j < count; ++j) {
-                    BenchmarkResultEntry entry = benchmarkResultEntries[i][j];
-                    expStats.addValue(entry.getExploitability());
-                    regretStats.addValue(entry.getAvgRegret());
-                    time += entry.getTimeMs()/denom;
-                    iterations += entry.getIterations()/denom;
-                    states += entry.getStatesVisited()/denom;
+                    timer.stop();
+                    long visitedStates = cfrSolver.getVisitedStates();
+                    double exp = ImperfectRecallExploitability.computeExploitability(new NormalizingStrategyWrapper(cfrSolver.getCumulativeStrat()), gameDesc);
+                    strategyExp = exp;
+                    double avgRegret = cfrSolver.getTotalRegret() / iter;
+                    csvOut.printRecord((entryIdx+1) * evaluateAfterMs ,timer.getDurationMs(), iter, visitedStates, exp, avgRegret);
+                    csvOut.flush();
+                    if (count == 1) {
+                        System.out.println(String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret)",
+                                timer.getDurationMs(), iter, visitedStates, exp, avgRegret));
+                    }
+                    entryIdx++;
+                    evaluationTimer.reset();
+                    timer.start();
                 }
-                csvOut.printRecord(time, (long)iterations, (long)states, expStats.getMean(), regretStats.getMean(),
-                        expStats.getPercentile(5), expStats.getPercentile(95), regretStats.getPercentile(5),
-                        regretStats.getPercentile(95));
-                System.out.println(String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret)",
-                        time, (long) iterations, (long) states, expStats.getMean(), regretStats.getMean()));
+                if (saveStrategy && strategyExp < bestStrategyExp) {
+                    bestStrategy = cfrSolver.getFinalCumulativeStrat();
+                    bestStrategyExp = strategyExp;
+                }
+                csvOut.close();
+            } catch (IOException e) {
+                continue;
             }
-            csvOut.close();
-        } catch (IOException e) {
-            System.out.print(e.getMessage());
-            return;
         }
 
 
@@ -146,7 +127,7 @@ public class SolveCommand implements Runnable {
             System.out.println(String.format("Best exploitability estimate: %f", bestStrategyExp));
             bestStrategy.normalize();
             try {
-                String resFileName = String.format("%1$s/%2$s-solution-%3$.4f.strat", resDir, dateKey,  bestStrategyExp);
+                String resFileName = String.format("%1$s/%2$s-solution-%3$.4f.strat", gameDir, getDateKey(),  bestStrategyExp);
                 System.out.println("Saving to: " + resFileName);
                 FileOutputStream fileOutputStream = new FileOutputStream(resFileName);
                 ObjectOutputStream objectOutputStream
