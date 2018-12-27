@@ -1,0 +1,10 @@
+# Princess and Monster
+
+Parameters:
+ - G - game graph
+ - T - max turns
+
+At each turn both princess and monster move to any valid location as specified by G.
+If they end up at the same location the monster wins (2 * T - T_princess - T_monster), otherwise princess wins 2*T.
+
+

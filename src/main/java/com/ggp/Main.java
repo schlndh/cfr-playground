@@ -75,6 +75,11 @@ public class Main {
                         PerfectRecallGameDescriptionWrapper.class.getConstructor(IGameDescription.class)
                 )
         );
+        factory.register(IGameDescription.class, "PrincessAndMonster",
+                ConfigurableFactory.createPositionalParameterList(
+                        GameRepository.princessAndMonster(5).getClass().getConstructor(int.class)
+                )
+        );
     }
 
     private static void registerCFRSolvers(ConfigurableFactory factory) {

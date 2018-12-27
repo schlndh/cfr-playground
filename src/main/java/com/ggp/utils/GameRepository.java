@@ -22,4 +22,8 @@ public class GameRepository {
     public static IGameDescription rps(int n) {
         return new com.ggp.games.RockPaperScissors.GameDescription(n);
     }
+
+    public static IGameDescription princessAndMonster(int maxTurns) {
+        return new com.ggp.games.PrincessAndMonster.GameDescription(maxTurns);
+    }
 }
