@@ -1,0 +1,7 @@
+# 3x3 Latent Tic-Tac-Toe
+
+2 players take turns marking fields in 3x3 grid.
+Actions have delayed effect - after player takes action, the opponent's last action is revealed and only valid if
+the field is still empty (not counting the players last action).
+The first player that marks 3 fields in a row, column or on a diagonal wins.
+If player 1 does that and player 2 does it as well the next turn it is a draw.

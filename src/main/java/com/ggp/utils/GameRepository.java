@@ -26,4 +26,8 @@ public class GameRepository {
     public static IGameDescription princessAndMonster(int maxTurns) {
         return new com.ggp.games.PrincessAndMonster.GameDescription(maxTurns);
     }
+
+    public static IGameDescription latentTTT() {
+        return new com.ggp.games.LatentTicTacToe.GameDescription();
+    }
 }

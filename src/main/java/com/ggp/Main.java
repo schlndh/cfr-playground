@@ -80,6 +80,11 @@ public class Main {
                         GameRepository.princessAndMonster(5).getClass().getConstructor(int.class)
                 )
         );
+        factory.register(IGameDescription.class, "LatentTicTacToe",
+                ConfigurableFactory.createPositionalParameterList(
+                        GameRepository.latentTTT().getClass().getConstructor()
+                )
+        );
     }
 
     private static void registerCFRSolvers(ConfigurableFactory factory) {
