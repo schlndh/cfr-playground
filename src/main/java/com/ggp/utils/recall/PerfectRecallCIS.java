@@ -8,7 +8,8 @@ import com.ggp.utils.CompleteInformationStateWrapper;
 
 import java.util.Objects;
 
-class PerfectRecallCIS extends CompleteInformationStateWrapper {
+public class PerfectRecallCIS extends CompleteInformationStateWrapper {
+    private static final long serialVersionUID = 1L;
     private PerfectRecallIS player1IS, player2IS;
 
     public PerfectRecallCIS(ICompleteInformationState state, PerfectRecallIS player1IS, PerfectRecallIS player2IS) {

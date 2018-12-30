@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 class PerceptListNode implements Serializable {
+    private static final long serialVersionUID = 1L;
     public final PerceptListNode previous;
     public final IPercept percept;
 
@@ -25,5 +26,13 @@ class PerceptListNode implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(previous, percept);
+    }
+
+    public PerceptListNode getPrevious() {
+        return previous;
+    }
+
+    public IPercept getPercept() {
+        return percept;
     }
 }

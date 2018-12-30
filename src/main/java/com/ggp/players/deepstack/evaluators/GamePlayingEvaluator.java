@@ -9,7 +9,7 @@ import com.ggp.players.deepstack.debug.StrategyAggregatorListener;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.players.random.RandomPlayer;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
-import com.ggp.utils.recall.ImperfectRecallExploitability;
+import com.ggp.utils.exploitability.ImperfectRecallExploitability;
 
 import java.util.List;
 

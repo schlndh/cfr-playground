@@ -9,7 +9,7 @@ import com.ggp.utils.strategy.Strategy;
 import com.ggp.solvers.cfr.BaseCFRSolver;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 import com.ggp.utils.time.StopWatch;
-import com.ggp.utils.recall.ImperfectRecallExploitability;
+import com.ggp.utils.exploitability.ImperfectRecallExploitability;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import picocli.CommandLine;

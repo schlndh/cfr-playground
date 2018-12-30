@@ -8,7 +8,8 @@ import com.ggp.utils.OwnActionPercept;
 
 import java.util.Objects;
 
-class PerfectRecallIS extends InformationSetWrapper {
+public class PerfectRecallIS extends InformationSetWrapper {
+    private static final long serialVersionUID = 1L;
     PerceptListNode percepts;
 
     public PerfectRecallIS(IInformationSet infoSet, PerceptListNode percepts) {
@@ -43,5 +44,9 @@ class PerfectRecallIS extends InformationSetWrapper {
     @Override
     public int hashCode() {
         return Objects.hash(percepts, infoSet.getOwnerId());
+    }
+
+    public PerceptListNode getPercepts() {
+        return percepts;
     }
 }
