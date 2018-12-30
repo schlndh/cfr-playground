@@ -42,6 +42,12 @@ public class SolveCommand implements Runnable {
     @CommandLine.Option(names={"-c", "--count"}, description="How many times to repeat the evaluation", defaultValue="1")
     private int count;
 
+    @CommandLine.Option(names={"-d", "--dry-run"}, description="Dry run - doesn't save output")
+    private boolean dryRun;
+
+    @CommandLine.Option(names={"-q", "--quiet"}, description="Quiet mode - doesn't print output")
+    private boolean quiet;
+
     @CommandLine.Option(names={"--save-strategy"}, description="Save computed strategy", defaultValue = "false")
     private boolean saveStrategy;
 
@@ -50,6 +56,7 @@ public class SolveCommand implements Runnable {
     }
 
     private void printUniformExp(IGameDescription gameDesc) {
+        if (quiet) return;
         StopWatch expTimer = new StopWatch();
         expTimer.start();
         double exp = ImperfectRecallExploitability.computeExploitability(new Strategy(), gameDesc);
@@ -79,17 +86,28 @@ public class SolveCommand implements Runnable {
         }
         String gameDir = "results/" + gameDesc.getConfigString();
         String solverDir =  gameDir + "/" + usedSolverFactory.getConfigString();
-        new File(solverDir).mkdirs();
-        System.out.println(String.format("Solving %s with %s logged to %s.", gameDesc.getConfigString(), usedSolverFactory.getConfigString(), solverDir));
+        if (!dryRun)
+            new File(solverDir).mkdirs();
+        if (!quiet) {
+            if (dryRun) {
+                System.out.println(String.format("Solving %s with %s", gameDesc.getConfigString(), usedSolverFactory.getConfigString()));
+            } else {
+                System.out.println(String.format("Solving %s with %s logged to %s.", gameDesc.getConfigString(), usedSolverFactory.getConfigString(), solverDir));
+            }
+        }
+
         Strategy bestStrategy = null;
         double bestStrategyExp = Double.MAX_VALUE;
         final int evalEntriesCount = (int)(timeLimit*1000/evalFreq);
         for (int i = 0; i < count; ++i) {
             String csvFileName = solverDir + "/" + getDateKey() + ".csv";
-            CSVPrinter csvOut;
+            CSVPrinter csvOut = null;
             try {
-                csvOut = new CSVPrinter(new FileWriter(csvFileName),
-                        CSVFormat.EXCEL.withHeader("intended_time", "time", "iterations", "states", "exp", "avg_regret"));
+                if (!dryRun) {
+                    csvOut = new CSVPrinter(new FileWriter(csvFileName),
+                            CSVFormat.EXCEL.withHeader("intended_time", "time", "iterations", "states", "exp", "avg_regret"));
+                }
+
                 BaseCFRSolver cfrSolver = usedSolverFactory.create(null);
                 IGameTraversalTracker tracker = SimpleTracker.createRoot(gameDesc.getInitialState());
                 int entryIdx = 0;
@@ -110,9 +128,12 @@ public class SolveCommand implements Runnable {
                     double exp = ImperfectRecallExploitability.computeExploitability(new NormalizingStrategyWrapper(cfrSolver.getCumulativeStrat()), gameDesc);
                     strategyExp = exp;
                     double avgRegret = cfrSolver.getTotalRegret() / iter;
-                    csvOut.printRecord((entryIdx+1) * evaluateAfterMs ,timer.getDurationMs(), iter, visitedStates, exp, avgRegret);
-                    csvOut.flush();
-                    if (count == 1) {
+                    if (!dryRun) {
+                        csvOut.printRecord((entryIdx+1) * evaluateAfterMs ,timer.getDurationMs(), iter, visitedStates, exp, avgRegret);
+                        csvOut.flush();
+                    }
+
+                    if (!quiet) {
                         System.out.println(String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret)",
                                 timer.getDurationMs(), iter, visitedStates, exp, avgRegret));
                     }
@@ -132,7 +153,10 @@ public class SolveCommand implements Runnable {
 
 
         if (saveStrategy && bestStrategy != null) {
-            System.out.println(String.format("Best exploitability estimate: %f", bestStrategyExp));
+            if (!quiet) {
+                System.out.println(String.format("Best exploitability estimate: %f", bestStrategyExp));
+            }
+
             bestStrategy.normalize();
             try {
                 String resFileName = String.format("%1$s/%2$s-solution-%3$.4f.strat", gameDir, getDateKey(),  bestStrategyExp);
