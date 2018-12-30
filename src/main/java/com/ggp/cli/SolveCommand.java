@@ -49,6 +49,14 @@ public class SolveCommand implements Runnable {
         return String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
     }
 
+    private void printUniformExp(IGameDescription gameDesc) {
+        StopWatch expTimer = new StopWatch();
+        expTimer.start();
+        double exp = ImperfectRecallExploitability.computeExploitability(new Strategy(), gameDesc);
+        expTimer.stop();
+        System.out.println("Exploitability estimate for uniform strategy: " + exp + " in " + expTimer.getDurationMs() + " ms");
+    }
+
     @Override
     public void run() {
         IGameDescription gameDesc = null;
@@ -60,7 +68,7 @@ public class SolveCommand implements Runnable {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
         }
 
-        System.out.println("Exploitability estimate for uniform strategy: " + ImperfectRecallExploitability.computeExploitability(new Strategy(), gameDesc));
+        printUniformExp(gameDesc);
         BaseCFRSolver.Factory usedSolverFactory = null;
         try {
             usedSolverFactory = mainCommand.getConfigurableFactory().create(BaseCFRSolver.Factory.class, ParseUtils.parseConfigExpression(solver));
