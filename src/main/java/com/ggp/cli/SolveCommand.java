@@ -55,6 +55,10 @@ public class SolveCommand implements Runnable {
         return String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
     }
 
+    private String getCSVName() {
+        return String.format("%d-%d-%s.csv", timeLimit, evalFreq, getDateKey());
+    }
+
     private void printUniformExp(IGameDescription gameDesc) {
         if (quiet) return;
         StopWatch expTimer = new StopWatch();
@@ -100,7 +104,7 @@ public class SolveCommand implements Runnable {
         double bestStrategyExp = Double.MAX_VALUE;
         final int evalEntriesCount = (int)(timeLimit*1000/evalFreq);
         for (int i = 0; i < count; ++i) {
-            String csvFileName = solverDir + "/" + getDateKey() + ".csv";
+            String csvFileName = solverDir + "/" + getCSVName();
             CSVPrinter csvOut = null;
             try {
                 if (!dryRun) {
