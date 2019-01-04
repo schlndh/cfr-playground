@@ -149,7 +149,7 @@ public class SolveCommand implements Runnable {
                     bestStrategy = cfrSolver.getFinalCumulativeStrat();
                     bestStrategyExp = strategyExp;
                 }
-                csvOut.close();
+                if (!dryRun) csvOut.close();
             } catch (IOException e) {
                 continue;
             }
