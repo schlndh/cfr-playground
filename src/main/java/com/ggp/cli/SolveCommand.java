@@ -48,6 +48,9 @@ public class SolveCommand implements Runnable {
     @CommandLine.Option(names={"-q", "--quiet"}, description="Quiet mode - doesn't print output")
     private boolean quiet;
 
+    @CommandLine.Option(names={"--skip-warmup"}, description="Skip warm-up")
+    private boolean skipWarmup;
+
     @CommandLine.Option(names={"--save-strategy"}, description="Save computed strategy", defaultValue = "false")
     private boolean saveStrategy;
 
@@ -66,6 +69,22 @@ public class SolveCommand implements Runnable {
         double exp = ImperfectRecallExploitability.computeExploitability(new Strategy(), gameDesc);
         expTimer.stop();
         System.out.println("Exploitability estimate for uniform strategy: " + exp + " in " + expTimer.getDurationMs() + " ms");
+    }
+
+    private void warmup(IGameDescription gameDesc, BaseCFRSolver.Factory solverFactory) {
+        if (skipWarmup) return;
+        if (!quiet) System.out.println("Warming up ...");
+
+        BaseCFRSolver cfrSolver = solverFactory.create(null);
+        IGameTraversalTracker tracker = SimpleTracker.createRoot(gameDesc.getInitialState());
+        StopWatch warmupTimer = new StopWatch();
+        warmupTimer.start();
+        long iters = 0;
+        while (warmupTimer.getLiveDurationMs() < 5000) {
+            cfrSolver.runIteration(tracker);
+            iters++;
+        }
+        if (!quiet) System.out.println("Warm-up complete after " + iters + " iterations.");
     }
 
     @Override
@@ -100,6 +119,7 @@ public class SolveCommand implements Runnable {
             }
         }
 
+        warmup(gameDesc, usedSolverFactory);
         Strategy bestStrategy = null;
         double bestStrategyExp = Double.MAX_VALUE;
         final int evalEntriesCount = (int)(timeLimit*1000/evalFreq);
