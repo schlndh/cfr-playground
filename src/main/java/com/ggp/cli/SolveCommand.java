@@ -119,7 +119,7 @@ public class SolveCommand implements Runnable {
                 StopWatch timer = new StopWatch(), evaluationTimer = new StopWatch();
                 timer.start();
                 evaluationTimer.start();
-                long iter = 0;
+                long iter = 0, lastEvalIters = 0;
                 double strategyExp = 0;
                 while (entryIdx < evalEntriesCount) {
                     while (evaluationTimer.getLiveDurationMs() < evaluateAfterMs) {
@@ -128,6 +128,7 @@ public class SolveCommand implements Runnable {
                     }
 
                     timer.stop();
+                    evaluationTimer.stop();
                     long visitedStates = cfrSolver.getVisitedStates();
                     double exp = ImperfectRecallExploitability.computeExploitability(new NormalizingStrategyWrapper(cfrSolver.getCumulativeStrat()), gameDesc);
                     strategyExp = exp;
@@ -138,10 +139,11 @@ public class SolveCommand implements Runnable {
                     }
 
                     if (!quiet) {
-                        System.out.println(String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret)",
-                                timer.getDurationMs(), iter, visitedStates, exp, avgRegret));
+                        System.out.println(String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret) | %.4g iters/s",
+                                timer.getDurationMs(), iter, visitedStates, exp, avgRegret, 1000*(iter - lastEvalIters)/((double)evaluationTimer.getDurationMs())));
                     }
                     entryIdx++;
+                    lastEvalIters = iter;
                     evaluationTimer.reset();
                     timer.start();
                 }
