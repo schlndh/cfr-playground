@@ -5,6 +5,7 @@ import com.ggp.parsers.ConfigurableFactory;
 import com.ggp.parsers.Parameter;
 import com.ggp.parsers.ParameterList;
 import com.ggp.players.PerfectRecallPlayerFactory;
+import com.ggp.players.SolvingPlayer;
 import com.ggp.players.deepstack.DeepstackPlayer;
 import com.ggp.solvers.cfr.IRegretMatching;
 import com.ggp.players.deepstack.ISubgameResolver;
@@ -151,6 +152,9 @@ public class Main {
         ));
         factory.register(IPlayerFactory.class, "PerfectRecall", ConfigurableFactory.createPositionalParameterList(
                 PerfectRecallPlayerFactory.class.getConstructor(IPlayerFactory.class)
+        ));
+        factory.register(IPlayerFactory.class, "SolvingPlayer", ConfigurableFactory.createPositionalParameterList(
+                SolvingPlayer.Factory.class.getConstructor(BaseCFRSolver.Factory.class)
         ));
     }
 
