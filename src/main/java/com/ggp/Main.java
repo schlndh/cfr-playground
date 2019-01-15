@@ -10,6 +10,7 @@ import com.ggp.players.deepstack.DeepstackPlayer;
 import com.ggp.solvers.cfr.IRegretMatching;
 import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.solvers.cfr.regret_matching.DiscountedRegretMatching;
+import com.ggp.solvers.cfr.regret_matching.ExplorativeRegretMatching;
 import com.ggp.solvers.cfr.regret_matching.RegretMatching;
 import com.ggp.solvers.cfr.regret_matching.RegretMatchingPlus;
 import com.ggp.players.random.RandomPlayer;
@@ -165,6 +166,9 @@ public class Main {
                 new ParameterList(null, null, (a, b) -> new RegretMatchingPlus.Factory()));
         factory.register(IRegretMatching.IFactory.class, "DRM", ConfigurableFactory.createPositionalParameterList(
                 DiscountedRegretMatching.Factory.class.getConstructor(double.class, double.class)
+        ));
+        factory.register(IRegretMatching.IFactory.class, "ERM", ConfigurableFactory.createPositionalParameterList(
+                ExplorativeRegretMatching.Factory.class.getConstructor(IRegretMatching.IFactory.class, double.class)
         ));
     }
 
