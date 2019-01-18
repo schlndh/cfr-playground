@@ -5,10 +5,14 @@ import com.ggp.players.deepstack.IResolvingInfo;
 import com.ggp.players.deepstack.IResolvingListener;
 import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.players.deepstack.cfrd.CFRDSubgameRoot;
+import com.ggp.players.deepstack.cfrd.OpponentsChoiceState;
+import com.ggp.players.deepstack.cfrd.actions.SelectCISAction;
 import com.ggp.players.deepstack.trackers.CFRDTracker;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.players.deepstack.utils.*;
 import com.ggp.solvers.cfr.BaseCFRSolver;
+import com.ggp.solvers.cfr.ISearchTargeting;
+import com.ggp.solvers.cfr.ITargetableSolver;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.strategy.Strategy;
 
@@ -49,6 +53,39 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private HashMap<IInformationSet, Double> nextOpponentCFV = new HashMap<>();
     private IStrategy cummulativeStrategy;
     private BaseCFRSolver lastSolver = null;
+    private final boolean useISTargeting = true;
+
+    private class InfoSetTargeting implements ISearchTargeting {
+        private final List<Integer> rootTargeting;
+        private final List<Integer> opponentsChoiceTargeting;
+
+        public InfoSetTargeting(CFRDSubgameRoot subgame) {
+            List<Integer> rootActions = new ArrayList<>();
+            int actionIdx = 0;
+            for (IAction a: subgame.getLegalActions()) {
+                SelectCISAction cisAction = (SelectCISAction) a;
+                if (hiddenInfo.equals(cisAction.getSelectedState().getInfoSetForPlayer(myId))) {
+                    rootActions.add(actionIdx);
+                }
+                actionIdx++;
+            }
+            this.rootTargeting = Collections.unmodifiableList(rootActions);
+            // always use the follow action in opponent's choice node
+            this.opponentsChoiceTargeting = Collections.singletonList(0);
+        }
+
+        @Override
+        public List<Integer> target(ICompleteInformationState s) {
+            if (s.getClass() == CFRDSubgameRoot.class) return rootTargeting;
+            if (s.getClass() == OpponentsChoiceState.class) return opponentsChoiceTargeting;
+            return null;
+        }
+
+        @Override
+        public ISearchTargeting next(IAction a) {
+            return this;
+        }
+    }
 
     private class ResolvingInfo implements IResolvingInfo {
         @Override
@@ -81,7 +118,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         this.solverFactory = solverFactory;
     }
 
-    private BaseCFRSolver createSolver(HashSet<IInformationSet> accumulatedInfoSets) {
+    private BaseCFRSolver createSolver(CFRDSubgameRoot subgame, HashSet<IInformationSet> accumulatedInfoSets) {
         BaseCFRSolver cfrSolver = solverFactory.create(new BaseCFRSolver.IStrategyAccumulationFilter() {
             @Override
             public boolean isAccumulated(IInformationSet is) {
@@ -112,6 +149,10 @@ public class ExternalCFRResolver implements ISubgameResolver {
                 }
             }
         });
+        if (useISTargeting && subgame != null && cfrSolver instanceof ITargetableSolver) {
+            ITargetableSolver s = (ITargetableSolver) cfrSolver;
+            s.setTargeting(new InfoSetTargeting(subgame));
+        }
         cummulativeStrategy = cfrSolver.getCumulativeStrat();
         lastSolver = cfrSolver;
         return cfrSolver;
@@ -154,7 +195,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
             myInformationSets.add(s.getInfoSetForActingPlayer());
         }
         int iters = 0;
-        BaseCFRSolver cfrSolver = createSolver(myInformationSets);
+        BaseCFRSolver cfrSolver = createSolver((CFRDSubgameRoot) tracker.getCurrentState(), myInformationSets);
         while (timeout.canDoAnotherIteration()) {
             timeout.startIteration();
             cfrSolver.runIteration(tracker);
@@ -194,7 +235,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
     protected InitResult doInit(CFRDTracker tracker, IterationTimer timeout) {
         int iters = 0;
-        BaseCFRSolver cfrSolver = createSolver(null);
+        BaseCFRSolver cfrSolver = createSolver(null, null);
         while (timeout.canDoAnotherIteration()) {
             timeout.startIteration();
             cfrSolver.runIteration(tracker);
