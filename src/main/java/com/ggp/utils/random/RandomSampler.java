@@ -107,4 +107,34 @@ public class RandomSampler {
         }
         return new SampleResult<>(i, p);
     }
+
+    /**
+     * Sample binary choice
+     * @param trueProb
+     * @return
+     */
+    public boolean choose(double trueProb) {
+        return rng.nextDouble() < trueProb;
+    }
+
+    /**
+     * Normalize probMap over given options
+     * @param options
+     * @param probMap
+     * @param <T>
+     * @return
+     */
+    public <T> Function<T, Double> normalize(Iterable<T> options, Function<T, Double> probMap) {
+        if (options == null) return null;
+        double norm = 0;
+        int count = 0;
+        for (T it: options) {
+            norm += probMap.apply(it);
+            count++;
+        }
+        final double finNorm = norm;
+        if (norm > 0) return a -> probMap.apply(a)/finNorm;
+        int size = count;
+        return a -> 1d/size;
+    }
 }

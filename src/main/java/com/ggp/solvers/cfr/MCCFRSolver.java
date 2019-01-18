@@ -12,8 +12,9 @@ import com.ggp.utils.random.RandomSampler;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
 
-public class MCCFRSolver extends BaseCFRSolver {
+public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
     public static class Factory extends BaseCFRSolver.Factory {
         protected final double explorationProb;
         protected final double targetingProb;
@@ -49,6 +50,8 @@ public class MCCFRSolver extends BaseCFRSolver {
     private long iterationCounter = 0;
     private IBaseline.IFactory baselineFactory;
     private final double cumulativeStratExp;
+    private ISearchTargeting rootTargeting;
+    private boolean isTargetedIteration = false;
 
     public MCCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter,
                        double explorationProb, double targetingProb, double cumulativeStratExp) {
@@ -88,22 +91,45 @@ public class MCCFRSolver extends BaseCFRSolver {
         }
     }
 
-    private SampleResult sampleRandom(ICompleteInformationState s) {
-        List<IAction> legalActions = s.getLegalActions();
-        IRandomNode rndNode = s.getRandomNode();
-        RandomSampler.SampleResult<Integer> res = sampler.selectIdx(legalActions.size(), a -> rndNode.getActionProb(legalActions.get(a)));
-        return new SampleResult(res.getResult(), res.getSampleProb(), res.getSampleProb());
+    @Override
+    public void setTargeting(ISearchTargeting targeting) {
+        rootTargeting = targeting;
     }
 
-    private SampleResult samplePlayerAction(int actingPlayer, double[] strat, int player) {
-        double unifPart = explorationProb * 1d/strat.length;
-        RandomSampler.SampleResult<Integer> res;
-        if (actingPlayer == player) {
-            res = sampler.selectIdx(strat.length, actionIdx -> unifPart + (1-explorationProb) * strat[actionIdx]);
-        } else {
-            res = sampler.selectIdx(strat.length, actionIdx -> strat[actionIdx]);
+    private SampleResult sample(ICompleteInformationState s, ISearchTargeting targeting, Function<Integer, Double> probMap, int size) {
+        Function<Integer, Double> targetedProbMap = probMap;
+        if (targeting != null) {
+            List<Integer> targetedActions = targeting.target(s);
+            if (targetedActions != null && !targetedActions.isEmpty()) {
+                Function<Integer, Double> normalizedTargetedProbs = sampler.normalize(targetedActions, probMap);
+                if (isTargetedIteration) {
+                    RandomSampler.SampleResult<Integer> res = sampler.select(targetedActions, normalizedTargetedProbs);
+                    return new SampleResult(res.getResult(), res.getSampleProb(), probMap.apply(res.getResult()));
+                } else {
+                    targetedProbMap = a -> targetedActions.contains(a) ? normalizedTargetedProbs.apply(a) : 0d;
+                }
+            }
         }
-        return new SampleResult(res.getResult(), res.getSampleProb(), res.getSampleProb());
+        RandomSampler.SampleResult<Integer> res = sampler.selectIdx(size, probMap);
+        return new SampleResult(res.getResult(), targetedProbMap.apply(res.getResult()), res.getSampleProb());
+    }
+
+    private SampleResult sampleRandom(ICompleteInformationState s, ISearchTargeting targeting) {
+        List<IAction> legalActions = s.getLegalActions();
+        IRandomNode rndNode = s.getRandomNode();
+        Function<Integer, Double> probMap  = actionIdx -> rndNode.getActionProb(legalActions.get(actionIdx));
+        return sample(s, targeting, probMap, legalActions.size());
+    }
+
+    private SampleResult samplePlayerAction(ICompleteInformationState s, double[] strat, int player, ISearchTargeting targeting) {
+        double unifPart = explorationProb * 1d/strat.length;
+        Function<Integer, Double> probMap;
+        if (s.getActingPlayerId() == player) {
+            probMap = actionIdx -> unifPart + (1-explorationProb) * strat[actionIdx];
+        } else {
+            probMap = actionIdx -> strat[actionIdx];
+        }
+        return sample(s, targeting, probMap, strat.length);
     }
 
     private CFRResult playout(ICompleteInformationState s, double prefixProb, int player) {
@@ -112,7 +138,7 @@ public class MCCFRSolver extends BaseCFRSolver {
             visitedStates++;
             SampleResult res;
             if (s.isRandomNode()) {
-                res = sampleRandom(s);
+                res = sampleRandom(s, null);
             } else {
                 List<IAction> legalActions = s.getLegalActions();
                 res = new SampleResult(sampler.selectIdx(legalActions),
@@ -126,7 +152,7 @@ public class MCCFRSolver extends BaseCFRSolver {
     }
 
     private CFRResult cfr(IGameTraversalTracker tracker, double playerProb, double opponentProb,
-                          double targetedSampleProb, double untargetedSampleProb, int player, int depth) {
+                          double targetedSampleProb, double untargetedSampleProb, int player, int depth, ISearchTargeting targeting) {
         ICompleteInformationState s = tracker.getCurrentState();
         Info info = PlayerHelpers.callWithOrderedParams(player, playerProb, opponentProb, (prob1, prob2) -> new Info(prob1, prob2, tracker.getRndProb()));
         visitedStates++;
@@ -144,9 +170,11 @@ public class MCCFRSolver extends BaseCFRSolver {
         if (s.isRandomNode()) {
             MCCFRISInfo isInfo = (MCCFRISInfo) getIsInfo(new RandomNodeIS(depth, legalActions));
             IBaseline baseline = isInfo.getBaseline(player);
-            SampleResult sample = sampleRandom(s);
-            CFRResult res = cfr(tracker.next(legalActions.get(sample.actionIdx)), playerProb, opponentProb,
-                    sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb, player, depth+1);
+            SampleResult sample = sampleRandom(s, targeting);
+            IAction action = legalActions.get(sample.actionIdx);
+            CFRResult res = cfr(tracker.next(action), playerProb, opponentProb,
+                    sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb,
+                    player, depth+1, (targeting != null) ? targeting.next(action) : null);
             res.suffixReachProb *= sample.untargetedProb;
             double utility = 0;
             int actionIdx = 0;
@@ -174,7 +202,7 @@ public class MCCFRSolver extends BaseCFRSolver {
         int actingPlayer = s.getActingPlayerId();
 
         isInfo.doRegretMatching();
-        SampleResult sampledAction = samplePlayerAction(actingPlayer, isInfo.getStrat(), player);
+        SampleResult sampledAction = samplePlayerAction(s, isInfo.getStrat(), player, targeting);
         CFRResult ret;
         double actionProb = isInfo.getStrat()[sampledAction.actionIdx];
         if (isInMemory) {
@@ -185,9 +213,11 @@ public class MCCFRSolver extends BaseCFRSolver {
             } else {
                 newOpponentProb *= actionProb;
             }
-            ret = cfr(tracker.next(legalActions.get(sampledAction.actionIdx)), newPlayerProb, newOpponentProb,
+            IAction action = legalActions.get(sampledAction.actionIdx);
+            ret = cfr(tracker.next(action), newPlayerProb, newOpponentProb,
                     sampledAction.targetedProb * targetedSampleProb,
-                    sampledAction.untargetedProb * untargetedSampleProb, player, depth+1);
+                    sampledAction.untargetedProb * untargetedSampleProb, player,
+                    depth+1, (targeting != null) ? targeting.next(action) : null);
         } else {
             ret = playout(s.next(legalActions.get(sampledAction.actionIdx)), (totalSampleProb)/legalActions.size(), player);
         }
@@ -245,7 +275,8 @@ public class MCCFRSolver extends BaseCFRSolver {
     @Override
     public void runIteration(IGameTraversalTracker tracker) {
         iterationCounter++;
-        cfr(tracker, 1, 1, 1, 1, (int)(iterationCounter % 2) + 1, 0);
+        isTargetedIteration = sampler.choose(targetingProb);
+        cfr(tracker, 1, 1, 1, 1, (int)(iterationCounter % 2) + 1, 0, rootTargeting);
     }
 
     @Override
