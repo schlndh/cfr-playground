@@ -1,6 +1,10 @@
 package com.ggp.solvers.cfr;
 
 import com.ggp.*;
+import com.ggp.players.deepstack.cfrd.CFRDSubgameRoot;
+import com.ggp.players.deepstack.cfrd.OpponentsChoiceState;
+import com.ggp.players.deepstack.cfrd.actions.FollowAction;
+import com.ggp.players.deepstack.cfrd.actions.TerminateAction;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.solvers.cfr.baselines.NoBaseline;
 import com.ggp.IInfoSetStrategy;
@@ -275,11 +279,56 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
         return ret;
     }
 
+    private double handleCFRDStart(IGameTraversalTracker tracker, double targetedSampleProb, double untargetedSampleProb, int player, ISearchTargeting targeting) {
+        ICompleteInformationState s = tracker.getCurrentState();
+        Info info = new Info(1,1, tracker.getRndProb());
+        visitedStates++;
+        listeners.forEach(listener -> listener.enteringState(tracker, info));
+        double util = 0;
+        if (s.getClass().equals(CFRDSubgameRoot.class)) {
+            List<IAction> legalActions = s.getLegalActions();
+            SampleResult sample = sampleRandom(s, targeting);
+            IAction a = legalActions.get(sample.actionIdx);
+            util = handleCFRDStart(tracker.next(a),
+                    sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb, player, targeting != null ? targeting.next(a) : null);
+        } else {
+            IInformationSet actingPlayerInfoSet = s.getInfoSetForActingPlayer();
+            MCCFRISInfo isInfo = (MCCFRISInfo) getIsInfo(actingPlayerInfoSet);
+            final int actingPlayer = s.getActingPlayerId();
+            final double totalSampleProb = targetingProb * targetedSampleProb + (1-targetingProb) * untargetedSampleProb;
+            double actionUtil[] = new double[2];
+            // since both actions are always "sampled" we leave sampling probs as they are
+            CFRResult followRes = cfr(tracker.next(FollowAction.instance), (actingPlayer == player) ? isInfo.getStrat()[0] : 1,
+                    (actingPlayer != player) ? isInfo.getStrat()[0] : 1,
+                    targetedSampleProb, untargetedSampleProb, player, 2, targeting != null ? targeting.next(FollowAction.instance) : null);
+            actionUtil[0] = followRes.utility / totalSampleProb;
+            actionUtil[1] = s.next(TerminateAction.instance).getPayoff(player) / totalSampleProb;
+
+            util = (isInfo.getStrat()[0] * actionUtil[0] + isInfo.getStrat()[1] * actionUtil[1]);
+
+            if (actingPlayer == player) {
+                for (int a = 0; a < 2; a++) {
+                    addRegret(isInfo, a, tracker.getRndProb() * (actionUtil[a] - util));
+                }
+                isInfo.doRegretMatching();
+            }
+        }
+
+        final double p1Utility = PlayerHelpers.selectByPlayerId(player, 1, -1) * util;
+        listeners.forEach(listener -> listener.leavingState(tracker, info, p1Utility));
+        return util;
+    }
+
     @Override
     public void runIteration(IGameTraversalTracker tracker) {
         iterationCounter++;
         isTargetedIteration = sampler.choose(targetingProb);
-        cfr(tracker, 1, 1, 1, 1, (int)(iterationCounter % 2) + 1, 0, rootTargeting);
+        int player = (int)(iterationCounter % 2) + 1;
+        if (tracker.getCurrentState().getClass().equals(CFRDSubgameRoot.class)) {
+            handleCFRDStart(tracker, 1, 1, player, rootTargeting);
+        } else {
+            cfr(tracker, 1, 1, 1, 1, player, 0, rootTargeting);
+        }
     }
 
     @Override
