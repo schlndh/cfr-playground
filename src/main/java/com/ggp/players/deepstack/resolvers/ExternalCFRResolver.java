@@ -138,9 +138,15 @@ public class ExternalCFRResolver implements ISubgameResolver {
         return tracker;
     }
 
+    private void runWithPausedTimer(IterationTimer timer, Runnable fn) {
+        timer.stop();
+        fn.run();
+        timer.start();
+    }
+
     @Override
     public ActResult act(IterationTimer timeout) {
-        resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo));
+        runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
         CFRDTracker tracker = prepareDataStructures();
 
         HashSet<IInformationSet> myInformationSets = new HashSet<>();
@@ -153,12 +159,12 @@ public class ExternalCFRResolver implements ISubgameResolver {
             timeout.startIteration();
             cfrSolver.runIteration(tracker);
 
-            resolvingListeners.forEach(listener -> listener.resolvingIterationEnd(resInfo));
+            runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingIterationEnd(resInfo)));
             timeout.endIteration();
             iters++;
         }
 
-        resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo));
+        runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo)));
 
         Strategy cumulativeStrat = cfrSolver.getFinalCumulativeStrat();
         cumulativeStrat.normalize();
@@ -173,12 +179,15 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
     @Override
     public InitResult init(ICompleteInformationState initialState, IterationTimer timeout) {
-        resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo));
+        runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
         CFRDTracker tracker = CFRDTracker.createForInit(myId, initialState);
         findMyNextTurn(tracker);
         InitResult res = doInit(tracker, timeout);
-        resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo));
-        resolvingListeners.forEach(listener -> listener.initEnd(resInfo));
+        runWithPausedTimer(timeout, () -> {
+            resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo));
+            resolvingListeners.forEach(listener -> listener.initEnd(resInfo));
+        });
+
         lastSolver = null;
         return res;
     }
@@ -189,7 +198,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         while (timeout.canDoAnotherIteration()) {
             timeout.startIteration();
             cfrSolver.runIteration(tracker);
-            resolvingListeners.forEach(listener -> listener.resolvingIterationEnd(resInfo));
+            runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingIterationEnd(resInfo)));
             timeout.endIteration();
             iters++;
         }

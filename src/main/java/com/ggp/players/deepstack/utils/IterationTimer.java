@@ -1,46 +1,48 @@
 package com.ggp.players.deepstack.utils;
 
+import com.ggp.utils.time.StopWatch;
+
 public class IterationTimer {
-    private long startNano;
-    private long iterStartNano;
-    private long timeoutNano;
-    private long maxIterTimeNano = 0;
+    private StopWatch totalTime = new StopWatch();
+    private StopWatch iterTime = new StopWatch();
+    private boolean iterRunning = false;
+    private long timeoutMs;
     private long iters = 0;
     private long totalIterTime = 0;
 
-    private static final long msToNano = 1000000L;
-
-    public IterationTimer(long timeoutMillis) {
-        this.timeoutNano = timeoutMillis * msToNano;
+    public IterationTimer(long timeoutMs) {
+        this.timeoutMs = timeoutMs;
     }
 
     public void start() {
-        startNano = System.nanoTime();
+        totalTime.start();
+        if (iterRunning) iterTime.start();
+    }
+
+    public void stop() {
+        totalTime.stop();
+        if (iterRunning) iterTime.start();
     }
 
     public void startIteration() {
-        iterStartNano = System.nanoTime();
+        iterTime.reset();
+        iterRunning = true;
     }
 
     public void endIteration() {
-        long iterTime = System.nanoTime() - iterStartNano;
-        if (iterTime >  maxIterTimeNano) maxIterTimeNano = iterTime;
-        totalIterTime += iterTime;
+        iterTime.stop();
+        iterRunning = false;
+        totalIterTime += iterTime.getDurationMs();
         iters++;
-        iterStartNano = System.nanoTime();
     }
 
-    private long getEstimatedIterationLengthNano() {
+    private long getEstimatedIterationLengthMs() {
         if (iters == 0) return 0;
         return totalIterTime/iters;
     }
 
     public boolean canDoAnotherIteration() {
-        long remainingNano = timeoutNano - (System.nanoTime() - startNano);
-        return (remainingNano > getEstimatedIterationLengthNano());
-    }
-
-    public long getTotalMs() {
-        return (System.nanoTime() - startNano)/msToNano;
+        long remainingMs = timeoutMs - totalTime.getLiveDurationMs();
+        return (remainingMs > getEstimatedIterationLengthMs());
     }
 }
