@@ -1,8 +1,11 @@
 package com.ggp.cli;
 
+import com.ggp.GameManager;
 import com.ggp.IGameDescription;
+import com.ggp.IPlayerFactory;
 import com.ggp.parsers.ParseUtils;
 import com.ggp.parsers.exceptions.ConfigAssemblyException;
+import com.ggp.players.deepstack.DeepstackPlayer;
 import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.players.deepstack.evaluators.EvaluatorEntry;
 import com.ggp.players.deepstack.evaluators.IDeepstackEvaluator;
@@ -49,6 +52,13 @@ public class EvaluateCommand implements Runnable {
     @CommandLine.Option(names={"-q", "--quiet"}, description="Quiet mode - doesn't print output")
     private boolean quiet;
 
+    private void warmup(IGameDescription gameDesc, IPlayerFactory plFactory) {
+        if (!quiet) System.out.println("Warming up...");
+        GameManager manager = new GameManager(plFactory, plFactory, gameDesc);
+        manager.run(300, 300);
+        if (!quiet) System.out.println("Warm-up complete.");
+    }
+
     @Override
     public void run() {
         IGameDescription gameDesc = null;
@@ -90,13 +100,14 @@ public class EvaluateCommand implements Runnable {
         IDeepstackEvaluator evaluator = usedEvaluatorFactory.create(init, logPointsMs);
 
         if (!quiet) System.out.println("Evaluating " + usedResolver.getConfigString() + " using " + evaluator.getConfigString());
+        warmup(gameDesc, new DeepstackPlayer.Factory(usedResolver));
         List<EvaluatorEntry> entries = evaluator.evaluate(gameDesc, usedResolver, quiet);
 
         long lastEntryStates = 0;
         for (EvaluatorEntry entry : entries) {
             double exp = ImperfectRecallExploitability.computeExploitability(entry.getAggregatedStrat(), gameDesc, null);
             if (!quiet) {
-                System.out.println(String.format("(%8d ms, %12d states) -> %.4f exp | %.4g states/s",
+                System.out.println(String.format("(%5d ms, %12d states) -> %.4f exp | %.4g states/s",
                         (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(double)(evalFreq)));
             }
             lastEntryStates = entry.getAvgVisitedStates();
