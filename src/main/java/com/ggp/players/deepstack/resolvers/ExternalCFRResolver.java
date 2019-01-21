@@ -48,6 +48,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private NextRangeTree nrt = new NextRangeTree();
     private HashMap<IInformationSet, Double> nextOpponentCFV = new HashMap<>();
     private IStrategy cummulativeStrategy;
+    private BaseCFRSolver lastSolver = null;
 
     private class ResolvingInfo implements IResolvingInfo {
         @Override
@@ -58,6 +59,12 @@ public class ExternalCFRResolver implements ISubgameResolver {
         @Override
         public IInformationSet getHiddenInfo() {
             return hiddenInfo;
+        }
+
+        @Override
+        public long getVisitedStatesInCurrentResolving() {
+            if (lastSolver == null) return 0;
+            return lastSolver.getVisitedStates();
         }
     }
 
@@ -106,6 +113,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
             }
         });
         cummulativeStrategy = cfrSolver.getCumulativeStrat();
+        lastSolver = cfrSolver;
         return cfrSolver;
     }
 
@@ -157,6 +165,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         this.cummulativeStrategy = cumulativeStrat;
         int cfvNorm = iters;
         nextOpponentCFV.replaceAll((is, cfv) -> cfv/cfvNorm);
+        lastSolver = null;
 
         return new ActResult(cumulativeStrat, subgameMap, nrt, nextOpponentCFV);
     }
@@ -170,6 +179,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         InitResult res = doInit(tracker, timeout);
         resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo));
         resolvingListeners.forEach(listener -> listener.initEnd(resInfo));
+        lastSolver = null;
         return res;
     }
 

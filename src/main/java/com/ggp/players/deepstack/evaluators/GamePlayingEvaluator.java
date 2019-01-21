@@ -71,6 +71,7 @@ public class GamePlayingEvaluator implements IDeepstackEvaluator {
 
         for (EvaluatorEntry entry: stratAggregator.getEntries()) {
             entry.getAggregatedStrat().normalize();
+            entry.setVisitedStatesNorm(gameCount);
         }
         return stratAggregator.getEntries();
     }

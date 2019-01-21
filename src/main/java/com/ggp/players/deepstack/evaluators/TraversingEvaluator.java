@@ -129,6 +129,7 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
             InfoSetStrategy cachedStrat = cachedEntry.getAggregatedStrat().getInfoSetStrategy(is);
             entries.get(i).addTime(cachedEntry.getEntryTimeMs(), playerReachProb);
             entries.get(i).getAggregatedStrat().addProbabilities(is, actionIdx -> playerReachProb * cachedStrat.getProbability(actionIdx));
+            entries.get(i).addVisitedStates(cachedEntry.getAvgVisitedStates());
         }
 
         int actionIdx = 0;
@@ -175,6 +176,7 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
 
         for (EvaluatorEntry entry: entries) {
             entry.getAggregatedStrat().normalize();
+            entry.setVisitedStatesNorm(count);
         }
         return entries;
     }

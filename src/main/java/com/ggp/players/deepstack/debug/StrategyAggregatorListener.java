@@ -41,6 +41,7 @@ public class StrategyAggregatorListener extends BaseListener {
             IInfoSetStrategy isStrat = strat.getInfoSetStrategy(is);
             target.addProbabilities(is, actionIdx -> isStrat.getProbability(actionIdx));
         }
+        entry.addVisitedStates(resInfo.getVisitedStatesInCurrentResolving());
     }
 
     @Override

@@ -6,6 +6,8 @@ public class EvaluatorEntry {
     private double intendedTimeMs;
     private double avgTimeMs = 0;
     private double avgTimeWeigthNorm = 0;
+    private long visitedStates = 0;
+    private long visitedStatesNorm = 1;
     private Strategy aggregatedStrat = new Strategy();
 
     public EvaluatorEntry(double intendedTimeMs) {
@@ -24,6 +26,10 @@ public class EvaluatorEntry {
         avgTimeWeigthNorm += weight;
     }
 
+    public void addVisitedStates(long states) {
+        visitedStates += states;
+    }
+
     public double getIntendedTimeMs() {
         return intendedTimeMs;
     }
@@ -34,5 +40,13 @@ public class EvaluatorEntry {
 
     public Strategy getAggregatedStrat() {
         return aggregatedStrat;
+    }
+
+    public long getAvgVisitedStates() {
+        return visitedStates / visitedStatesNorm;
+    }
+
+    public void setVisitedStatesNorm(long visitedStatesNorm) {
+        this.visitedStatesNorm = visitedStatesNorm;
     }
 }

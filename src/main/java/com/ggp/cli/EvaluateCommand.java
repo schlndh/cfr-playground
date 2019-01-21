@@ -92,10 +92,14 @@ public class EvaluateCommand implements Runnable {
         if (!quiet) System.out.println("Evaluating " + usedResolver.getConfigString() + " using " + evaluator.getConfigString());
         List<EvaluatorEntry> entries = evaluator.evaluate(gameDesc, usedResolver, quiet);
 
+        long lastEntryStates = 0;
         for (EvaluatorEntry entry : entries) {
             double exp = ImperfectRecallExploitability.computeExploitability(entry.getAggregatedStrat(), gameDesc, null);
-            if (!quiet) System.out.println(String.format("Exploitability estimate at %d ms (intended %d ms): %f",
-                    (int) entry.getEntryTimeMs(), (int) entry.getIntendedTimeMs(), exp));
+            if (!quiet) {
+                System.out.println(String.format("(%8d ms, %12d states) -> %.4f exp | %.4g states/s",
+                        (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(double)(evalFreq)));
+            }
+            lastEntryStates = entry.getAvgVisitedStates();
         }
     }
 }

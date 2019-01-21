@@ -11,4 +11,5 @@ import com.ggp.utils.strategy.Strategy;
 public interface IResolvingInfo {
     IStrategy getUnnormalizedCumulativeStrategy();
     IInformationSet getHiddenInfo();
+    long getVisitedStatesInCurrentResolving();
 }
