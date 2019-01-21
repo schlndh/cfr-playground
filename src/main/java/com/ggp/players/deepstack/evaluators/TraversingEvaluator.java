@@ -19,10 +19,24 @@ import java.util.List;
  * while aggregating the resulting strategies at given time intervals.
  */
 public class TraversingEvaluator implements IDeepstackEvaluator {
+    public static class Factory implements IFactory {
+        private int count;
+
+        public Factory(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public IDeepstackEvaluator create(int initMs, List<Integer> logPointsMs) {
+            return new TraversingEvaluator(initMs, count, logPointsMs);
+        }
+    }
+
     private int initMs;
     private int count;
     private int timeoutMs;
     private ArrayList<Integer> logPointsMs;
+    private boolean quiet;
 
     /**
      * Constructor
@@ -48,10 +62,12 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
     }
 
     private void printAction(int actionIdx, int actions) {
+        if (quiet) return;
         System.out.print(getActionStr(actionIdx, actions));
     }
 
     private void unprintAction(int actionIdx, int actions) {
+        if (quiet) return;
         String tmp = "";
         String actionStr = getActionStr(actionIdx, actions);
         String clearStr = "";
@@ -141,7 +157,8 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
     }
 
     @Override
-    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, ISubgameResolver.Factory subgameResolverFactory) {
+    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, ISubgameResolver.Factory subgameResolverFactory, boolean quiet) {
+        this.quiet = quiet;
         DeepstackPlayer.Factory playerFactory = new DeepstackPlayer.Factory(subgameResolverFactory, null);
         ICompleteInformationState initialState = gameDesc.getInitialState();
         DeepstackPlayer pl1 = playerFactory.create(gameDesc, 1), pl2 = playerFactory.create(gameDesc, 2);
@@ -164,9 +181,8 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
 
     @Override
     public String getConfigString() {
-        return "Traversing{" +
-                "i=" + initMs +
-                ",c=" + count +
+        return "TraversingEvaluator{" +
+                    count +
                 '}';
     }
 }

@@ -18,6 +18,19 @@ import java.util.List;
  * at encountered decision points.
  */
 public class GamePlayingEvaluator implements IDeepstackEvaluator {
+    public static class Factory implements IFactory {
+        private int gameCount;
+
+        public Factory(int gameCount) {
+            this.gameCount = gameCount;
+        }
+
+        @Override
+        public IDeepstackEvaluator create(int initMs, List<Integer> logPointsMs) {
+            return new GamePlayingEvaluator(initMs, logPointsMs, gameCount);
+        }
+    }
+
     private int initMs;
     private int timeoutMs;
     StrategyAggregatorListener stratAggregator;
@@ -37,7 +50,7 @@ public class GamePlayingEvaluator implements IDeepstackEvaluator {
     }
 
     @Override
-    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, ISubgameResolver.Factory subgameResolverFactory) {
+    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, ISubgameResolver.Factory subgameResolverFactory, boolean quiet) {
         IPlayerFactory deepstack = new DeepstackPlayer.Factory(subgameResolverFactory, stratAggregator);
         IPlayerFactory random = new RandomPlayer.Factory();
 
@@ -53,7 +66,7 @@ public class GamePlayingEvaluator implements IDeepstackEvaluator {
             List<EvaluatorEntry> entries = stratAggregator.getEntries();
             Strategy strat = entries.get(entries.size() - 1).getAggregatedStrat();
             double exp = ImperfectRecallExploitability.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
-            System.out.println(String.format("Game %d: defined IS %d, last strategy exploitability %f", i, strat.countDefinedInformationSets(), exp));
+            if (!quiet) System.out.println(String.format("Game %d: defined IS %d, last strategy exploitability %f", i, strat.countDefinedInformationSets(), exp));
         }
 
         for (EvaluatorEntry entry: stratAggregator.getEntries()) {
@@ -64,9 +77,8 @@ public class GamePlayingEvaluator implements IDeepstackEvaluator {
 
     @Override
     public String getConfigString() {
-        return "Gameplay{" +
-                "init=" + initMs +
-                ", count=" + gameCount +
+        return "GamePlayingEvaluator{" +
+                    gameCount +
                 '}';
     }
 }
