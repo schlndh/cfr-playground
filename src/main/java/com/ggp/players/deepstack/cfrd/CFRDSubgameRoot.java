@@ -12,11 +12,21 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
     private CISRange range;
     private Map<IInformationSet, Double> opponentCFV;
     private int opponentId;
+    private final List<IAction> legalActions;
+    private final HashMap<IInformationSet, Double> opponentIsReachProbs;
 
     public CFRDSubgameRoot(CISRange range, Map<IInformationSet, Double> opponentCFV, int opponentId) {
         this.range = range;
         this.opponentCFV = opponentCFV;
         this.opponentId = opponentId;
+
+        this.opponentIsReachProbs = new HashMap<>();
+        ArrayList<IAction> legalActions = new ArrayList<>(range.size());
+        for (Map.Entry<ICompleteInformationState, Double> entry: range.getProbabilities()) {
+            legalActions.add(new SelectCISAction(entry.getKey(), entry.getValue()/range.getNorm()));
+            this.opponentIsReachProbs.merge(entry.getKey().getInfoSetForPlayer(opponentId), entry.getValue(), (oldV, newV) -> oldV + newV);
+        }
+        this.legalActions = Collections.unmodifiableList(legalActions);
     }
 
     @Override
@@ -36,11 +46,7 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
 
     @Override
     public List<IAction> getLegalActions() {
-        ArrayList<IAction> ret = new ArrayList<>(range.size());
-        for (Map.Entry<ICompleteInformationState, Double> entry: range.getProbabilities()) {
-            ret.add(new SelectCISAction(entry.getKey(), entry.getValue()/range.getNorm()));
-        }
-        return ret;
+        return legalActions;
     }
 
     @Override
@@ -53,12 +59,7 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
         if (!isLegal(a)) return null;
         SelectCISAction sel = (SelectCISAction) a;
         ICompleteInformationState s = sel.getSelectedState();
-        // TODO: improve this
-        double isReachProb = 0d;
-        IInformationSet is = s.getInfoSetForPlayer(opponentId);
-        for (Map.Entry<ICompleteInformationState, Double> entry: range.getProbabilities()) {
-            if (is.equals(entry.getKey().getInfoSetForPlayer(opponentId))) isReachProb += entry.getValue();
-        }
+        double isReachProb = opponentIsReachProbs.get(s.getInfoSetForPlayer(opponentId));
         return new OpponentsChoiceState(s, opponentId, opponentCFV.get(s.getInfoSetForPlayer(opponentId))/isReachProb);
     }
 
@@ -84,11 +85,10 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
             @Override
             public Iterator<IRandomNodeAction> iterator() {
                 return new Iterator<IRandomNodeAction>() {
-                    private List<IAction> legalActions = getLegalActions();
                     private int idx = 0;
                     @Override
                     public boolean hasNext() {
-                        return idx < range.size();
+                        return idx < legalActions.size();
                     }
 
                     @Override
