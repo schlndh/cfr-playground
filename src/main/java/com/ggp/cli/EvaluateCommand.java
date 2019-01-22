@@ -55,7 +55,7 @@ public class EvaluateCommand implements Runnable {
     private void warmup(IGameDescription gameDesc, IPlayerFactory plFactory) {
         if (!quiet) System.out.println("Warming up...");
         GameManager manager = new GameManager(plFactory, plFactory, gameDesc);
-        manager.run(300, 300);
+        manager.run(4000, 1000);
         if (!quiet) System.out.println("Warm-up complete.");
     }
 
