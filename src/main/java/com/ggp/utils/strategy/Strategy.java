@@ -21,7 +21,11 @@ public class Strategy implements IStrategy {
     }
 
     public void addProbabilities(IInformationSet is, Function<Integer, Double> probMap) {
-        getInfoSetStrategy(is).addProbabilities(probMap);
+        if (isDefined(is)) {
+            getInfoSetStrategy(is).addProbabilities(probMap);
+        } else {
+            getInfoSetStrategy(is).setProbabilities(probMap);
+        }
     }
 
     public void normalize() {
