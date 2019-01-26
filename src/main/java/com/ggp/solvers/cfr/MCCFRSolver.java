@@ -175,7 +175,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             CFRResult res = cfr(tracker.next(action), playerProb, opponentProb,
                     sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb,
                     player, depth+1, (targeting != null) ? targeting.next(action) : null);
-            res.suffixReachProb *= sample.untargetedProb;
+            res.suffixReachProb *= sample.untargetedProb; // action prob == untargeted sampling prob for random node
             double utility = 0;
             int actionIdx = 0;
             for (IRandomNode.IRandomNodeAction rna: s.getRandomNode()) {
@@ -203,6 +203,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
 
         isInfo.doRegretMatching();
         SampleResult sampledAction = samplePlayerAction(s, isInfo.getStrat(), player, targeting);
+        final double actionSampleProb = targetingProb * sampledAction.targetedProb + (1-targetingProb) * sampledAction.untargetedProb;
         CFRResult ret;
         double actionProb = isInfo.getStrat()[sampledAction.actionIdx];
         if (isInMemory) {
@@ -228,7 +229,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             double baselineValue = baseline.getValue(actionIdx);
             double actionUtil = baselineValue;
             if (actionIdx == sampledAction.actionIdx) {
-                actionUtil = (baselineValue + (ret.utility - baselineValue) / sampledAction.untargetedProb);
+                actionUtil = (baselineValue + (ret.utility - baselineValue) / actionSampleProb);
                 baseline.update(actionIdx, ret.utility);
             }
             utility += prob * actionUtil;
@@ -248,7 +249,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
                 double baselineValue = baseline.getValue(actionIdx);
                 double actionUtil;
                 if (actionIdx == sampledAction.actionIdx) {
-                    actionUtil = baselineValue + (ret.utility - baselineValue)/sampledAction.untargetedProb;
+                    actionUtil = baselineValue + (ret.utility - baselineValue)/actionSampleProb;
                 } else {
                     actionUtil = baselineValue;
                 }
