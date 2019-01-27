@@ -20,7 +20,11 @@ public class DeepstackPlayer implements IPlayer {
         }
 
         public Factory(BaseCFRSolver.Factory cfrSolverFactory) {
-            this(new ExternalCFRResolver.Factory(cfrSolverFactory));
+            this(new ExternalCFRResolver.Factory(cfrSolverFactory, false));
+        }
+
+        public Factory(BaseCFRSolver.Factory cfrSolverFactory, boolean useISTargeting) {
+            this(new ExternalCFRResolver.Factory(cfrSolverFactory, useISTargeting));
         }
 
         public Factory(ISubgameResolver.Factory resolverFactory, IResolvingListener listener) {

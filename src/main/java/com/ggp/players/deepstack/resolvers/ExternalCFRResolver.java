@@ -21,16 +21,18 @@ import java.util.*;
 public class ExternalCFRResolver implements ISubgameResolver {
     public static class Factory implements ISubgameResolver.Factory {
         private BaseCFRSolver.Factory solverFactory;
+        private final boolean useISTargeting;
 
-        public Factory(BaseCFRSolver.Factory solverFactory) {
+        public Factory(BaseCFRSolver.Factory solverFactory, boolean useISTargeting) {
             this.solverFactory = solverFactory;
+            this.useISTargeting = useISTargeting;
         }
 
         @Override
         public ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
                                        ArrayList<IResolvingListener> resolvingListeners)
         {
-            return new ExternalCFRResolver(myId, hiddenInfo, myRange, opponentCFV, resolvingListeners, solverFactory);
+            return new ExternalCFRResolver(myId, hiddenInfo, myRange, opponentCFV, resolvingListeners, solverFactory, useISTargeting);
         }
 
         @Override
@@ -53,7 +55,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private HashMap<IInformationSet, Double> nextOpponentCFV = new HashMap<>();
     private IStrategy cummulativeStrategy;
     private BaseCFRSolver lastSolver = null;
-    private final boolean useISTargeting = true;
+    private final boolean useISTargeting;
 
     private class InfoSetTargeting implements ISearchTargeting {
         private final List<Integer> rootTargeting;
@@ -106,7 +108,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     }
 
     public ExternalCFRResolver(int myId, IInformationSet hiddenInfo, CISRange range, HashMap<IInformationSet, Double> opponentCFV,
-                               ArrayList<IResolvingListener> resolvingListeners, BaseCFRSolver.Factory solverFactory)
+                               ArrayList<IResolvingListener> resolvingListeners, BaseCFRSolver.Factory solverFactory, boolean useISTargeting)
     {
         this.myId = myId;
         this.hiddenInfo = hiddenInfo;
@@ -116,6 +118,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         if (this.resolvingListeners == null) this.resolvingListeners = new ArrayList<>();
         this.opponentId = PlayerHelpers.getOpponentId(myId);
         this.solverFactory = solverFactory;
+        this.useISTargeting = useISTargeting;
     }
 
     private BaseCFRSolver createSolver(CFRDSubgameRoot subgame, HashSet<IInformationSet> accumulatedInfoSets) {

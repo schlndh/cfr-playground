@@ -52,6 +52,9 @@ public class EvaluateCommand implements Runnable {
     @CommandLine.Option(names={"-q", "--quiet"}, description="Quiet mode - doesn't print output")
     private boolean quiet;
 
+    @CommandLine.Option(names={"--is-targeting"}, description="Use IS targeting")
+    private boolean useISTargeting;
+
     private void warmup(IGameDescription gameDesc, IPlayerFactory plFactory) {
         if (!quiet) System.out.println("Warming up...");
         GameManager manager = new GameManager(plFactory, plFactory, gameDesc);
@@ -87,7 +90,7 @@ public class EvaluateCommand implements Runnable {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup evalautor '" + evaluator + "'.", null, evaluator);
         }
 
-        ISubgameResolver.Factory usedResolver = new ExternalCFRResolver.Factory(usedSolverFactory);
+        ISubgameResolver.Factory usedResolver = new ExternalCFRResolver.Factory(usedSolverFactory, useISTargeting);
         if (!quiet) System.out.println("Exploitability estimate for uniform strategy: " + ImperfectRecallExploitability.computeExploitability(new Strategy(), gameDesc));
 
         ArrayList<Integer> logPointsMs = new ArrayList<>();
