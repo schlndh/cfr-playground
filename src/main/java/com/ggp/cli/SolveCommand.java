@@ -57,12 +57,15 @@ public class SolveCommand implements Runnable {
     @CommandLine.Option(names={"--save-strategy"}, description="Save computed strategy", defaultValue = "false")
     private boolean saveStrategy;
 
+    @CommandLine.Option(names={"--res-postfix"}, description="Postfix for result files", defaultValue="0")
+    private String resultPostfix;
+
     private String getDateKey() {
         return String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
     }
 
     private String getCSVName() {
-        return String.format("%d-%d-%s.csv", timeLimit, evalFreq, getDateKey());
+        return String.format("%d-%d-%s-%s.csv", timeLimit, evalFreq, getDateKey(), resultPostfix.replace("-", ""));
     }
 
     private void printUniformExp(IGameDescription gameDesc) {
