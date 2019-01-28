@@ -3,9 +3,11 @@ package com.ggp.games.IIGoofspiel;
 import com.ggp.ICompleteInformationState;
 import com.ggp.ICompleteInformationStateFactory;
 import com.ggp.IGameDescription;
+import com.ggp.utils.recall.PerfectRecallGame;
 
 import java.util.Objects;
 
+@PerfectRecallGame
 public class GameDescription implements IGameDescription {
     private static final long serialVersionUID = 1L;
     private CompleteInformationState initialState;

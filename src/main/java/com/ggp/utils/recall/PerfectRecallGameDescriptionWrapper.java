@@ -7,6 +7,7 @@ import java.util.Objects;
 /**
  * Makes a perfect-recall version of given game.
  */
+@PerfectRecallGame
 public class PerfectRecallGameDescriptionWrapper implements IGameDescription {
     private static final long serialVersionUID = 1L;
     private IGameDescription gameDesc;
