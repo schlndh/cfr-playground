@@ -51,6 +51,9 @@ public class SolveCommand implements Runnable {
     @CommandLine.Option(names={"--skip-warmup"}, description="Skip warm-up")
     private boolean skipWarmup;
 
+    @CommandLine.Option(names={"--res-dir"}, description="Results directory", defaultValue="results")
+    private String resultsDirectory;
+
     @CommandLine.Option(names={"--save-strategy"}, description="Save computed strategy", defaultValue = "false")
     private boolean saveStrategy;
 
@@ -107,7 +110,7 @@ public class SolveCommand implements Runnable {
         if (usedSolverFactory == null) {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup solver '" + solver + "'.", null, solver);
         }
-        String gameDir = "results/" + gameDesc.getConfigString();
+        String gameDir = resultsDirectory + "/" + gameDesc.getConfigString();
         String solverDir =  gameDir + "/" + usedSolverFactory.getConfigString();
         if (!dryRun)
             new File(solverDir).mkdirs();
