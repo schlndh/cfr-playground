@@ -36,7 +36,7 @@ public class SolveCommand implements Runnable {
     @CommandLine.Option(names={"-t", "--time-limit"}, description="Time limit (s)", required=true)
     private long timeLimit;
 
-    @CommandLine.Option(names={"-e", "--eval-freq"}, description="Evaluation frequency (ms)", required=true)
+    @CommandLine.Option(names={"-f", "--eval-freq"}, description="Evaluation frequency (ms)", required=true)
     private long evalFreq;
 
     @CommandLine.Option(names={"-c", "--count"}, description="How many times to repeat the evaluation", defaultValue="1")
