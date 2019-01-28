@@ -6,10 +6,10 @@ import com.ggp.IPlayerFactory;
 import com.ggp.players.deepstack.DeepstackPlayer;
 import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.players.deepstack.debug.StrategyAggregatorListener;
+import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.players.random.RandomPlayer;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
-import com.ggp.utils.exploitability.ImperfectRecallExploitability;
 
 import java.util.List;
 
@@ -65,7 +65,7 @@ public class GamePlayingEvaluator implements IDeepstackEvaluator {
             manager.run(initMs, timeoutMs);
             List<EvaluatorEntry> entries = stratAggregator.getEntries();
             Strategy strat = entries.get(entries.size() - 1).getAggregatedStrat();
-            double exp = ImperfectRecallExploitability.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
+            double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
             if (!quiet) System.out.println(String.format("Game %d: defined IS %d, last strategy exploitability %f", i, strat.countDefinedInformationSets(), exp));
         }
 

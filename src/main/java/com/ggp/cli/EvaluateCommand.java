@@ -11,7 +11,7 @@ import com.ggp.players.deepstack.evaluators.EvaluatorEntry;
 import com.ggp.players.deepstack.evaluators.IDeepstackEvaluator;
 import com.ggp.players.deepstack.resolvers.ExternalCFRResolver;
 import com.ggp.solvers.cfr.BaseCFRSolver;
-import com.ggp.utils.exploitability.ImperfectRecallExploitability;
+import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.Strategy;
 import picocli.CommandLine;
 
@@ -91,7 +91,7 @@ public class EvaluateCommand implements Runnable {
         }
 
         ISubgameResolver.Factory usedResolver = new ExternalCFRResolver.Factory(usedSolverFactory, useISTargeting);
-        if (!quiet) System.out.println("Exploitability estimate for uniform strategy: " + ImperfectRecallExploitability.computeExploitability(new Strategy(), gameDesc));
+        if (!quiet) System.out.println("Exploitability estimate for uniform strategy: " + ExploitabilityUtils.computeExploitability(new Strategy(), gameDesc));
 
         ArrayList<Integer> logPointsMs = new ArrayList<>();
         int logTimeMs = evalFreq;
@@ -109,7 +109,7 @@ public class EvaluateCommand implements Runnable {
         long lastEntryStates = 0;
         double lastTime = 0;
         for (EvaluatorEntry entry : entries) {
-            double exp = ImperfectRecallExploitability.computeExploitability(entry.getAggregatedStrat(), gameDesc, null);
+            double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
             if (!quiet) {
                 System.out.println(String.format("(%5d ms, %12d states) -> %.4f exp | %.4g states/s",
                         (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(entry.getEntryTimeMs() - lastTime)));

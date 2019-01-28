@@ -5,11 +5,11 @@ import com.ggp.parsers.ParseUtils;
 import com.ggp.parsers.exceptions.ConfigAssemblyException;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.players.deepstack.trackers.SimpleTracker;
+import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.solvers.cfr.BaseCFRSolver;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 import com.ggp.utils.time.StopWatch;
-import com.ggp.utils.exploitability.ImperfectRecallExploitability;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import picocli.CommandLine;
@@ -69,7 +69,7 @@ public class SolveCommand implements Runnable {
         if (quiet) return;
         StopWatch expTimer = new StopWatch();
         expTimer.start();
-        double exp = ImperfectRecallExploitability.computeExploitability(new Strategy(), gameDesc);
+        double exp = ExploitabilityUtils.computeExploitability(new Strategy(), gameDesc);
         expTimer.stop();
         System.out.println("Exploitability estimate for uniform strategy: " + exp + " in " + expTimer.getDurationMs() + " ms");
     }
@@ -153,7 +153,7 @@ public class SolveCommand implements Runnable {
                     timer.stop();
                     evaluationTimer.stop();
                     long visitedStates = cfrSolver.getVisitedStates();
-                    double exp = ImperfectRecallExploitability.computeExploitability(new NormalizingStrategyWrapper(cfrSolver.getCumulativeStrat()), gameDesc);
+                    double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(cfrSolver.getCumulativeStrat()), gameDesc);
                     strategyExp = exp;
                     double avgRegret = cfrSolver.getTotalRegret() / iter;
                     if (!dryRun) {
