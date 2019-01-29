@@ -81,16 +81,60 @@ public class SolveCommand implements Runnable {
         if (skipWarmup) return;
         if (!quiet) System.out.println("Warming up ...");
 
-        BaseCFRSolver cfrSolver = solverFactory.create(null);
-        IGameTraversalTracker tracker = SimpleTracker.createRoot(gameDesc.getInitialState());
-        StopWatch warmupTimer = new StopWatch();
-        warmupTimer.start();
-        long iters = 0;
-        while (warmupTimer.getLiveDurationMs() < 5000) {
-            cfrSolver.runIteration(tracker);
-            iters++;
+        for (int i = 0; i < 5; ++i) {
+            runSolver(solverFactory, gameDesc, 1000, 5, true, -1, new StringWriter());
         }
-        if (!quiet) System.out.println("Warm-up complete after " + iters + " iterations.");
+
+        if (!quiet) System.out.println("Warm-up complete.");
+    }
+
+    private Strategy runSolver(BaseCFRSolver.Factory usedSolverFactory, IGameDescription gameDesc, long freqMs, long evalEntries, boolean quiet, double returnStratThreshold, Writer fileOutput) {
+        try {
+            CSVPrinter csvOut = new CSVPrinter(fileOutput,
+                    CSVFormat.EXCEL.withHeader("intended_time", "time", "iterations", "states", "exp", "avg_regret"));
+
+            BaseCFRSolver cfrSolver = usedSolverFactory.create(null);
+            IGameTraversalTracker tracker = SimpleTracker.createRoot(gameDesc.getInitialState());
+            int entryIdx = 0;
+            final long evaluateAfterMs = freqMs;
+            StopWatch timer = new StopWatch(), evaluationTimer = new StopWatch();
+            timer.start();
+            evaluationTimer.start();
+            long iter = 0, lastEvalIters = 0;
+            double strategyExp = 0;
+            while (entryIdx < evalEntries) {
+                do {
+                    iter++;
+                    cfrSolver.runIteration(tracker);
+                } while (timer.getLiveDurationMs() < (entryIdx+1)*evaluateAfterMs);
+
+                timer.stop();
+                evaluationTimer.stop();
+                long visitedStates = cfrSolver.getVisitedStates();
+                double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(cfrSolver.getCumulativeStrat()), gameDesc);
+                strategyExp = exp;
+                double avgRegret = cfrSolver.getTotalRegret() / iter;
+                csvOut.printRecord((entryIdx+1) * evaluateAfterMs ,timer.getDurationMs(), iter, visitedStates, exp, avgRegret);
+                csvOut.flush();
+
+                String status = String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret) | %.4g iters/s",
+                        timer.getDurationMs(), iter, visitedStates, exp, avgRegret, 1000*(iter - lastEvalIters)/((double)evaluationTimer.getDurationMs()));
+                if (!quiet) {
+                    System.out.println(status);
+                }
+                while (timer.getDurationMs() >= (entryIdx+1)*evaluateAfterMs) entryIdx++;
+                lastEvalIters = iter;
+                evaluationTimer.reset();
+                timer.start();
+            }
+            if (strategyExp < returnStratThreshold) {
+                return cfrSolver.getFinalCumulativeStrat();
+            }
+            csvOut.close();
+            return null;
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     @Override
@@ -127,57 +171,18 @@ public class SolveCommand implements Runnable {
 
         warmup(gameDesc, usedSolverFactory);
         Strategy bestStrategy = null;
-        double bestStrategyExp = Double.MAX_VALUE;
+        double bestStrategyExp = saveStrategy ? Double.MAX_VALUE : -1;
         final int evalEntriesCount = (int)(timeLimit*1000/evalFreq);
         for (int i = 0; i < count; ++i) {
             String csvFileName = solverDir + "/" + getCSVName();
-            CSVPrinter csvOut = null;
             try {
-                if (!dryRun) {
-                    csvOut = new CSVPrinter(new FileWriter(csvFileName),
-                            CSVFormat.EXCEL.withHeader("intended_time", "time", "iterations", "states", "exp", "avg_regret"));
+                Writer output = dryRun ? new StringWriter() : new FileWriter(csvFileName);
+                Strategy newBestStrat = runSolver(usedSolverFactory, gameDesc, evalFreq, evalEntriesCount, quiet, bestStrategyExp, output);
+                if (newBestStrat != null) {
+                    bestStrategy = newBestStrat;
+                    newBestStrat.normalize();
+                    bestStrategyExp = ExploitabilityUtils.computeExploitability(newBestStrat, gameDesc);
                 }
-
-                BaseCFRSolver cfrSolver = usedSolverFactory.create(null);
-                IGameTraversalTracker tracker = SimpleTracker.createRoot(gameDesc.getInitialState());
-                int entryIdx = 0;
-                final long evaluateAfterMs = evalFreq;
-                StopWatch timer = new StopWatch(), evaluationTimer = new StopWatch();
-                timer.start();
-                evaluationTimer.start();
-                long iter = 0, lastEvalIters = 0;
-                double strategyExp = 0;
-                while (entryIdx < evalEntriesCount) {
-                    do {
-                        iter++;
-                        cfrSolver.runIteration(tracker);
-                    } while (timer.getLiveDurationMs() < (entryIdx+1)*evaluateAfterMs);
-
-                    timer.stop();
-                    evaluationTimer.stop();
-                    long visitedStates = cfrSolver.getVisitedStates();
-                    double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(cfrSolver.getCumulativeStrat()), gameDesc);
-                    strategyExp = exp;
-                    double avgRegret = cfrSolver.getTotalRegret() / iter;
-                    if (!dryRun) {
-                        csvOut.printRecord((entryIdx+1) * evaluateAfterMs ,timer.getDurationMs(), iter, visitedStates, exp, avgRegret);
-                        csvOut.flush();
-                    }
-
-                    if (!quiet) {
-                        System.out.println(String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret) | %.4g iters/s",
-                                timer.getDurationMs(), iter, visitedStates, exp, avgRegret, 1000*(iter - lastEvalIters)/((double)evaluationTimer.getDurationMs())));
-                    }
-                    while (timer.getDurationMs() >= (entryIdx+1)*evaluateAfterMs) entryIdx++;
-                    lastEvalIters = iter;
-                    evaluationTimer.reset();
-                    timer.start();
-                }
-                if (saveStrategy && strategyExp < bestStrategyExp) {
-                    bestStrategy = cfrSolver.getFinalCumulativeStrat();
-                    bestStrategyExp = strategyExp;
-                }
-                if (!dryRun) csvOut.close();
             } catch (IOException e) {
                 continue;
             }
