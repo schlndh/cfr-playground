@@ -148,10 +148,10 @@ public class SolveCommand implements Runnable {
                 long iter = 0, lastEvalIters = 0;
                 double strategyExp = 0;
                 while (entryIdx < evalEntriesCount) {
-                    while (evaluationTimer.getLiveDurationMs() < evaluateAfterMs) {
+                    do {
                         iter++;
                         cfrSolver.runIteration(tracker);
-                    }
+                    } while (timer.getLiveDurationMs() < (entryIdx+1)*evaluateAfterMs);
 
                     timer.stop();
                     evaluationTimer.stop();
@@ -168,7 +168,7 @@ public class SolveCommand implements Runnable {
                         System.out.println(String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret) | %.4g iters/s",
                                 timer.getDurationMs(), iter, visitedStates, exp, avgRegret, 1000*(iter - lastEvalIters)/((double)evaluationTimer.getDurationMs())));
                     }
-                    entryIdx++;
+                    while (timer.getDurationMs() >= (entryIdx+1)*evaluateAfterMs) entryIdx++;
                     lastEvalIters = iter;
                     evaluationTimer.reset();
                     timer.start();
