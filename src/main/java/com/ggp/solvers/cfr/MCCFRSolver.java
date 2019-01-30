@@ -171,6 +171,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             MCCFRISInfo isInfo = (MCCFRISInfo) getIsInfo(new RandomNodeIS(depth, legalActions));
             IBaseline baseline = isInfo.getBaseline(player);
             SampleResult sample = sampleRandom(s, targeting);
+            final double sampleProb = targetingProb * sample.targetedProb + (1-targetingProb) * sample.untargetedProb;
             IAction action = legalActions.get(sample.actionIdx);
             CFRResult res = cfr(tracker.next(action), playerProb, opponentProb,
                     sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb,
@@ -183,7 +184,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
                 double actionProb = rna.getProb();
                 double baselineValue = baseline.getValue(actionIdx);
                 if (actionIdx == sample.actionIdx) {
-                    double actionUtil = (baselineValue + (res.utility - baselineValue)/sample.untargetedProb);
+                    double actionUtil = (baselineValue + (res.utility - baselineValue)/sampleProb);
                     utility += actionProb * actionUtil;
                     baseline.update(actionIdx, res.utility);
                 } else {
@@ -263,6 +264,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
                 double[] cumulativeStrat = isInfo.getCumulativeStrat();
                 double mul = Math.pow(((double) isInfo.getLastVisitedAtIteration()) / iterationCounter, cumulativeStratExp);
                 for (int a = 0; a < legalActions.size(); ++a) {
+                    // player != actingPlayer therefore probWithoutPlayer == acting player's prob
                     cumulativeStrat[a] = mul * cumulativeStrat[a] + probWithoutPlayer*strat[a]/totalSampleProb;
                 }
             }
