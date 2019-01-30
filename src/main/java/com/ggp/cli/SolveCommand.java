@@ -148,7 +148,6 @@ public class SolveCommand implements Runnable {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
         }
 
-        printUniformExp(gameDesc);
         BaseCFRSolver.Factory usedSolverFactory = null;
         try {
             usedSolverFactory = mainCommand.getConfigurableFactory().create(BaseCFRSolver.Factory.class, ParseUtils.parseConfigExpression(solver));
@@ -170,6 +169,7 @@ public class SolveCommand implements Runnable {
         }
 
         warmup(gameDesc, usedSolverFactory);
+        printUniformExp(gameDesc);
         Strategy bestStrategy = null;
         double bestStrategyExp = saveStrategy ? Double.MAX_VALUE : -1;
         final int evalEntriesCount = (int)(timeLimit*1000/evalFreq);
