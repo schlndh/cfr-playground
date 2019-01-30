@@ -62,13 +62,12 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
     /**
      * Run CFR
      * @param tracker
-     * @param player
      * @param depth
      * @param reachProb1
      * @param reachProb2
      * @return 1st player utility of root state under current strategy
      */
-    private double cfr(IGameTraversalTracker tracker, int player, int depth, double reachProb1, double reachProb2) {
+    private double cfr(IGameTraversalTracker tracker, int depth, double reachProb1, double reachProb2) {
         // CVF_i(h) = reachProb_{-i}(h) * utility_i(H)
         // this method passes reachProb from top and returns player 1's utility
         ICompleteInformationState s = tracker.getCurrentState();
@@ -93,7 +92,7 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
             double ret = 0;
             for (IRandomNode.IRandomNodeAction rndAction: rndNode) {
                 double actionProb = rndAction.getProb();
-                ret += actionProb * cfr(tracker.next(rndAction.getAction()), player, depth+1, reachProb1, reachProb2);
+                ret += actionProb * cfr(tracker.next(rndAction.getAction()), depth+1, reachProb1, reachProb2);
             }
             return ret;
         }
@@ -103,23 +102,16 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         double utility = 0;
         double[] actionUtility = new double[legalActions.size()];
 
-        BiFunction<ICompleteInformationState, Integer, Double> callCfr = (x, actionIdx) -> {
-            double np1 = reachProb1, np2 = reachProb2;
-            if (s.getActingPlayerId() == 1) {
-                np1 *= isInfo.getStrat()[actionIdx];
-            } else if (s.getActingPlayerId() == 2) {
-                np2 *= isInfo.getStrat()[actionIdx];
-            }
-            IAction a = legalActions.get(actionIdx);
-            return cfr(tracker.next(a), player, depth+1, np1, np2);
-        };
-
-
         int actionIdx = 0;
         for (IAction a: legalActions) {
             double actionProb = isInfo.getStrat()[actionIdx];
-            double res = callCfr.apply(s, actionIdx);
-            actionUtility[actionIdx] = res;
+            double np1 = reachProb1, np2 = reachProb2;
+            if (s.getActingPlayerId() == 1) {
+                np1 *= actionProb;
+            } else if (s.getActingPlayerId() == 2) {
+                np2 *= actionProb;
+            }
+            actionUtility[actionIdx] = cfr(tracker.next(a), depth+1, np1, np2);
             utility = utility + actionProb*actionUtility[actionIdx];
             actionIdx++;
         }
@@ -160,7 +152,7 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
             updatePlayer[PlayerHelpers.getOpponentId(player)] = false;
         }
 
-        cfr(tracker, player, 0, 1, 1);
+        cfr(tracker, 0, 1, 1);
         isInfos.forEach((is, isInfo) -> {if (updatePlayer[is.getOwnerId()]) isInfo.doRegretMatching();});
     }
 }
