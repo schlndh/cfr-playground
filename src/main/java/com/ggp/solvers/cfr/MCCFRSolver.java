@@ -231,7 +231,6 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             double actionUtil = baselineValue;
             if (actionIdx == sampledAction.actionIdx) {
                 actionUtil = (baselineValue + (ret.utility - baselineValue) / actionSampleProb);
-                baseline.update(actionIdx, ret.utility);
             }
             utility += prob * actionUtil;
             actionIdx++;
@@ -269,6 +268,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
                 }
             }
         }
+        baseline.update(sampledAction.actionIdx, ret.utility);
         isInfo.setLastVisitedAtIteration(iterationCounter);
         ret.suffixReachProb = newSuffixReachProb;
         ret.utility = utility;
