@@ -18,7 +18,8 @@ public class NormalizingInfoSetStrategyWrapper implements IInfoSetStrategy {
 
     @Override
     public double getProbability(int actionIdx) {
-        return unnormalizedIsStrat.getProbability(actionIdx)/norm;
+        if (norm > 0) return unnormalizedIsStrat.getProbability(actionIdx)/norm;
+        return 1d/unnormalizedIsStrat.size();
     }
 
     @Override
