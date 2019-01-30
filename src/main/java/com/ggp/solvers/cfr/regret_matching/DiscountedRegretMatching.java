@@ -27,7 +27,7 @@ public class DiscountedRegretMatching extends BaseRegretMatching {
 
         @Override
         public String getConfigString() {
-            return null;
+            return toString();
         }
     }
 
