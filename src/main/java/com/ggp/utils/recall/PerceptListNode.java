@@ -5,7 +5,7 @@ import com.ggp.IPercept;
 import java.io.Serializable;
 import java.util.Objects;
 
-class PerceptListNode implements Serializable {
+public class PerceptListNode implements Serializable {
     private static final long serialVersionUID = 1L;
     public final PerceptListNode previous;
     public final IPercept percept;
@@ -37,5 +37,20 @@ class PerceptListNode implements Serializable {
 
     public IPercept getPercept() {
         return percept;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder bld = new StringBuilder();
+        bld.append(percept);
+        bld.append(']');
+        PerceptListNode node = previous;
+        while (node != null) {
+            bld.insert(0, ", ");
+            bld.insert(0, node.getPercept());
+            node = node.previous;
+        }
+        bld.insert(0, '[');
+        return bld.toString();
     }
 }
