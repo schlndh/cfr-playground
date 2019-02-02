@@ -60,4 +60,9 @@ public class PerfectRecallCIS extends CompleteInformationStateWrapper {
     public int hashCode() {
         return Objects.hash(super.hashCode(), player1IS, player2IS);
     }
+
+    @Override
+    public String toString() {
+        return "PR{" + state.toString() + "}";
+    }
 }

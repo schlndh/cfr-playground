@@ -49,4 +49,9 @@ public class PerfectRecallIS extends InformationSetWrapper {
     public PerceptListNode getPercepts() {
         return percepts;
     }
+
+    @Override
+    public String toString() {
+        return "PR{" + infoSet.toString() + "}";
+    }
 }
