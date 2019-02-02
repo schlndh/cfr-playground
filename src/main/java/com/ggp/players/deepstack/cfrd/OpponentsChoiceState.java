@@ -14,12 +14,14 @@ public class OpponentsChoiceState implements ICompleteInformationState {
     private ICompleteInformationState origGameState;
     private int opponentId;
     private double opponentCFV;
+    private OpponentsChoiceIS opponentsIs;
 
 
     public OpponentsChoiceState(ICompleteInformationState origGameState, int opponentId, double opponentCFV) {
         this.origGameState = origGameState;
         this.opponentId = opponentId;
         this.opponentCFV = opponentCFV;
+        this.opponentsIs = new OpponentsChoiceIS(opponentId, origGameState.getInfoSetForPlayer(opponentId));
     }
 
     @Override
@@ -39,13 +41,13 @@ public class OpponentsChoiceState implements ICompleteInformationState {
 
     @Override
     public List<IAction> getLegalActions() {
-        return Arrays.asList(FollowAction.instance, TerminateAction.instance);
+        return opponentsIs.getLegalActions();
     }
 
     @Override
     public IInformationSet getInfoSetForPlayer(int player) {
         if (player != opponentId) return origGameState.getInfoSetForPlayer(player);
-        return new OpponentsChoiceIS(opponentId, origGameState.getInfoSetForPlayer(opponentId));
+        return opponentsIs;
     }
 
     @Override
