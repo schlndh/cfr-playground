@@ -196,8 +196,8 @@ public class SolveCommand implements Runnable {
 
             bestStrategy.normalize();
             try {
-                String resFileName = String.format("%1$s/%2$s-solution-%3$.4f.strat", gameDir, getDateKey(),  bestStrategyExp);
-                System.out.println("Saving to: " + resFileName);
+                String resFileName = String.format("%1$s/%2$s-solution-%3$.4f-.strat", solverDir, getDateKey(),  bestStrategyExp, resultPostfix);
+                if (!quiet) System.out.println("Saving to: " + resFileName);
                 FileOutputStream fileOutputStream = new FileOutputStream(resFileName);
                 ObjectOutputStream objectOutputStream
                         = new ObjectOutputStream(fileOutputStream);
