@@ -1,6 +1,8 @@
 package com.ggp.players.deepstack.cfrd;
 
 import com.ggp.*;
+import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
+import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedIS;
 import com.ggp.players.deepstack.cfrd.actions.SelectCISAction;
 import com.ggp.players.deepstack.cfrd.percepts.ISSelectedPercept;
 import com.ggp.players.deepstack.utils.CISRange;
@@ -23,8 +25,9 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
         this.opponentIsReachProbs = new HashMap<>();
         ArrayList<IAction> legalActions = new ArrayList<>(range.size());
         for (Map.Entry<ICompleteInformationState, Double> entry: range.getProbabilities()) {
-            legalActions.add(new SelectCISAction(entry.getKey(), entry.getValue()/range.getNorm()));
-            this.opponentIsReachProbs.merge(entry.getKey().getInfoSetForPlayer(opponentId), entry.getValue(), (oldV, newV) -> oldV + newV);
+            ICompleteInformationState s = entry.getKey();
+            legalActions.add(new SelectCISAction(s, entry.getValue()/range.getNorm()));
+            this.opponentIsReachProbs.merge(((CFRDAugmentedCISWrapper)s).getOpponentsAugmentedIS(), entry.getValue(), (oldV, newV) -> oldV + newV);
         }
         this.legalActions = Collections.unmodifiableList(legalActions);
     }
@@ -59,8 +62,9 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
         if (!isLegal(a)) return null;
         SelectCISAction sel = (SelectCISAction) a;
         ICompleteInformationState s = sel.getSelectedState();
-        double isReachProb = opponentIsReachProbs.get(s.getInfoSetForPlayer(opponentId));
-        return new OpponentsChoiceState(s, opponentId, opponentCFV.get(s.getInfoSetForPlayer(opponentId))/isReachProb);
+        CFRDAugmentedIS is = ((CFRDAugmentedCISWrapper)s).getOpponentsAugmentedIS();
+        double isReachProb = opponentIsReachProbs.get(is);
+        return new OpponentsChoiceState(s, opponentId, opponentCFV.get(is)/isReachProb);
     }
 
     @Override

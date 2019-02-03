@@ -4,6 +4,7 @@ import com.ggp.*;
 import com.ggp.players.deepstack.IResolvingInfo;
 import com.ggp.players.deepstack.IResolvingListener;
 import com.ggp.players.deepstack.ISubgameResolver;
+import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
 import com.ggp.players.deepstack.cfrd.CFRDSubgameRoot;
 import com.ggp.players.deepstack.cfrd.OpponentsChoiceState;
 import com.ggp.players.deepstack.cfrd.actions.SelectCISAction;
@@ -50,7 +51,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private final int opponentId;
 
     private BaseCFRSolver.Factory solverFactory;
-    private SubgameMap subgameMap = new SubgameMap();
+    private SubgameMap subgameMap;
     private NextRangeTree nrt = new NextRangeTree();
     private HashMap<IInformationSet, Double> nextOpponentCFV = new HashMap<>();
     private IStrategy cummulativeStrategy;
@@ -119,6 +120,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         this.opponentId = PlayerHelpers.getOpponentId(myId);
         this.solverFactory = solverFactory;
         this.useISTargeting = useISTargeting;
+        this.subgameMap = new SubgameMap(opponentId);
     }
 
     private BaseCFRSolver createSolver(CFRDSubgameRoot subgame, HashSet<IInformationSet> accumulatedInfoSets) {
@@ -146,7 +148,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
                 if (tracker.isMyNextTurnReached()) {
                     double probWithoutOpponent = info.rndProb * PlayerHelpers.selectByPlayerId(myId, info.reachProb1, info.reachProb2);
                     double playerMul = PlayerHelpers.selectByPlayerId(myId, -1, 1);
-                    IInformationSet oppIs = tracker.getCurrentState().getInfoSetForPlayer(opponentId);
+                    IInformationSet oppIs = ((CFRDAugmentedCISWrapper)tracker.getCurrentState()).getOpponentsAugmentedIS();
                     double oppCFV = probWithoutOpponent * playerMul * p1Utility;
                     nextOpponentCFV.merge(oppIs, oppCFV, (oldV, newV) -> oldV + newV);
                 }
@@ -167,7 +169,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         if (tracker.isMyNextTurnReached()) {
             subgameMap.addSubgameState(s);
             nrt.add(s, tracker.getMyFirstIS(), tracker.getMyTopAction(), tracker.getRndProb());
-            nextOpponentCFV.putIfAbsent(s.getInfoSetForPlayer(opponentId), 0d);
+            nextOpponentCFV.putIfAbsent(((CFRDAugmentedCISWrapper)tracker.getCurrentState()).getOpponentsAugmentedIS(), 0d);
             return;
         }
         for (IAction a: s.getLegalActions()) {

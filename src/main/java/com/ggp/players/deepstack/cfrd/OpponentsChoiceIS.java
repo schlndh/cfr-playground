@@ -66,4 +66,9 @@ public class OpponentsChoiceIS implements IInformationSet {
     public int hashCode() {
         return Objects.hash(owner, followIS);
     }
+
+    @Override
+    public String toString() {
+        return "CFRDOpponentsChoiceIS{" + followIS.toString() + "}";
+    }
 }

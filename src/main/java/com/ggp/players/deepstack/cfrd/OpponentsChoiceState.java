@@ -1,8 +1,10 @@
 package com.ggp.players.deepstack.cfrd;
 
 import com.ggp.*;
+import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
 import com.ggp.players.deepstack.cfrd.actions.FollowAction;
 import com.ggp.players.deepstack.cfrd.actions.TerminateAction;
+import com.ggp.players.deepstack.cfrd.percepts.ISSelectedPercept;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,7 +23,7 @@ public class OpponentsChoiceState implements ICompleteInformationState {
         this.origGameState = origGameState;
         this.opponentId = opponentId;
         this.opponentCFV = opponentCFV;
-        this.opponentsIs = new OpponentsChoiceIS(opponentId, origGameState.getInfoSetForPlayer(opponentId));
+        this.opponentsIs = new OpponentsChoiceIS(opponentId,((CFRDAugmentedCISWrapper)origGameState).getOpponentsAugmentedIS());
     }
 
     @Override
@@ -63,6 +65,10 @@ public class OpponentsChoiceState implements ICompleteInformationState {
 
     @Override
     public Iterable<IPercept> getPercepts(IAction a) {
+        if (a.getClass().equals(FollowAction.class)) {
+            // let the opponent know what he's entering the subgame with
+            return Collections.singleton(new ISSelectedPercept(opponentId, origGameState.getInfoSetForPlayer(opponentId)));
+        }
         return Collections.EMPTY_LIST;
     }
 

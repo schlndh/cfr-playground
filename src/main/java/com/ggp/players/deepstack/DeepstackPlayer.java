@@ -1,6 +1,8 @@
 package com.ggp.players.deepstack;
 
 import com.ggp.*;
+import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
+import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedGameDescriptionWrapper;
 import com.ggp.players.deepstack.resolvers.ExternalCFRResolver;
 import com.ggp.players.deepstack.utils.*;
 import com.ggp.solvers.cfr.BaseCFRSolver;
@@ -83,13 +85,15 @@ public class DeepstackPlayer implements IPlayer {
     public DeepstackPlayer(int id, IGameDescription gameDesc, ISubgameResolver.Factory resolverFactory) {
         this.id = id;
         this.opponentId = PlayerHelpers.getOpponentId(id);
-        IInformationSet initialSet = gameDesc.getInitialInformationSet(id);
+        gameDesc = new CFRDAugmentedGameDescriptionWrapper(gameDesc, opponentId);
+        this.gameDesc = gameDesc;
+        IInformationSet initialSet = this.gameDesc.getInitialInformationSet(id);
+        CFRDAugmentedCISWrapper initialState = (CFRDAugmentedCISWrapper) this.gameDesc.getInitialState();
         hiddenInfo = initialSet;
-        IInformationSet initialOpponentSet = gameDesc.getInitialInformationSet(opponentId);
-        range = new CISRange(gameDesc.getInitialState());
+        IInformationSet initialOpponentSet = initialState.getOpponentsAugmentedIS();
+        range = new CISRange(initialState);
         opponentCFV = new HashMap<>(1);
         opponentCFV.put(initialOpponentSet, 0d);
-        this.gameDesc = gameDesc;
         this.resolverFactory = resolverFactory;
     }
 
