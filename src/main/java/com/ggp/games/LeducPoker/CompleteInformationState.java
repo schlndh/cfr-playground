@@ -36,7 +36,7 @@ public class CompleteInformationState implements ICompleteInformationState {
                 legalDealActions.add(new DealCardAction(i, player));
             }
             if (round == Rounds.PublicCard && player1IS.getPrivateCard() == player2IS.getPrivateCard()) {
-                legalDealActions.remove(player1IS.getPrivateCard());
+                legalDealActions.remove((int) player1IS.getPrivateCard());
             }
         }
     }
