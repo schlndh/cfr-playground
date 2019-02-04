@@ -240,7 +240,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
         double newSuffixReachProb = actionProb * ret.suffixReachProb;
         double cfv = probWithoutPlayer * utility / totalSampleProb;
 
-        final double p1Utility = PlayerHelpers.selectByPlayerId(player, 1, -1) * utility;
+        final double p1Utility = PlayerHelpers.selectByPlayerId(player, 1, -1) * utility / totalSampleProb;
         listeners.forEach(listener -> listener.leavingState(tracker, info, p1Utility));
 
         if (actingPlayer == player) {
