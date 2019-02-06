@@ -57,6 +57,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private IStrategy cummulativeStrategy;
     private BaseCFRSolver lastSolver = null;
     private final boolean useISTargeting;
+    private long visitedStates = 0;
 
     private class InfoSetTargeting implements ISearchTargeting {
         private final List<Integer> rootTargeting;
@@ -103,8 +104,8 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
         @Override
         public long getVisitedStatesInCurrentResolving() {
-            if (lastSolver == null) return 0;
-            return lastSolver.getVisitedStates();
+            if (lastSolver == null) return visitedStates;
+            return visitedStates + lastSolver.getVisitedStates();
         }
     }
 
@@ -165,6 +166,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
     protected void findMyNextTurn(CFRDTracker tracker) {
         ICompleteInformationState s = tracker.getCurrentState();
+        visitedStates++;
         if (s.isTerminal()) return;
         if (tracker.isMyNextTurnReached()) {
             subgameMap.addSubgameState(s);
