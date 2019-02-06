@@ -143,8 +143,8 @@ public class EvaluateCommand implements Runnable {
                 bestStrategyExp = exp;
             }
             if (!quiet) {
-                System.out.println(String.format("(%5d ms, %12d states) -> %.4f exp | %.4g states/s",
-                        (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(entry.getEntryTimeMs() - lastTime)));
+                System.out.println(String.format("(%5d ms, %12d total states, %8d avg. path states) -> %.4f exp | %.4g states/s",
+                        (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), entry.getPathStatesAvg(),exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(entry.getEntryTimeMs() - lastTime)));
             }
             lastEntryStates = entry.getAvgVisitedStates();
             lastTime = entry.getEntryTimeMs();

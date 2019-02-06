@@ -53,7 +53,7 @@ public class GamePlayingEvaluator implements IDeepstackEvaluator {
     public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, ISubgameResolver.Factory subgameResolverFactory, boolean quiet) {
         IPlayerFactory deepstack = new DeepstackPlayer.Factory(subgameResolverFactory, stratAggregator);
         IPlayerFactory random = new RandomPlayer.Factory();
-
+        long lastVisitedStates[] = new long[stratAggregator.getEntries().size()];
         for (int i = 0; i < gameCount; ++i) {
             IPlayerFactory pl1 = deepstack, pl2 = random;
             if (i % 2 == 1) {
@@ -64,6 +64,11 @@ public class GamePlayingEvaluator implements IDeepstackEvaluator {
             GameManager manager = new GameManager(pl1, pl2, gameDesc);
             manager.run(initMs, timeoutMs);
             List<EvaluatorEntry> entries = stratAggregator.getEntries();
+            for (int j = 0; j < entries.size(); ++j) {
+                EvaluatorEntry e = entries.get(j);
+                e.addPathStates(e.getAvgVisitedStates() - lastVisitedStates[j], 1);
+                lastVisitedStates[j] = e.getAvgVisitedStates();
+            }
             Strategy strat = entries.get(entries.size() - 1).getAggregatedStrat();
             double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
             if (!quiet) System.out.println(String.format("Game %d: defined IS %d, last strategy exploitability %f", i, strat.countDefinedInformationSets(), exp));

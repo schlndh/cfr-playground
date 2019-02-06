@@ -8,6 +8,10 @@ public class EvaluatorEntry {
     private double avgTimeWeigthNorm = 0;
     private long visitedStates = 0;
     private long visitedStatesNorm = 1;
+    private long pathStatesMin = Long.MAX_VALUE;
+    private long pathStatesMax = 0;
+    private long pathStatesSum = 0;
+    private double pathStatesNorm = 0;
     private Strategy aggregatedStrat = new Strategy();
 
     public EvaluatorEntry(double intendedTimeMs) {
@@ -48,5 +52,24 @@ public class EvaluatorEntry {
 
     public void setVisitedStatesNorm(long visitedStatesNorm) {
         this.visitedStatesNorm = visitedStatesNorm;
+    }
+
+    public long getPathStatesMin() {
+        return pathStatesMin;
+    }
+
+    public long getPathStatesMax() {
+        return pathStatesMax;
+    }
+
+    public long getPathStatesAvg() {
+        return (long) (pathStatesSum / pathStatesNorm);
+    }
+
+    public void addPathStates(long pathStates, double weight) {
+        if (pathStatesMin > pathStates) pathStatesMin = pathStates;
+        else if (pathStatesMax < pathStates) pathStatesMax = pathStates;
+        pathStatesSum += weight * pathStates;
+        pathStatesNorm += weight;
     }
 }
