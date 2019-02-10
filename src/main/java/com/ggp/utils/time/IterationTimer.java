@@ -1,6 +1,4 @@
-package com.ggp.players.deepstack.utils;
-
-import com.ggp.utils.time.StopWatch;
+package com.ggp.utils.time;
 
 public class IterationTimer {
     private StopWatch totalTime = new StopWatch();
