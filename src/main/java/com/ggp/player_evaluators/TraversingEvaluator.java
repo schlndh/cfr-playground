@@ -1,10 +1,7 @@
-package com.ggp.players.deepstack.evaluators;
+package com.ggp.player_evaluators;
 
 import com.ggp.*;
-import com.ggp.players.deepstack.DeepstackPlayer;
-import com.ggp.players.deepstack.ISubgameResolver;
-import com.ggp.players.deepstack.debug.StrategyAggregatorListener;
-import com.ggp.utils.strategy.InfoSetStrategy;
+import com.ggp.player_evaluators.listeners.StrategyAggregatorListener;
 import com.ggp.utils.CompleteInformationStateWrapper;
 import com.ggp.IInfoSetStrategy;
 import com.ggp.utils.PlayerHelpers;
@@ -19,7 +16,7 @@ import java.util.List;
  * Evaluates Deepstack configuration by traversing the game tree and computing strategy at each decision point,
  * while aggregating the resulting strategies at given time intervals.
  */
-public class TraversingEvaluator implements IDeepstackEvaluator {
+public class TraversingEvaluator implements IPlayerEvaluator {
     public static class Factory implements IFactory {
         private int count;
 
@@ -28,7 +25,7 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
         }
 
         @Override
-        public IDeepstackEvaluator create(int initMs, List<Integer> logPointsMs) {
+        public IPlayerEvaluator create(int initMs, List<Integer> logPointsMs) {
             return new TraversingEvaluator(initMs, count, logPointsMs);
         }
     }
@@ -52,7 +49,7 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
         this.logPointsMs = new ArrayList<>(logPointsMs);
     }
 
-    private void applyPercepts(DeepstackPlayer pl1, DeepstackPlayer pl2, Iterable<IPercept> percepts) {
+    private void applyPercepts(IEvaluablePlayer pl1, IEvaluablePlayer pl2, Iterable<IPercept> percepts) {
         for (IPercept p: percepts) {
             PlayerHelpers.selectByPlayerId(p.getTargetPlayer(), pl1, pl2).receivePercepts(p);
         }
@@ -80,18 +77,16 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
     }
 
     private static class ActCacheEntry {
-        public ISubgameResolver.ActResult actResult;
-        public DeepstackPlayer playerWithComputedStrat;
+        public IEvaluablePlayer playerWithComputedStrat;
         public List<EvaluatorEntry> entries;
 
-        public ActCacheEntry(ISubgameResolver.ActResult actResult, DeepstackPlayer playerWithComputedStrat, List<EvaluatorEntry> entries) {
-            this.actResult = actResult;
+        public ActCacheEntry(IEvaluablePlayer playerWithComputedStrat, List<EvaluatorEntry> entries) {
             this.playerWithComputedStrat = playerWithComputedStrat;
             this.entries = entries;
         }
     }
 
-    private void aggregateStrategy(HashMap<IInformationSet, ActCacheEntry> actCache, List<EvaluatorEntry> entries, CompleteInformationStateWrapper sw, DeepstackPlayer pl1, DeepstackPlayer pl2, double reachProb1, double reachProb2, int depth, long[] pathStates) {
+    private void aggregateStrategy(HashMap<IInformationSet, ActCacheEntry> actCache, List<EvaluatorEntry> entries, CompleteInformationStateWrapper sw, IEvaluablePlayer pl1, IEvaluablePlayer pl2, double reachProb1, double reachProb2, int depth, long[] pathStates) {
         ICompleteInformationState s = sw.getOrigState();
         if (s.isTerminal()) {
             for (int i = 0; i < entries.size(); ++i) {
@@ -108,7 +103,7 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
             for (IRandomNode.IRandomNodeAction rndAction: rndNode) {
                 IAction a = rndAction.getAction();
                 double actionProb = rndAction.getProb();
-                DeepstackPlayer npl1 = pl1.copy(), npl2 = pl2.copy();
+                IEvaluablePlayer npl1 = pl1.copy(), npl2 = pl2.copy();
                 applyPercepts(npl1, npl2, s.getPercepts(a));
                 printAction(actionIdx, legalActions.size());
                 aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) sw.next(a), npl1, npl2, reachProb1 * actionProb, reachProb2 * actionProb, depth + 1, pathStates);
@@ -121,20 +116,19 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
         IInformationSet is = s.getInfoSetForActingPlayer();
 
         ActCacheEntry cacheEntry = actCache.computeIfAbsent(sw.getInfoSetForActingPlayer(), k -> {
-            DeepstackPlayer currentPlayer = PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), pl1, pl2);
+            IEvaluablePlayer currentPlayer = PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), pl1, pl2);
             StrategyAggregatorListener strategyAggregatorListener = new StrategyAggregatorListener(logPointsMs);
             strategyAggregatorListener.initEnd(null);
             currentPlayer.registerResolvingListener(strategyAggregatorListener);
-            ISubgameResolver.ActResult res = currentPlayer.computeStrategy(timeoutMs);
+            currentPlayer.computeStrategy(timeoutMs);
             currentPlayer.unregisterResolvingListener(strategyAggregatorListener);
-            return new ActCacheEntry(res, currentPlayer, strategyAggregatorListener.getEntries());
+            return new ActCacheEntry(currentPlayer, strategyAggregatorListener.getEntries());
         });
 
-        ISubgameResolver.ActResult actResult = cacheEntry.actResult;
         long newPathStates[] = Arrays.copyOf(pathStates, pathStates.length);
         for (int i = 0; i < entries.size(); ++i) {
             EvaluatorEntry cachedEntry = cacheEntry.entries.get(i);
-            InfoSetStrategy cachedStrat = cachedEntry.getAggregatedStrat().getInfoSetStrategy(is);
+            IInfoSetStrategy cachedStrat = cachedEntry.getAggregatedStrat().getInfoSetStrategy(is);
             entries.get(i).addTime(cachedEntry.getEntryTimeMs(), playerReachProb);
             entries.get(i).getAggregatedStrat().addProbabilities(is, actionIdx -> playerReachProb * cachedStrat.getProbability(actionIdx));
             entries.get(i).addVisitedStates(cachedEntry.getAvgVisitedStates());
@@ -142,20 +136,20 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
         }
 
         int actionIdx = 0;
-        IInfoSetStrategy isStrat = actResult.cumulativeStrategy.getInfoSetStrategy(is);
+        IInfoSetStrategy isStrat = cacheEntry.playerWithComputedStrat.getNormalizedSubgameStrategy().getInfoSetStrategy(is);
         for (IAction a: legalActions) {
             double actionProb = isStrat.getProbability(actionIdx);
             double nrp1 = reachProb1, nrp2 = reachProb2;
-            DeepstackPlayer npl1 = null, npl2 = null;
+            IEvaluablePlayer npl1 = null, npl2 = null;
             if (s.getActingPlayerId() == 1) {
                 npl1 = cacheEntry.playerWithComputedStrat.copy();
                 npl2 = pl2.copy();
-                npl1.act(a, cacheEntry.actResult);
+                npl1.actWithPrecomputedStrategy(a);
                 nrp1 *= actionProb;
             } else if (s.getActingPlayerId() == 2) {
                 npl1 = pl1.copy();
                 npl2 = cacheEntry.playerWithComputedStrat.copy();
-                npl2.act(a, cacheEntry.actResult);
+                npl2.actWithPrecomputedStrategy(a);
                 nrp2 *= actionProb;
             }
             applyPercepts(npl1, npl2, s.getPercepts(a));
@@ -167,11 +161,10 @@ public class TraversingEvaluator implements IDeepstackEvaluator {
     }
 
     @Override
-    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, ISubgameResolver.Factory subgameResolverFactory, boolean quiet) {
+    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet) {
         this.quiet = quiet;
-        DeepstackPlayer.Factory playerFactory = new DeepstackPlayer.Factory(subgameResolverFactory, null);
         ICompleteInformationState initialState = gameDesc.getInitialState();
-        DeepstackPlayer pl1 = playerFactory.create(gameDesc, 1), pl2 = playerFactory.create(gameDesc, 2);
+        IEvaluablePlayer pl1 = playerFactory.create(gameDesc, 1), pl2 = playerFactory.create(gameDesc, 2);
         pl1.init(initMs);
         pl2.init(initMs);
         List<EvaluatorEntry> entries = new ArrayList<>(logPointsMs.size());

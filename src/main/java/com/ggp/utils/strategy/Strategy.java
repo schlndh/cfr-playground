@@ -1,5 +1,6 @@
 package com.ggp.utils.strategy;
 
+import com.ggp.IInfoSetStrategy;
 import com.ggp.IInformationSet;
 import com.ggp.IStrategy;
 
@@ -17,14 +18,14 @@ public class Strategy implements IStrategy {
      * @param probMap
      */
     public void setProbabilities(IInformationSet is, Function<Integer, Double> probMap) {
-        getInfoSetStrategy(is).setProbabilities(probMap);
+        getOrCreateISStrategy(is).setProbabilities(probMap);
     }
 
     public void addProbabilities(IInformationSet is, Function<Integer, Double> probMap) {
         if (isDefined(is)) {
-            getInfoSetStrategy(is).addProbabilities(probMap);
+            getOrCreateISStrategy(is).addProbabilities(probMap);
         } else {
-            getInfoSetStrategy(is).setProbabilities(probMap);
+            getOrCreateISStrategy(is).setProbabilities(probMap);
         }
     }
 
@@ -60,10 +61,19 @@ public class Strategy implements IStrategy {
         return strategy.containsKey(is);
     }
 
-    @Override
-    public InfoSetStrategy getInfoSetStrategy(IInformationSet is) {
+    private InfoSetStrategy getOrCreateISStrategy(IInformationSet is) {
         if (is == null) return null;
-        return strategy.computeIfAbsent(is, k -> new InfoSetStrategy(is));
+        return strategy.computeIfAbsent(is, k -> new InfoSetStrategy(is.getLegalActions().size()));
+    }
+
+    @Override
+    public IInfoSetStrategy getInfoSetStrategy(IInformationSet is) {
+        if (is == null) return null;
+        IInfoSetStrategy strat =  strategy.getOrDefault(is, null);
+        if (strat == null) {
+            return new UniformISStrategy(is.getLegalActions().size());
+        }
+        return strat;
     }
 
     public void setInfoSetStrategy(IInformationSet is, InfoSetStrategy isStrat) {

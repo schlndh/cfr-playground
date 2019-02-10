@@ -5,12 +5,9 @@ import com.ggp.IGameDescription;
 import com.ggp.IPlayerFactory;
 import com.ggp.parsers.ParseUtils;
 import com.ggp.parsers.exceptions.ConfigAssemblyException;
-import com.ggp.players.deepstack.DeepstackPlayer;
-import com.ggp.players.deepstack.ISubgameResolver;
-import com.ggp.players.deepstack.evaluators.EvaluatorEntry;
-import com.ggp.players.deepstack.evaluators.IDeepstackEvaluator;
-import com.ggp.players.deepstack.resolvers.ExternalCFRResolver;
-import com.ggp.solvers.cfr.BaseCFRSolver;
+import com.ggp.player_evaluators.IEvaluablePlayer;
+import com.ggp.player_evaluators.EvaluatorEntry;
+import com.ggp.player_evaluators.IPlayerEvaluator;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.Strategy;
 import picocli.CommandLine;
@@ -35,8 +32,8 @@ public class EvaluateCommand implements Runnable {
     @CommandLine.Option(names={"-g", "--game"}, description="Game to be played", required=true)
     private String game;
 
-    @CommandLine.Option(names={"-s", "--solver"}, description="CFR solver")
-    private String solver;
+    @CommandLine.Option(names={"-p", "--player"}, description="Player to evaluate")
+    private String player;
 
     @CommandLine.Option(names={"-e", "--evaluator"}, description="Evaluator")
     private String evaluator;
@@ -93,25 +90,27 @@ public class EvaluateCommand implements Runnable {
         if (gameDesc == null) {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
         }
-        BaseCFRSolver.Factory usedSolverFactory = null;
+
+        IEvaluablePlayer.IFactory usedPlayerFactory = null;
         try {
-            usedSolverFactory = mainCommand.getConfigurableFactory().create(BaseCFRSolver.Factory.class, ParseUtils.parseConfigExpression(solver));
+            usedPlayerFactory = (IEvaluablePlayer.IFactory) mainCommand.getConfigurableFactory().create(IPlayerFactory.class, ParseUtils.parseConfigExpression(player));
+        } catch (ClassCastException e) {
+            throw new CommandLine.ParameterException(new CommandLine(this), "Player " + player + " doesn't support evaluation.", null, player);
         } catch (ConfigAssemblyException e) { }
 
-        if (usedSolverFactory == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup solver '" + solver + "'.", null, solver);
+        if (usedPlayerFactory == null) {
+            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup player '" + player + "'.", null, player);
         }
 
-        IDeepstackEvaluator.IFactory usedEvaluatorFactory = null;
+        IPlayerEvaluator.IFactory usedEvaluatorFactory = null;
         try {
-            usedEvaluatorFactory = mainCommand.getConfigurableFactory().create(IDeepstackEvaluator.IFactory.class, ParseUtils.parseConfigExpression(evaluator));
+            usedEvaluatorFactory = mainCommand.getConfigurableFactory().create(IPlayerEvaluator.IFactory.class, ParseUtils.parseConfigExpression(evaluator));
         } catch (ConfigAssemblyException e) {}
 
         if (usedEvaluatorFactory == null) {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup evalautor '" + evaluator + "'.", null, evaluator);
         }
 
-        ISubgameResolver.Factory usedResolver = new ExternalCFRResolver.Factory(usedSolverFactory, useISTargeting);
         if (!quiet) System.out.println("Exploitability estimate for uniform strategy: " + ExploitabilityUtils.computeExploitability(new Strategy(), gameDesc));
 
         ArrayList<Integer> logPointsMs = new ArrayList<>();
@@ -121,16 +120,16 @@ public class EvaluateCommand implements Runnable {
             logTimeMs += evalFreq;
         }
         logPointsMs.add(timeLimit);
-        IDeepstackEvaluator evaluator = usedEvaluatorFactory.create(init, logPointsMs);
+        IPlayerEvaluator evaluator = usedEvaluatorFactory.create(init, logPointsMs);
 
         String gameDir = resultsDirectory + "/" + gameDesc.getConfigString();
-        String solverDir =  gameDir + "/" + usedSolverFactory.getConfigString();
+        String solverDir =  gameDir + "/" + usedPlayerFactory.getConfigString();
         if (!dryRun)
             new File(solverDir).mkdirs();
 
-        if (!quiet) System.out.println("Evaluating " + usedResolver.getConfigString() + " using " + evaluator.getConfigString());
-        warmup(gameDesc, new DeepstackPlayer.Factory(usedResolver));
-        List<EvaluatorEntry> entries = evaluator.evaluate(gameDesc, usedResolver, quiet);
+        if (!quiet) System.out.println("Evaluating " + usedPlayerFactory.getConfigString() + " using " + evaluator.getConfigString());
+        warmup(gameDesc, usedPlayerFactory);
+        List<EvaluatorEntry> entries = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet);
 
         long lastEntryStates = 0;
         double lastTime = 0;

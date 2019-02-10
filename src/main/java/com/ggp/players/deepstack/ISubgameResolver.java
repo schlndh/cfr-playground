@@ -1,6 +1,7 @@
 package com.ggp.players.deepstack;
 
 import com.ggp.*;
+import com.ggp.player_evaluators.IEvaluablePlayer;
 import com.ggp.players.deepstack.utils.*;
 
 import java.util.ArrayList;
@@ -9,7 +10,7 @@ import java.util.HashMap;
 public interface ISubgameResolver {
     interface Factory {
         ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
-                                ArrayList<IResolvingListener> resolvingListeners);
+                                ArrayList<IEvaluablePlayer.IListener> resolvingListeners);
         String getConfigString();
     }
 

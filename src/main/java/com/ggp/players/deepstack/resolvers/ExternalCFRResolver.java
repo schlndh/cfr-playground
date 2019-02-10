@@ -1,8 +1,7 @@
 package com.ggp.players.deepstack.resolvers;
 
 import com.ggp.*;
-import com.ggp.players.deepstack.IResolvingInfo;
-import com.ggp.players.deepstack.IResolvingListener;
+import com.ggp.player_evaluators.IEvaluablePlayer;
 import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
 import com.ggp.players.deepstack.cfrd.CFRDSubgameRoot;
@@ -15,6 +14,7 @@ import com.ggp.solvers.cfr.BaseCFRSolver;
 import com.ggp.solvers.cfr.ISearchTargeting;
 import com.ggp.solvers.cfr.ITargetableSolver;
 import com.ggp.utils.PlayerHelpers;
+import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 import com.ggp.utils.strategy.Strategy;
 
 import java.util.*;
@@ -31,7 +31,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
         @Override
         public ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
-                                       ArrayList<IResolvingListener> resolvingListeners)
+                                       ArrayList<IEvaluablePlayer.IListener> resolvingListeners)
         {
             return new ExternalCFRResolver(myId, hiddenInfo, myRange, opponentCFV, resolvingListeners, solverFactory, useISTargeting);
         }
@@ -46,8 +46,8 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private IInformationSet hiddenInfo;
     private CISRange range;
     private HashMap<IInformationSet, Double> opponentCFV;
-    private List<IResolvingListener> resolvingListeners;
-    private IResolvingInfo resInfo = new ResolvingInfo();
+    private List<IEvaluablePlayer.IListener> resolvingListeners;
+    private ResolvingInfo resInfo = new ResolvingInfo();
     private final int opponentId;
 
     private BaseCFRSolver.Factory solverFactory;
@@ -91,14 +91,14 @@ public class ExternalCFRResolver implements ISubgameResolver {
         }
     }
 
-    private class ResolvingInfo implements IResolvingInfo {
+    private class ResolvingInfo implements IEvaluablePlayer.IResolvingInfo {
         @Override
-        public IStrategy getUnnormalizedCumulativeStrategy() {
-            return cummulativeStrategy;
+        public IStrategy getNormalizedSubgameStrategy() {
+            return new NormalizingStrategyWrapper(cummulativeStrategy);
         }
 
         @Override
-        public IInformationSet getHiddenInfo() {
+        public IInformationSet getCurrentInfoSet() {
             return hiddenInfo;
         }
 
@@ -110,7 +110,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     }
 
     public ExternalCFRResolver(int myId, IInformationSet hiddenInfo, CISRange range, HashMap<IInformationSet, Double> opponentCFV,
-                               ArrayList<IResolvingListener> resolvingListeners, BaseCFRSolver.Factory solverFactory, boolean useISTargeting)
+                               ArrayList<IEvaluablePlayer.IListener> resolvingListeners, BaseCFRSolver.Factory solverFactory, boolean useISTargeting)
     {
         this.myId = myId;
         this.hiddenInfo = hiddenInfo;

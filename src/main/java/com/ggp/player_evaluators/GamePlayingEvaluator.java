@@ -1,11 +1,9 @@
-package com.ggp.players.deepstack.evaluators;
+package com.ggp.player_evaluators;
 
 import com.ggp.GameManager;
 import com.ggp.IGameDescription;
 import com.ggp.IPlayerFactory;
-import com.ggp.players.deepstack.DeepstackPlayer;
-import com.ggp.players.deepstack.ISubgameResolver;
-import com.ggp.players.deepstack.debug.StrategyAggregatorListener;
+import com.ggp.player_evaluators.listeners.StrategyAggregatorListener;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.players.random.RandomPlayer;
@@ -17,7 +15,7 @@ import java.util.List;
  * Evaluates Deepstack configuration by playing number of games against random opponent, while aggregating computed strategies
  * at encountered decision points.
  */
-public class GamePlayingEvaluator implements IDeepstackEvaluator {
+public class GamePlayingEvaluator implements IPlayerEvaluator {
     public static class Factory implements IFactory {
         private int gameCount;
 
@@ -26,7 +24,7 @@ public class GamePlayingEvaluator implements IDeepstackEvaluator {
         }
 
         @Override
-        public IDeepstackEvaluator create(int initMs, List<Integer> logPointsMs) {
+        public IPlayerEvaluator create(int initMs, List<Integer> logPointsMs) {
             return new GamePlayingEvaluator(initMs, logPointsMs, gameCount);
         }
     }
@@ -50,15 +48,15 @@ public class GamePlayingEvaluator implements IDeepstackEvaluator {
     }
 
     @Override
-    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, ISubgameResolver.Factory subgameResolverFactory, boolean quiet) {
-        IPlayerFactory deepstack = new DeepstackPlayer.Factory(subgameResolverFactory, stratAggregator);
+    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet) {
         IPlayerFactory random = new RandomPlayer.Factory();
         long lastVisitedStates[] = new long[stratAggregator.getEntries().size()];
+        playerFactory.registerResolvingListener(stratAggregator);
         for (int i = 0; i < gameCount; ++i) {
-            IPlayerFactory pl1 = deepstack, pl2 = random;
+            IPlayerFactory pl1 = playerFactory, pl2 = random;
             if (i % 2 == 1) {
                 pl1 = random;
-                pl2 = deepstack;
+                pl2 = playerFactory;
             }
             stratAggregator.reinit();
             GameManager manager = new GameManager(pl1, pl2, gameDesc);

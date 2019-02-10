@@ -1,6 +1,7 @@
 package com.ggp.players.deepstack;
 
 import com.ggp.*;
+import com.ggp.player_evaluators.IEvaluablePlayer;
 import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
 import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedGameDescriptionWrapper;
 import com.ggp.players.deepstack.resolvers.ExternalCFRResolver;
@@ -11,11 +12,11 @@ import com.ggp.utils.random.RandomSampler;
 
 import java.util.*;
 
-public class DeepstackPlayer implements IPlayer {
-    public static class Factory implements IPlayerFactory {
+public class DeepstackPlayer implements IEvaluablePlayer {
+    public static class Factory implements IEvaluablePlayer.IFactory {
         private static final long serialVersionUID = 1L;
         private ISubgameResolver.Factory resolverFactory;
-        private IResolvingListener listener;
+        private ArrayList<IEvaluablePlayer.IListener> resolvingListeners = new ArrayList<>();
 
         public Factory(ISubgameResolver.Factory resolverFactory) {
             this.resolverFactory = resolverFactory;
@@ -29,16 +30,23 @@ public class DeepstackPlayer implements IPlayer {
             this(new ExternalCFRResolver.Factory(cfrSolverFactory, useISTargeting));
         }
 
-        public Factory(ISubgameResolver.Factory resolverFactory, IResolvingListener listener) {
-            this.resolverFactory = resolverFactory;
-            this.listener = listener;
-        }
-
         @Override
         public DeepstackPlayer create(IGameDescription game, int role) {
             DeepstackPlayer ret = new DeepstackPlayer(role, game, resolverFactory);
-            if (listener != null) ret.registerResolvingListener(listener);
+            for (IListener l: resolvingListeners) {
+                if (l != null) ret.registerResolvingListener(l);
+            }
             return ret;
+        }
+
+        @Override
+        public void registerResolvingListener(IListener listener) {
+            if (listener != null) resolvingListeners.add(listener);
+        }
+
+        @Override
+        public void unregisterResolvingListener(IListener listener) {
+            if (listener != null) resolvingListeners.remove(listener);
         }
 
         @Override
@@ -57,7 +65,7 @@ public class DeepstackPlayer implements IPlayer {
     private IGameDescription gameDesc;
     private IAction myLastAction;
     private IStrategy lastCumulativeStrategy;
-    private ArrayList<IResolvingListener> resolvingListeners = new ArrayList<>();
+    private ArrayList<IEvaluablePlayer.IListener> resolvingListeners = new ArrayList<>();
     private ISubgameResolver.Factory resolverFactory;
     private SubgameMap subgameMap;
     private NextRangeTree nrt;
@@ -66,7 +74,7 @@ public class DeepstackPlayer implements IPlayer {
     private DeepstackPlayer(int id, CISRange range, IInformationSet hiddenInfo,
                             IGameDescription gameDesc,
                             IAction myLastAction,
-                            IStrategy lastCumulativeStrategy, ArrayList<IResolvingListener> resolvingListeners,
+                            IStrategy lastCumulativeStrategy, ArrayList<IEvaluablePlayer.IListener> resolvingListeners,
                             ISubgameResolver.Factory resolverFactory, SubgameMap subgameMap, NextRangeTree nrt, HashMap<IInformationSet, Double> opponentCFV) {
         this.id = id;
         this.opponentId = PlayerHelpers.getOpponentId(id);
@@ -97,11 +105,13 @@ public class DeepstackPlayer implements IPlayer {
         this.resolverFactory = resolverFactory;
     }
 
-    public void registerResolvingListener(IResolvingListener listener) {
+    @Override
+    public void registerResolvingListener(IListener listener) {
         if (listener != null) resolvingListeners.add(listener);
     }
 
-    public void unregisterResolvingListener(IResolvingListener listener) {
+    @Override
+    public void unregisterResolvingListener(IListener listener) {
         if (listener != null) resolvingListeners.remove(listener);
     }
 
@@ -125,14 +135,21 @@ public class DeepstackPlayer implements IPlayer {
         return id;
     }
 
-    public ISubgameResolver.ActResult computeStrategy(long timeoutMillis) {
+    @Override
+    public void computeStrategy(long timeoutMillis) {
         IterationTimer timer = new IterationTimer(timeoutMillis);
         timer.start();
         range = new CISRange(subgameMap.getSubgame(hiddenInfo), nrt, lastCumulativeStrategy);
         ISubgameResolver r = createResolver();
-        return r.act(timer);
+        ISubgameResolver.ActResult res = r.act(timer);
+
+        lastCumulativeStrategy = res.cumulativeStrategy;
+        subgameMap = res.subgameMap;
+        nrt = res.nrt;
+        opponentCFV = res.nextOpponentCFV;
     }
 
+    @Override
     public DeepstackPlayer copy() {
         return new DeepstackPlayer(id, range, hiddenInfo,
                 gameDesc, myLastAction,
@@ -140,24 +157,21 @@ public class DeepstackPlayer implements IPlayer {
     }
 
     private IAction act(IAction forcedAction, long timeoutMillis) {
-        ISubgameResolver.ActResult res = computeStrategy(timeoutMillis);
+        computeStrategy(timeoutMillis);
         IAction selectedAction;
         if (forcedAction == null) {
-            selectedAction = PlayerHelpers.sampleAction(sampler, hiddenInfo, res.cumulativeStrategy);
+            selectedAction = PlayerHelpers.sampleAction(sampler, hiddenInfo, lastCumulativeStrategy);
         } else {
             selectedAction = forcedAction;
         }
 
-        act(selectedAction, res);
+        actWithPrecomputedStrategy(selectedAction);
         return selectedAction;
     }
 
-    public void act(IAction selectedAction, ISubgameResolver.ActResult res) {
-        lastCumulativeStrategy = res.cumulativeStrategy;
+    @Override
+    public void actWithPrecomputedStrategy(IAction selectedAction) {
         myLastAction = selectedAction;
-        subgameMap = res.subgameMap;
-        nrt = res.nrt;
-        opponentCFV = res.nextOpponentCFV;
         hiddenInfo = hiddenInfo.next(selectedAction);
     }
 
@@ -180,5 +194,10 @@ public class DeepstackPlayer implements IPlayer {
         return "DeepstackPlayer{" +
                 "subgameResolver=" + resolverFactory.getConfigString() +
                 '}';
+    }
+
+    @Override
+    public IStrategy getNormalizedSubgameStrategy() {
+        return lastCumulativeStrategy;
     }
 }

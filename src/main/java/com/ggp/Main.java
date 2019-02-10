@@ -7,9 +7,9 @@ import com.ggp.parsers.ParameterList;
 import com.ggp.players.PerfectRecallPlayerFactory;
 import com.ggp.players.SolvingPlayer;
 import com.ggp.players.deepstack.DeepstackPlayer;
-import com.ggp.players.deepstack.evaluators.GamePlayingEvaluator;
-import com.ggp.players.deepstack.evaluators.IDeepstackEvaluator;
-import com.ggp.players.deepstack.evaluators.TraversingEvaluator;
+import com.ggp.player_evaluators.GamePlayingEvaluator;
+import com.ggp.player_evaluators.IPlayerEvaluator;
+import com.ggp.player_evaluators.TraversingEvaluator;
 import com.ggp.solvers.cfr.IRegretMatching;
 import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.solvers.cfr.regret_matching.DiscountedRegretMatching;
@@ -196,12 +196,12 @@ public class Main {
     }
 
     private static void registerDeepstackEvaluators(ConfigurableFactory factory) throws NoSuchMethodException {
-        factory.register(IDeepstackEvaluator.IFactory.class, "GamePlayingEvaluator",
+        factory.register(IPlayerEvaluator.IFactory.class, "GamePlayingEvaluator",
                 ConfigurableFactory.createPositionalParameterList(
                         GamePlayingEvaluator.Factory.class.getConstructor(int.class)
                 )
         );
-        factory.register(IDeepstackEvaluator.IFactory.class, "TraversingEvaluator",
+        factory.register(IPlayerEvaluator.IFactory.class, "TraversingEvaluator",
                 ConfigurableFactory.createPositionalParameterList(
                         TraversingEvaluator.Factory.class.getConstructor(int.class)
                 )

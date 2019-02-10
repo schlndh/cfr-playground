@@ -1,9 +1,9 @@
-package com.ggp.players.deepstack.debug;
+package com.ggp.player_evaluators.listeners;
 
 import com.ggp.IInformationSet;
 import com.ggp.IStrategy;
-import com.ggp.players.deepstack.IResolvingInfo;
-import com.ggp.players.deepstack.evaluators.EvaluatorEntry;
+import com.ggp.player_evaluators.IEvaluablePlayer;
+import com.ggp.player_evaluators.EvaluatorEntry;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.IInfoSetStrategy;
 import com.ggp.utils.time.TimedCounter;
@@ -27,13 +27,13 @@ public class StrategyAggregatorListener extends BaseListener {
     }
 
     @Override
-    public void resolvingStart(IResolvingInfo resInfo) {
+    public void resolvingStart(IEvaluablePlayer.IResolvingInfo resInfo) {
         timedCounter.reset();
         strategyIdx = 0;
     }
 
-    private void mergeStrategy(IResolvingInfo resInfo) {
-        IStrategy strat = resInfo.getUnnormalizedCumulativeStrategy();
+    private void mergeStrategy(IEvaluablePlayer.IResolvingInfo resInfo) {
+        IStrategy strat = resInfo.getNormalizedSubgameStrategy();
         EvaluatorEntry entry = entries.get(strategyIdx);
         entry.addTime(timedCounter.getLiveDurationMs(), 1);
         Strategy target = entry.getAggregatedStrat();
@@ -45,14 +45,14 @@ public class StrategyAggregatorListener extends BaseListener {
     }
 
     @Override
-    public void resolvingEnd(IResolvingInfo resInfo) {
+    public void resolvingEnd(IEvaluablePlayer.IResolvingInfo resInfo) {
         if (!hasInitEnded()) return;
         strategyIdx = logPointsMs.size() - 1;
         mergeStrategy(resInfo);
     }
 
     @Override
-    public void resolvingIterationEnd(IResolvingInfo resInfo) {
+    public void resolvingIterationEnd(IEvaluablePlayer.IResolvingInfo resInfo) {
         if (!hasInitEnded()) return;
         if (strategyIdx >= logPointsMs.size() - 1) return;
         int counter = timedCounter.tryIncrement();

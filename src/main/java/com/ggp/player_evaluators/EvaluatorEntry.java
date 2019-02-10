@@ -1,4 +1,4 @@
-package com.ggp.players.deepstack.evaluators;
+package com.ggp.player_evaluators;
 
 import com.ggp.utils.strategy.Strategy;
 
