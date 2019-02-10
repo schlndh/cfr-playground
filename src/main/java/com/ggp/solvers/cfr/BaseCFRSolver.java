@@ -96,12 +96,12 @@ public abstract class BaseCFRSolver {
         return new IStrategy() {
             @Override
             public Iterable<IInformationSet> getDefinedInformationSets() {
-                return isInfos.keySet();
+                return accumulationFilter.getAccumulated();
             }
 
             @Override
             public boolean isDefined(IInformationSet is) {
-                return isInfos.containsKey(is);
+                return accumulationFilter.isAccumulated(is);
             }
 
             @Override
