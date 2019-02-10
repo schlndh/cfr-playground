@@ -38,4 +38,9 @@ public class DeepstackUtilityEstimatorWrapper implements IUtilityEstimator {
     public boolean canEstimate(IGameTraversalTracker tracker) {
         return ((CFRDTracker)tracker).wasMyNextTurnReached() && utilityEstimator.canEstimate(tracker);
     }
+
+    @Override
+    public IUtilityEstimator copy() {
+        return new DeepstackUtilityEstimatorWrapper(utilityEstimator.copy());
+    }
 }

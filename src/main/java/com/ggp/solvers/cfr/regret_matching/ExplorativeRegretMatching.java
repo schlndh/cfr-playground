@@ -57,4 +57,9 @@ public class ExplorativeRegretMatching implements IRegretMatching {
     public double getRegret(int actionIdx) {
         return rm.getRegret(actionIdx);
     }
+
+    @Override
+    public IRegretMatching copy() {
+        return new ExplorativeRegretMatching(rm.copy(), gamma);
+    }
 }

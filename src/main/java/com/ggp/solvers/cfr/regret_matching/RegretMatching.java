@@ -15,6 +15,10 @@ public class RegretMatching extends BaseRegretMatching {
         }
     }
 
+    private RegretMatching(RegretMatching rm) {
+        super(rm);
+    }
+
     public RegretMatching(int actionSize) {
         super(actionSize);
     }
@@ -22,5 +26,10 @@ public class RegretMatching extends BaseRegretMatching {
     @Override
     protected double sumRegrets(double r1, double r2) {
         return r1 + r2;
+    }
+
+    @Override
+    public IRegretMatching copy() {
+        return new RegretMatching(this);
     }
 }

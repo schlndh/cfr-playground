@@ -9,6 +9,12 @@ public class BaseCFRISInfo {
     protected double[] strat;
     protected double[] cumulativeStrat;
 
+    protected BaseCFRISInfo(BaseCFRISInfo info) {
+        this.regretMatching = info.regretMatching.copy();
+        this.strat = Arrays.copyOf(info.strat, info.strat.length);
+        this.cumulativeStrat = Arrays.copyOf(info.cumulativeStrat, info.cumulativeStrat.length);
+    }
+
     public BaseCFRISInfo(IRegretMatching.IFactory rmFactory, int actionSize) {
         this.regretMatching = rmFactory.create(actionSize);
         this.strat = new double[actionSize];
@@ -31,5 +37,9 @@ public class BaseCFRISInfo {
 
     public void doRegretMatching() {
         regretMatching.getRegretMatchedStrategy(strat);
+    }
+
+    public BaseCFRISInfo copy() {
+        return new BaseCFRISInfo(this);
     }
 }

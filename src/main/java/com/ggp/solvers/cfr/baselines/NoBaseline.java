@@ -23,4 +23,9 @@ public class NoBaseline implements IBaseline {
     @Override
     public void update(int actionIdx, double utilityEstimate) {
     }
+
+    @Override
+    public IBaseline copy() {
+        return this;
+    }
 }

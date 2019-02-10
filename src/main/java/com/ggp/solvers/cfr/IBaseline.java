@@ -8,4 +8,5 @@ public interface IBaseline {
 
     double getValue(int actionIdx);
     void update(int actionIdx, double utilityEstimate);
+    IBaseline copy();
 }

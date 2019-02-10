@@ -31,4 +31,6 @@ public interface IUtilityEstimator {
      * @return
      */
     boolean canEstimate(IGameTraversalTracker tracker);
+
+    IUtilityEstimator copy();
 }

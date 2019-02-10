@@ -11,6 +11,7 @@ import com.ggp.utils.strategy.Strategy;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class BaseCFRSolver {
     public static abstract class Factory {
@@ -51,6 +52,18 @@ public abstract class BaseCFRSolver {
     protected long visitedStates = 0;
     private double totalRegret = 0;
 
+    protected BaseCFRSolver(BaseCFRSolver solver, IStrategyAccumulationFilter accumulationFilter) {
+        this.rmFactory = solver.rmFactory;
+        for (Map.Entry<IInformationSet, BaseCFRISInfo> entry: solver.isInfos.entrySet()) {
+            isInfos.put(entry.getKey(), entry.getValue().copy());
+        }
+        if (accumulationFilter == null) accumulationFilter = getDefaultStrategyAccumulationFilter();
+        this.accumulationFilter = accumulationFilter;
+        this.listeners = new ArrayList<>(solver.listeners);
+        this.visitedStates = solver.visitedStates;
+        this.totalRegret = solver.totalRegret;
+    }
+
     public BaseCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter) {
         this.rmFactory = rmFactory;
         if (accumulationFilter == null) accumulationFilter = getDefaultStrategyAccumulationFilter();
@@ -84,6 +97,10 @@ public abstract class BaseCFRSolver {
 
     public void registerListener(DepthLimitedCFRSolver.IListener listener) {
         if (listener != null) listeners.add(listener);
+    }
+
+    public void clearListeners() {
+        listeners.clear();
     }
 
     /**
@@ -160,4 +177,6 @@ public abstract class BaseCFRSolver {
     public double getTotalRegret() {
         return totalRegret;
     }
+
+    public abstract BaseCFRSolver copy(IStrategyAccumulationFilter accumulationFilter);
 }

@@ -92,4 +92,9 @@ public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
     public boolean canEstimate(IGameTraversalTracker tracker) {
         return true;
     }
+
+    @Override
+    public IUtilityEstimator copy() {
+        return new RandomPlayoutUtilityEstimator(iters);
+    }
 }

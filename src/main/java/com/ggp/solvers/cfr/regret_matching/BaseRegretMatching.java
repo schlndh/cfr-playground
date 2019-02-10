@@ -3,8 +3,15 @@ package com.ggp.solvers.cfr.regret_matching;
 import com.ggp.solvers.cfr.IRegretMatching;
 import com.ggp.utils.strategy.InfoSetStrategy;
 
+import java.util.Arrays;
+
 abstract class BaseRegretMatching implements IRegretMatching {
     protected double[] actionRegrets;
+
+
+    protected BaseRegretMatching(BaseRegretMatching rm) {
+        this.actionRegrets = Arrays.copyOf(rm.actionRegrets, rm.actionRegrets.length);
+    }
 
     public BaseRegretMatching(int actionSize) {
         this.actionRegrets = new double[actionSize];

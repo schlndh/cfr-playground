@@ -10,4 +10,5 @@ public interface IRegretMatching {
     void addActionRegret(int actionIdx, double regretDiff);
     void getRegretMatchedStrategy(double[] probabilities);
     double getRegret(int actionIdx);
+    IRegretMatching copy();
 }

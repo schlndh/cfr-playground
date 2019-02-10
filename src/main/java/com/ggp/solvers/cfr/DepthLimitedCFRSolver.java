@@ -50,6 +50,16 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
     private final double cumulativeStratExp;
     private boolean[] updatePlayer = new boolean[]{false, true, true};
 
+    protected DepthLimitedCFRSolver(DepthLimitedCFRSolver solver, IStrategyAccumulationFilter accumulationFilter) {
+        super(solver, accumulationFilter);
+        this.depthLimit = solver.depthLimit;
+        this.utilityEstimator = solver.utilityEstimator;
+        if (this.utilityEstimator != null) this.utilityEstimator = this.utilityEstimator.copy();
+        this.iterationCounter = solver.iterationCounter;
+        this.alternatingUpdates = solver.alternatingUpdates;
+        this.cumulativeStratExp = solver.cumulativeStratExp;
+    }
+
     public DepthLimitedCFRSolver(IRegretMatching.IFactory rmFactory, IStrategyAccumulationFilter accumulationFilter,
                                  int depthLimit, IUtilityEstimator utilityEstimator, boolean alternatingUpdates, double cumulativeStratExp) {
         super(rmFactory, accumulationFilter);
@@ -57,6 +67,11 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         this.utilityEstimator = utilityEstimator;
         this.alternatingUpdates = alternatingUpdates;
         this.cumulativeStratExp = cumulativeStratExp;
+    }
+
+    @Override
+    public BaseCFRSolver copy(IStrategyAccumulationFilter accumulationFilter) {
+        return new DepthLimitedCFRSolver(this, accumulationFilter);
     }
 
     /**

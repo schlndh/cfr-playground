@@ -71,6 +71,16 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
         this.baselineFactory = baselineFactory;
     }
 
+    protected MCCFRSolver(MCCFRSolver solver, IStrategyAccumulationFilter accumulationFilter) {
+        super(solver, accumulationFilter);
+        this.explorationProb = solver.explorationProb;
+        this.targetingProb = solver.targetingProb;
+        this.iterationCounter = solver.iterationCounter;
+        this.baselineFactory = solver.baselineFactory;
+        this.cumulativeStratExp = solver.cumulativeStratExp;
+        this.rootTargeting = solver.rootTargeting;
+    }
+
     private static class CFRResult {
         public double suffixReachProb;
         public double sampleProb;
@@ -335,5 +345,10 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
     protected BaseCFRISInfo initIsInfo(IInformationSet is) {
         int actionSize = is.getLegalActions().size();
         return new MCCFRISInfo(rmFactory, actionSize, baselineFactory);
+    }
+
+    @Override
+    public BaseCFRSolver copy(IStrategyAccumulationFilter accumulationFilter) {
+        return new MCCFRSolver(this, accumulationFilter);
     }
 }

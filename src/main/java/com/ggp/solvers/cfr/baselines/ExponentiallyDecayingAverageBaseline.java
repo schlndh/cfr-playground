@@ -2,6 +2,8 @@ package com.ggp.solvers.cfr.baselines;
 
 import com.ggp.solvers.cfr.IBaseline;
 
+import java.util.Arrays;
+
 public class ExponentiallyDecayingAverageBaseline implements IBaseline {
     public static class Factory implements IFactory {
         private final double alpha;
@@ -30,6 +32,11 @@ public class ExponentiallyDecayingAverageBaseline implements IBaseline {
     private final double alpha;
     private double[] baselineValues;
 
+    private ExponentiallyDecayingAverageBaseline(ExponentiallyDecayingAverageBaseline bl) {
+        this.alpha = bl.alpha;
+        this.baselineValues = Arrays.copyOf(bl.baselineValues, bl.baselineValues.length);
+    }
+
     public ExponentiallyDecayingAverageBaseline(double alpha, int actionSize) {
         this.alpha = alpha;
         this.baselineValues = new double[actionSize];
@@ -44,5 +51,10 @@ public class ExponentiallyDecayingAverageBaseline implements IBaseline {
     @Override
     public void update(int actionIdx, double utilityEstimate) {
         baselineValues[actionIdx] = (1-alpha)*baselineValues[actionIdx] + alpha * utilityEstimate;
+    }
+
+    @Override
+    public IBaseline copy() {
+        return new ExponentiallyDecayingAverageBaseline(this);
     }
 }
