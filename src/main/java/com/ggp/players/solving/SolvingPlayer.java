@@ -1,4 +1,4 @@
-package com.ggp.players;
+package com.ggp.players.solving;
 
 import com.ggp.*;
 import com.ggp.player_evaluators.IEvaluablePlayer;
@@ -11,6 +11,7 @@ import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 import com.ggp.utils.time.IterationTimer;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class SolvingPlayer implements IEvaluablePlayer {
@@ -57,8 +58,23 @@ public class SolvingPlayer implements IEvaluablePlayer {
     private class SolvingInfo implements IEvaluablePlayer.IResolvingInfo {
         @Override
         public IStrategy getNormalizedSubgameStrategy() {
-            //TODO: limit this to current subgame
-            return new NormalizingStrategyWrapper(cfrSolver.getCumulativeStrat());
+            return new NormalizingStrategyWrapper(new IStrategy() {
+                    @Override
+                    public Iterable<IInformationSet> getDefinedInformationSets() {
+                        return subgame;
+                    }
+
+                    @Override
+                    public boolean isDefined(IInformationSet is) {
+                        return subgame.contains(is);
+                    }
+
+                    @Override
+                    public IInfoSetStrategy getInfoSetStrategy(IInformationSet is) {
+                        return cfrSolver.getCumulativeStrat().getInfoSetStrategy(is);
+                    }
+                }
+            );
         }
 
         @Override
@@ -80,6 +96,8 @@ public class SolvingPlayer implements IEvaluablePlayer {
     private ArrayList<IListener> resolvingListeners = new ArrayList<>();
     private SolvingInfo resInfo = new SolvingInfo();
     private long lastVisitedStates = 0;
+    private int resolves = -1;
+    private HashSet<IInformationSet> subgame = new HashSet<>();
 
     public SolvingPlayer(BaseCFRSolver cfrSolver, IGameDescription gameDesc, int role) {
         this.cfrSolver = cfrSolver;
@@ -95,6 +113,36 @@ public class SolvingPlayer implements IEvaluablePlayer {
         this.role = player.role;
         this.resolvingListeners = new ArrayList<>(player.resolvingListeners);
         this.lastVisitedStates = player.lastVisitedStates;
+        this.resolves = player.resolves;
+        this.subgame = new HashSet<>(player.subgame);
+    }
+
+    private void fillSubgame() {
+        subgame = new HashSet<>();
+        subgame.add(currentInfoSet);
+
+        // there is no point in finding the exact subgame, if nobody wants the subgame strategy
+        if (resolvingListeners.isEmpty()) return;
+        fillSubgame(rootTracker.getCurrentState(), 0);
+    }
+
+    private void fillSubgame(ICompleteInformationState s, int myActions) {
+        if (s.isTerminal()) return;
+        int myNextActions = myActions;
+        if (s.getActingPlayerId() == role) {
+            myNextActions++;
+            //TODO: prune all infoSets not below my current IS when targeting is used
+            // if (myActions == resolves && !s.getInfoSetForActingPlayer().equals(currentInfoSet)) return;
+
+            // add info sets where I act next
+            if (myActions == resolves + 1) {
+                subgame.add(s.getInfoSetForActingPlayer());
+                return;
+            }
+        }
+        for (IAction a: s.getLegalActions()) {
+            fillSubgame(s.next(a), myNextActions);
+        }
     }
 
     @Override
@@ -104,6 +152,8 @@ public class SolvingPlayer implements IEvaluablePlayer {
     }
 
     private void computeStrategy(IterationTimer timer) {
+        fillSubgame();
+        resolves++;
         resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo));
         while (timer.canDoAnotherIteration()) {
             timer.startIteration();
