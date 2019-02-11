@@ -5,7 +5,7 @@ import com.ggp.parsers.ConfigurableFactory;
 import com.ggp.parsers.Parameter;
 import com.ggp.parsers.ParameterList;
 import com.ggp.players.PerfectRecallPlayerFactory;
-import com.ggp.players.SolvingPlayer;
+import com.ggp.players.solving.SolvingPlayer;
 import com.ggp.players.deepstack.DeepstackPlayer;
 import com.ggp.player_evaluators.GamePlayingEvaluator;
 import com.ggp.player_evaluators.IPlayerEvaluator;

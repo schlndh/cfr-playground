@@ -87,7 +87,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         }
 
         @Override
-        public ISearchTargeting next(IAction a) {
+        public ISearchTargeting next(IAction a, int actionIdx) {
             return this;
         }
     }
@@ -158,7 +158,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         });
         if (useISTargeting && subgame != null && cfrSolver instanceof ITargetableSolver) {
             ITargetableSolver s = (ITargetableSolver) cfrSolver;
-            s.setTargeting(new InfoSetTargeting(subgame));
+            if (s.wantsTargeting()) s.setTargeting(new InfoSetTargeting(subgame));
         }
         cummulativeStrategy = cfrSolver.getCumulativeStrat();
         lastSolver = cfrSolver;

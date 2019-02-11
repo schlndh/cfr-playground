@@ -5,6 +5,7 @@ import com.ggp.player_evaluators.IEvaluablePlayer;
 import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
 import com.ggp.players.deepstack.trackers.SimpleTracker;
 import com.ggp.solvers.cfr.BaseCFRSolver;
+import com.ggp.solvers.cfr.ITargetableSolver;
 import com.ggp.utils.random.RandomSampler;
 import com.ggp.utils.strategy.NormalizingInfoSetStrategyWrapper;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
@@ -98,12 +99,20 @@ public class SolvingPlayer implements IEvaluablePlayer {
     private long lastVisitedStates = 0;
     private int resolves = -1;
     private HashSet<IInformationSet> subgame = new HashSet<>();
+    private ObjectTree<ActionIdxWrapper> currentPathTree = new ObjectTree<>();
+    private final boolean useISTargeting;
 
     public SolvingPlayer(BaseCFRSolver cfrSolver, IGameDescription gameDesc, int role) {
         this.cfrSolver = cfrSolver;
         this.currentInfoSet = gameDesc.getInitialInformationSet(role);
         this.rootTracker = SimpleTracker.createRoot(gameDesc.getInitialState());
         this.role = role;
+        if (cfrSolver instanceof ITargetableSolver) {
+            this.useISTargeting = ((ITargetableSolver) cfrSolver).wantsTargeting();
+        } else {
+            this.useISTargeting = false;
+        }
+
     }
 
     protected SolvingPlayer(SolvingPlayer player) {
@@ -115,24 +124,35 @@ public class SolvingPlayer implements IEvaluablePlayer {
         this.lastVisitedStates = player.lastVisitedStates;
         this.resolves = player.resolves;
         this.subgame = new HashSet<>(player.subgame);
+        this.useISTargeting = player.useISTargeting;
     }
 
     private void fillSubgame() {
         subgame = new HashSet<>();
         subgame.add(currentInfoSet);
 
-        // there is no point in finding the exact subgame, if nobody wants the subgame strategy
-        if (resolvingListeners.isEmpty()) return;
-        fillSubgame(rootTracker.getCurrentState(), 0);
+        if (resolvingListeners.isEmpty() && !useISTargeting) return;
+        fillSubgame(rootTracker.getCurrentState(), 0, new ArrayList<>());
+        if (useISTargeting) {
+            ITargetableSolver s = (ITargetableSolver) cfrSolver;
+            s.setTargeting(new ISSearchTargeting(currentPathTree));
+        }
     }
 
-    private void fillSubgame(ICompleteInformationState s, int myActions) {
+    private void fillSubgame(ICompleteInformationState s, int myActions, ArrayList<ActionIdxWrapper> actionPath) {
         if (s.isTerminal()) return;
         int myNextActions = myActions;
         if (s.getActingPlayerId() == role) {
             myNextActions++;
-            //TODO: prune all infoSets not below my current IS when targeting is used
-            // if (myActions == resolves && !s.getInfoSetForActingPlayer().equals(currentInfoSet)) return;
+            if (myActions == resolves) {
+                if (s.getInfoSetForActingPlayer().equals(currentInfoSet)) {
+                    if (useISTargeting) currentPathTree.addPath(actionPath);
+                }
+                // prune all infoSets not below my current IS when targeting is used
+                else if (useISTargeting) {
+                    return;
+                }
+            }
 
             // add info sets where I act next
             if (myActions == resolves + 1) {
@@ -140,8 +160,12 @@ public class SolvingPlayer implements IEvaluablePlayer {
                 return;
             }
         }
+        int actionIdx = 0;
         for (IAction a: s.getLegalActions()) {
-            fillSubgame(s.next(a), myNextActions);
+            actionPath.add(new ActionIdxWrapper(a, actionIdx));
+            fillSubgame(s.next(a), myNextActions, actionPath);
+            actionPath.remove(actionPath.size() - 1);
+            actionIdx++;
         }
     }
 

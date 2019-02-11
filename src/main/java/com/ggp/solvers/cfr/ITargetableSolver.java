@@ -6,4 +6,10 @@ public interface ITargetableSolver {
      * @param targeting targeting or null to disable targeting
      */
     void setTargeting(ISearchTargeting targeting);
+
+    /**
+     * Asks the solver if it wants targeting (eg. targeting probability > 0)
+     * @return
+     */
+    boolean wantsTargeting();
 }

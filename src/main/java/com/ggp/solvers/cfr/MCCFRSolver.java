@@ -189,7 +189,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             IAction action = legalActions.get(sample.actionIdx);
             CFRResult res = cfr(tracker.next(action), playerProb, opponentProb,
                     sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb,
-                    player, depth+1, (targeting != null) ? targeting.next(action) : null);
+                    player, depth+1, (targeting != null) ? targeting.next(action, sample.actionIdx) : null);
             res.suffixReachProb *= sample.untargetedProb; // action prob == untargeted sampling prob for random node
             double utility = 0;
             int actionIdx = 0;
@@ -233,7 +233,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             ret = cfr(tracker.next(action), newPlayerProb, newOpponentProb,
                     sampledAction.targetedProb * targetedSampleProb,
                     sampledAction.untargetedProb * untargetedSampleProb, player,
-                    depth+1, (targeting != null) ? targeting.next(action) : null);
+                    depth+1, (targeting != null) ? targeting.next(action, sampledAction.actionIdx) : null);
         } else {
             ret = playout(s.next(legalActions.get(sampledAction.actionIdx)), (totalSampleProb)/legalActions.size(), player);
         }
@@ -300,7 +300,9 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             SampleResult sample = sampleRandom(s, targeting);
             IAction a = legalActions.get(sample.actionIdx);
             util = handleCFRDStart(tracker.next(a),
-                    sample.targetedProb * targetedSampleProb, sample.untargetedProb * untargetedSampleProb, player, targeting != null ? targeting.next(a) : null);
+                    sample.targetedProb * targetedSampleProb,
+                    sample.untargetedProb * untargetedSampleProb, player,
+                    targeting != null ? targeting.next(a, sample.actionIdx) : null);
         } else {
             IInformationSet actingPlayerInfoSet = s.getInfoSetForActingPlayer();
             MCCFRISInfo isInfo = (MCCFRISInfo) getIsInfo(actingPlayerInfoSet);
@@ -310,7 +312,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             // since both actions are always "sampled" we leave sampling probs as they are
             CFRResult followRes = cfr(tracker.next(FollowAction.instance), (actingPlayer == player) ? isInfo.getStrat()[0] : 1,
                     (actingPlayer != player) ? isInfo.getStrat()[0] : 1,
-                    targetedSampleProb, untargetedSampleProb, player, 2, targeting != null ? targeting.next(FollowAction.instance) : null);
+                    targetedSampleProb, untargetedSampleProb, player, 2, targeting != null ? targeting.next(FollowAction.instance, 0) : null);
             actionUtil[0] = followRes.utility / totalSampleProb;
             actionUtil[1] = s.next(TerminateAction.instance).getPayoff(player) / totalSampleProb;
 
@@ -350,5 +352,10 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
     @Override
     public BaseCFRSolver copy(IStrategyAccumulationFilter accumulationFilter) {
         return new MCCFRSolver(this, accumulationFilter);
+    }
+
+    @Override
+    public boolean wantsTargeting() {
+        return targetingProb > 0;
     }
 }

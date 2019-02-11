@@ -15,8 +15,9 @@ public interface ISearchTargeting {
 
     /**
      * Get targeting for next state
-     * @param a
+     * @param a action
+     * @param actionIdx action's index
      * @return Targeting for next state, or null if targeting should be aborted
      */
-    ISearchTargeting next(IAction a);
+    ISearchTargeting next(IAction a, int actionIdx);
 }
