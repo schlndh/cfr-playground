@@ -153,9 +153,6 @@ public class Main {
                 DeepstackPlayer.Factory.class.getConstructor(BaseCFRSolver.Factory.class)
         ));
         factory.register(IPlayerFactory.class, "Deepstack", ConfigurableFactory.createPositionalParameterList(
-                DeepstackPlayer.Factory.class.getConstructor(BaseCFRSolver.Factory.class, boolean.class)
-        ));
-        factory.register(IPlayerFactory.class, "Deepstack", ConfigurableFactory.createPositionalParameterList(
                 DeepstackPlayer.Factory.class.getConstructor(ISubgameResolver.Factory.class)
         ));
         factory.register(IPlayerFactory.class, "PerfectRecall", ConfigurableFactory.createPositionalParameterList(

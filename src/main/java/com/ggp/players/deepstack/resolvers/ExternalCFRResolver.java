@@ -23,18 +23,16 @@ import java.util.*;
 public class ExternalCFRResolver implements ISubgameResolver {
     public static class Factory implements ISubgameResolver.Factory {
         private BaseCFRSolver.Factory solverFactory;
-        private final boolean useISTargeting;
 
-        public Factory(BaseCFRSolver.Factory solverFactory, boolean useISTargeting) {
+        public Factory(BaseCFRSolver.Factory solverFactory) {
             this.solverFactory = solverFactory;
-            this.useISTargeting = useISTargeting;
         }
 
         @Override
         public ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
                                        ArrayList<IEvaluablePlayer.IListener> resolvingListeners)
         {
-            return new ExternalCFRResolver(myId, hiddenInfo, myRange, opponentCFV, resolvingListeners, solverFactory, useISTargeting);
+            return new ExternalCFRResolver(myId, hiddenInfo, myRange, opponentCFV, resolvingListeners, solverFactory);
         }
 
         @Override
@@ -57,7 +55,6 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private HashMap<IInformationSet, Double> nextOpponentCFV = new HashMap<>();
     private IStrategy cummulativeStrategy;
     private BaseCFRSolver lastSolver = null;
-    private final boolean useISTargeting;
     private long visitedStates = 0;
 
     private class InfoSetTargeting implements ISearchTargeting {
@@ -111,7 +108,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     }
 
     public ExternalCFRResolver(int myId, IInformationSet hiddenInfo, CISRange range, HashMap<IInformationSet, Double> opponentCFV,
-                               ArrayList<IEvaluablePlayer.IListener> resolvingListeners, BaseCFRSolver.Factory solverFactory, boolean useISTargeting)
+                               ArrayList<IEvaluablePlayer.IListener> resolvingListeners, BaseCFRSolver.Factory solverFactory)
     {
         this.myId = myId;
         this.hiddenInfo = hiddenInfo;
@@ -121,7 +118,6 @@ public class ExternalCFRResolver implements ISubgameResolver {
         if (this.resolvingListeners == null) this.resolvingListeners = new ArrayList<>();
         this.opponentId = PlayerHelpers.getOpponentId(myId);
         this.solverFactory = solverFactory;
-        this.useISTargeting = useISTargeting;
         this.subgameMap = new SubgameMap(opponentId);
     }
 
@@ -156,7 +152,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
                 }
             }
         });
-        if (useISTargeting && subgame != null && cfrSolver instanceof ITargetableSolver) {
+        if (subgame != null && cfrSolver instanceof ITargetableSolver) {
             ITargetableSolver s = (ITargetableSolver) cfrSolver;
             if (s.wantsTargeting()) s.setTargeting(new InfoSetTargeting(subgame));
         }

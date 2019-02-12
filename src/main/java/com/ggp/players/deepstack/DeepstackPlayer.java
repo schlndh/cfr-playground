@@ -24,11 +24,7 @@ public class DeepstackPlayer implements IEvaluablePlayer {
         }
 
         public Factory(BaseCFRSolver.Factory cfrSolverFactory) {
-            this(new ExternalCFRResolver.Factory(cfrSolverFactory, false));
-        }
-
-        public Factory(BaseCFRSolver.Factory cfrSolverFactory, boolean useISTargeting) {
-            this(new ExternalCFRResolver.Factory(cfrSolverFactory, useISTargeting));
+            this(new ExternalCFRResolver.Factory(cfrSolverFactory));
         }
 
         @Override
