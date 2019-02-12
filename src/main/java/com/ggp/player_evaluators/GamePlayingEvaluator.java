@@ -3,10 +3,12 @@ package com.ggp.player_evaluators;
 import com.ggp.*;
 import com.ggp.player_evaluators.listeners.StrategyAggregatorListener;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
+import com.ggp.utils.random.RandomSampler;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.players.random.RandomPlayer;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
@@ -75,9 +77,89 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
         return infoSets.size();
     }
 
+    private static class TerminalAvoidingRandomPlayer implements IPlayer {
+        public static class Factory implements IPlayerFactory {
+            @Override
+            public IPlayer create(IGameDescription game, int role) {
+                return new TerminalAvoidingRandomPlayer(role);
+            }
+
+            @Override
+            public String getConfigString() {
+                return "TerminalAvoidingRandomPlayer{}";
+            }
+        }
+        private int role;
+        private ICompleteInformationState state;
+        private RandomSampler sampler = new RandomSampler();
+
+        public TerminalAvoidingRandomPlayer(int role) {
+            this.role = role;
+        }
+
+        @Override
+        public void init(long timeoutMillis) {
+        }
+
+        @Override
+        public IAction act(long timeoutMillis) {
+            List<IAction> actions = new ArrayList<>();
+            for (IAction a: state.getLegalActions()) {
+                if (!state.next(a).isTerminal()) actions.add(a);
+            }
+            if (actions.isEmpty()) {
+                actions = state.getLegalActions();
+            }
+            return sampler.select(actions);
+        }
+
+        @Override
+        public void forceAction(IAction a, long timeoutMillis) {
+        }
+
+        @Override
+        public int getRole() {
+            return role;
+        }
+
+        @Override
+        public void receivePercepts(IPercept percept) {
+        }
+
+        public void setState(ICompleteInformationState state) {
+            this.state = state;
+        }
+    }
+
+    private static class TerminalAvoidingGameListener implements IGameListener {
+        private TerminalAvoidingRandomPlayer player;
+
+        @Override
+        public void gameStart(IPlayer player1, IPlayer player2) {
+            if (player1.getClass() == TerminalAvoidingRandomPlayer.class) {
+                player = (TerminalAvoidingRandomPlayer) player1;
+            } else  {
+                player = (TerminalAvoidingRandomPlayer) player2;
+            }
+        }
+
+        @Override
+        public void gameEnd(int payoff1, int payoff2) {
+        }
+
+        @Override
+        public void stateReached(ICompleteInformationState s) {
+            if (player != null) player.setState(s);
+        }
+
+        @Override
+        public void actionSelected(ICompleteInformationState s, IAction a) {
+        }
+    }
+
     @Override
     public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet) {
-        IPlayerFactory random = new RandomPlayer.Factory();
+        IPlayerFactory random = new TerminalAvoidingRandomPlayer.Factory();
         long lastVisitedStates[] = new long[stratAggregator.getEntries().size()];
         playerFactory.registerResolvingListener(stratAggregator);
         final int evalEach = gameCount/Math.min(gameCount, 10);
@@ -91,6 +173,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
             }
             stratAggregator.reinit();
             GameManager manager = new GameManager(pl1, pl2, gameDesc);
+            manager.registerGameListener(new TerminalAvoidingGameListener());
             manager.run(initMs, timeoutMs);
             List<EvaluatorEntry> entries = stratAggregator.getEntries();
             for (int j = 0; j < entries.size(); ++j) {

@@ -35,7 +35,7 @@ class GameManagerTest {
 
         gameManager.registerGameListener(new IGameListener() {
             @Override
-            public void gameStart() { }
+            public void gameStart(IPlayer player1, IPlayer player2) { }
 
             @Override
             public void gameEnd(int payoff1, int payoff2) { }

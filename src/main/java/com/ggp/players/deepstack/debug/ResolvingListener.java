@@ -3,6 +3,7 @@ package com.ggp.players.deepstack.debug;
 import com.ggp.IAction;
 import com.ggp.ICompleteInformationState;
 import com.ggp.IGameListener;
+import com.ggp.IPlayer;
 import com.ggp.players.deepstack.IResolvingInfo;
 import com.ggp.players.deepstack.IResolvingListener;
 import com.ggp.utils.time.StopWatch;
@@ -44,7 +45,7 @@ public class ResolvingListener implements IResolvingListener, IGameListener {
     }
 
     @Override
-    public void gameStart() {
+    public void gameStart(IPlayer player1, IPlayer player2) {
     }
 
     @Override

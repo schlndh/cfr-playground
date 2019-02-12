@@ -8,7 +8,7 @@ public class GamePlayVisualizer implements IGameListener {
     }
 
     @Override
-    public void gameStart() {
+    public void gameStart(IPlayer player1, IPlayer player2) {
 
     }
 

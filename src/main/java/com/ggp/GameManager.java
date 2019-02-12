@@ -24,7 +24,7 @@ public class GameManager {
     }
 
     public void run(long initTimeoutMillis, long actTimeoutMillis, Iterator<IAction> forcedActions) {
-        gameListeners.forEach((listener) -> listener.gameStart());
+        gameListeners.forEach((listener) -> listener.gameStart(player1, player2));
         player1.init(initTimeoutMillis);
         player2.init(initTimeoutMillis);
 
