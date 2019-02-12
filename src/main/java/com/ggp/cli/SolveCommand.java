@@ -36,7 +36,7 @@ public class SolveCommand implements Runnable {
     @CommandLine.Option(names={"-t", "--time-limit"}, description="Time limit (s)", required=true)
     private long timeLimit;
 
-    @CommandLine.Option(names={"-f", "--eval-freq"}, description="Evaluation frequency (ms)", required=true)
+    @CommandLine.Option(names={"-f", "--eval-freq"}, description="Evaluation frequency (ms)", defaultValue = "-1")
     private long evalFreq;
 
     @CommandLine.Option(names={"-c", "--count"}, description="How many times to repeat the evaluation", defaultValue="1")
@@ -139,6 +139,9 @@ public class SolveCommand implements Runnable {
 
     @Override
     public void run() {
+        if (evalFreq <= 0) {
+            evalFreq = timeLimit*1000;
+        }
         IGameDescription gameDesc = null;
         try {
             gameDesc = mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
