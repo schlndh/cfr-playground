@@ -200,14 +200,14 @@ public class ExternalCFRResolver implements ISubgameResolver {
         }
         int iters = 0;
         BaseCFRSolver cfrSolver = createSolver((CFRDSubgameRoot) tracker.getCurrentState(), myInformationSets);
-        while (timeout.canDoAnotherIteration()) {
+        do {
             timeout.startIteration();
             cfrSolver.runIteration(tracker);
 
             runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingIterationEnd(resInfo)));
             timeout.endIteration();
             iters++;
-        }
+        } while (timeout.canDoAnotherIteration());
 
         runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo)));
 
