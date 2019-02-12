@@ -18,27 +18,18 @@ import java.util.List;
  */
 public class TraversingEvaluator implements IPlayerEvaluator {
     public static class Factory implements IFactory {
-        private int count;
-
-        public Factory(int count) {
-            this.count = count;
-        }
-
         @Override
         public IPlayerEvaluator create(int initMs, List<Integer> logPointsMs) {
-            return new TraversingEvaluator(initMs, count, logPointsMs);
+            return new TraversingEvaluator(initMs, logPointsMs);
         }
 
         @Override
         public String getConfigString() {
-            return "TraversingEvaluator{" +
-                    count +
-                    '}';
+            return "TraversingEvaluator{}";
         }
     }
 
     private int initMs;
-    private int count;
     private int timeoutMs;
     private ArrayList<Integer> logPointsMs;
     private boolean quiet;
@@ -46,12 +37,10 @@ public class TraversingEvaluator implements IPlayerEvaluator {
     /**
      * Constructor
      * @param initMs timeout for deepstack initialization
-     * @param count how many times to traverse the game tree
      * @param logPointsMs ASC ordered list of times when strategies should be aggregated
      */
-    public TraversingEvaluator(int initMs, int count, List<Integer> logPointsMs) {
+    public TraversingEvaluator(int initMs, List<Integer> logPointsMs) {
         this.initMs = initMs;
-        this.count = count;
         this.timeoutMs = logPointsMs.get(logPointsMs.size() - 1);
         this.logPointsMs = new ArrayList<>(logPointsMs);
     }
@@ -179,14 +168,12 @@ public class TraversingEvaluator implements IPlayerEvaluator {
             entries.add(new EvaluatorEntry(logPointsMs.get(i)));
         }
         long pathStates[] = new long[entries.size()*2];
-        for (int i  = 0; i < count; ++i) {
-            HashMap<IInformationSet, ActCacheEntry> actCache = new HashMap<>();
-            aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) PerfectRecallGameDescriptionWrapper.wrapInitialState(initialState), pl1.copy(), pl2.copy(), 1d, 1d, 0, pathStates);
-        }
+        HashMap<IInformationSet, ActCacheEntry> actCache = new HashMap<>();
+        aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) PerfectRecallGameDescriptionWrapper.wrapInitialState(initialState), pl1.copy(), pl2.copy(), 1d, 1d, 0, pathStates);
 
         for (EvaluatorEntry entry: entries) {
             entry.getAggregatedStrat().normalize();
-            entry.setVisitedStatesNorm(count);
+            entry.setVisitedStatesNorm(1);
         }
         return entries;
     }

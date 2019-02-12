@@ -203,7 +203,7 @@ public class Main {
         );
         factory.register(IPlayerEvaluator.IFactory.class, "TraversingEvaluator",
                 ConfigurableFactory.createPositionalParameterList(
-                        TraversingEvaluator.Factory.class.getConstructor(int.class)
+                        TraversingEvaluator.Factory.class.getConstructor()
                 )
         );
     }

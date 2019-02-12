@@ -46,6 +46,9 @@ public class EvaluateCommand implements Runnable {
     @CommandLine.Option(names={"-f", "--eval-freq"}, description="Evaluation frequency (ms)", required=true)
     private int evalFreq;
 
+    @CommandLine.Option(names={"-c", "--count"}, description="How many times to repeat the evaluation", defaultValue="1")
+    private int count;
+
     @CommandLine.Option(names={"-d", "--dry-run"}, description="Dry run - doesn't save output")
     private boolean dryRun;
 
@@ -120,28 +123,36 @@ public class EvaluateCommand implements Runnable {
         if (!quiet) System.out.println("Evaluating " + usedPlayerFactory.getConfigString() + " using " + usedEvaluatorFactory.getConfigString());
         warmup(gameDesc, usedPlayerFactory);
 
-        long lastEntryStates = 0;
-        double lastTime = 0;
         Strategy bestStrategy = null;
         double bestStrategyExp = Double.MAX_VALUE;
-        int logTimeMs = Math.min(evalFreq, timeLimit);
-        do {
-            IPlayerEvaluator evaluator = usedEvaluatorFactory.create(init, Collections.singletonList(logTimeMs));
-            EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet).get(0);
-            double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
-            if (exp < bestStrategyExp) {
-                bestStrategy = entry.getAggregatedStrat();
-                bestStrategyExp = exp;
-            }
-            if (!quiet) {
-                System.out.println(String.format("(%5d ms, %12d total states, %8d avg. path states) -> %.4f exp | %.4g states/s",
-                        (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), entry.getPathStatesAvg(),exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(entry.getEntryTimeMs() - lastTime)));
-            }
-            lastEntryStates = entry.getAvgVisitedStates();
-            lastTime = entry.getEntryTimeMs();
 
-            logTimeMs += evalFreq;
-        } while (logTimeMs <= timeLimit);
+        for (int repetition = 0; repetition < count; ++repetition) {
+            if (!quiet && count > 1) {
+                System.out.println(String.format("Evaluation %d/%d:", repetition + 1, count));
+            }
+            long lastEntryStates = 0;
+            double lastTime = 0;
+
+            int logTimeMs = Math.min(evalFreq, timeLimit);
+            do {
+                IPlayerEvaluator evaluator = usedEvaluatorFactory.create(init, Collections.singletonList(logTimeMs));
+                EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet).get(0);
+                double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
+                if (exp < bestStrategyExp) {
+                    bestStrategy = entry.getAggregatedStrat();
+                    bestStrategyExp = exp;
+                }
+                if (!quiet) {
+                    System.out.println(String.format("(%5d ms, %12d total states, %8d avg. path states) -> %.4f exp | %.4g states/s",
+                            (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), entry.getPathStatesAvg(),exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(entry.getEntryTimeMs() - lastTime)));
+                }
+                lastEntryStates = entry.getAvgVisitedStates();
+                lastTime = entry.getEntryTimeMs();
+
+                logTimeMs += evalFreq;
+            } while (logTimeMs <= timeLimit);
+        }
+
 
         if (saveStrategy && bestStrategy != null) {
             if (!quiet) {
