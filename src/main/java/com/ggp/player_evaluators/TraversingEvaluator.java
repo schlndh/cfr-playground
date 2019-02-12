@@ -28,6 +28,13 @@ public class TraversingEvaluator implements IPlayerEvaluator {
         public IPlayerEvaluator create(int initMs, List<Integer> logPointsMs) {
             return new TraversingEvaluator(initMs, count, logPointsMs);
         }
+
+        @Override
+        public String getConfigString() {
+            return "TraversingEvaluator{" +
+                    count +
+                    '}';
+        }
     }
 
     private int initMs;
@@ -182,12 +189,5 @@ public class TraversingEvaluator implements IPlayerEvaluator {
             entry.setVisitedStatesNorm(count);
         }
         return entries;
-    }
-
-    @Override
-    public String getConfigString() {
-        return "TraversingEvaluator{" +
-                    count +
-                '}';
     }
 }

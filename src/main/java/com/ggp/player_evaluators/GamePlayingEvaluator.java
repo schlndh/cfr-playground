@@ -27,6 +27,13 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
         public IPlayerEvaluator create(int initMs, List<Integer> logPointsMs) {
             return new GamePlayingEvaluator(initMs, logPointsMs, gameCount);
         }
+
+        @Override
+        public String getConfigString() {
+            return "GamePlayingEvaluator{" +
+                    gameCount +
+                    '}';
+        }
     }
 
     private int initMs;
@@ -77,12 +84,5 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
             entry.setVisitedStatesNorm(gameCount);
         }
         return stratAggregator.getEntries();
-    }
-
-    @Override
-    public String getConfigString() {
-        return "GamePlayingEvaluator{" +
-                    gameCount +
-                '}';
     }
 }

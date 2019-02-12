@@ -15,9 +15,8 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 
 @CommandLine.Command(name = "evaluate",
         mixinStandardHelpOptions = true,
@@ -113,29 +112,22 @@ public class EvaluateCommand implements Runnable {
 
         if (!quiet) System.out.println("Exploitability estimate for uniform strategy: " + ExploitabilityUtils.computeExploitability(new Strategy(), gameDesc));
 
-        ArrayList<Integer> logPointsMs = new ArrayList<>();
-        int logTimeMs = evalFreq;
-        while (logTimeMs < timeLimit) {
-            logPointsMs.add(logTimeMs);
-            logTimeMs += evalFreq;
-        }
-        logPointsMs.add(timeLimit);
-        IPlayerEvaluator evaluator = usedEvaluatorFactory.create(init, logPointsMs);
-
         String gameDir = resultsDirectory + "/" + gameDesc.getConfigString();
         String solverDir =  gameDir + "/" + usedPlayerFactory.getConfigString();
         if (!dryRun)
             new File(solverDir).mkdirs();
 
-        if (!quiet) System.out.println("Evaluating " + usedPlayerFactory.getConfigString() + " using " + evaluator.getConfigString());
+        if (!quiet) System.out.println("Evaluating " + usedPlayerFactory.getConfigString() + " using " + usedEvaluatorFactory.getConfigString());
         warmup(gameDesc, usedPlayerFactory);
-        List<EvaluatorEntry> entries = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet);
 
         long lastEntryStates = 0;
         double lastTime = 0;
         Strategy bestStrategy = null;
         double bestStrategyExp = Double.MAX_VALUE;
-        for (EvaluatorEntry entry : entries) {
+        int logTimeMs = Math.min(evalFreq, timeLimit);
+        do {
+            IPlayerEvaluator evaluator = usedEvaluatorFactory.create(init, Collections.singletonList(logTimeMs));
+            EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet).get(0);
             double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
             if (exp < bestStrategyExp) {
                 bestStrategy = entry.getAggregatedStrat();
@@ -147,7 +139,9 @@ public class EvaluateCommand implements Runnable {
             }
             lastEntryStates = entry.getAvgVisitedStates();
             lastTime = entry.getEntryTimeMs();
-        }
+
+            logTimeMs += evalFreq;
+        } while (logTimeMs <= timeLimit);
 
         if (saveStrategy && bestStrategy != null) {
             if (!quiet) {
