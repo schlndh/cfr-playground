@@ -1,14 +1,13 @@
 package com.ggp.player_evaluators;
 
-import com.ggp.GameManager;
-import com.ggp.IGameDescription;
-import com.ggp.IPlayerFactory;
+import com.ggp.*;
 import com.ggp.player_evaluators.listeners.StrategyAggregatorListener;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.players.random.RandomPlayer;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -54,11 +53,36 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
         this.gameCount = gameCount;
     }
 
+    private void visit(HashSet<IInformationSet> infoSets, ICompleteInformationState s) {
+        if (s.isTerminal()) {
+            return;
+        }
+        if (s.isRandomNode()) {
+            for (IAction a: s.getLegalActions()) {
+                visit(infoSets, s.next(a));
+            }
+        } else {
+            infoSets.add(s.getInfoSetForActingPlayer());
+            for (IAction a: s.getLegalActions()) {
+                visit(infoSets, s.next(a));
+            }
+        }
+    }
+
+    private int countInfoSets(IGameDescription gameDesc) {
+        HashSet<IInformationSet> infoSets = new HashSet<>();
+        visit(infoSets, gameDesc.getInitialState());
+        return infoSets.size();
+    }
+
     @Override
     public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet) {
         IPlayerFactory random = new RandomPlayer.Factory();
         long lastVisitedStates[] = new long[stratAggregator.getEntries().size()];
         playerFactory.registerResolvingListener(stratAggregator);
+        final int evalEach = gameCount/Math.min(gameCount, 10);
+        int evals = 0;
+        final int totalInfoSets = countInfoSets(gameDesc);
         for (int i = 0; i < gameCount; ++i) {
             IPlayerFactory pl1 = playerFactory, pl2 = random;
             if (i % 2 == 1) {
@@ -75,8 +99,16 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
                 lastVisitedStates[j] = e.getAvgVisitedStates();
             }
             Strategy strat = entries.get(entries.size() - 1).getAggregatedStrat();
-            double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
-            if (!quiet) System.out.println(String.format("Game %d: defined IS %d, last strategy exploitability %f", i, strat.countDefinedInformationSets(), exp));
+            if (!quiet) {
+                if ((i+1) == evalEach*(evals + 1)) {
+                    double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
+                    System.out.println(String.format("\rGame %d: defined IS %d/%d, last strategy exploitability %f", i+1, strat.size(), totalInfoSets, exp));
+                    evals++;
+                } else {
+                    System.out.print(String.format("\rGame %d: defined IS %d/%d", i+1, strat.size(), totalInfoSets));
+                }
+            }
+
         }
 
         for (EvaluatorEntry entry: stratAggregator.getEntries()) {

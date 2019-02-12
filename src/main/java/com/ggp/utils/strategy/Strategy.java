@@ -40,7 +40,7 @@ public class Strategy implements IStrategy {
         return strategy.keySet();
     }
 
-    public int countDefinedInformationSets() {
+    public int size() {
         return strategy.size();
     }
 
@@ -50,10 +50,6 @@ public class Strategy implements IStrategy {
             ret.strategy.put(kv.getKey(), kv.getValue().copy());
         }
         return ret;
-    }
-
-    public boolean hasInformationSet(IInformationSet is) {
-        return strategy.containsKey(is);
     }
 
     @Override
