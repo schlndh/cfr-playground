@@ -160,13 +160,38 @@ public class TraversingEvaluator implements IPlayerEvaluator {
     public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet) {
         this.quiet = quiet;
         ICompleteInformationState initialState = gameDesc.getInitialState();
-        IEvaluablePlayer pl1 = playerFactory.create(gameDesc, 1), pl2 = playerFactory.create(gameDesc, 2);
-        pl1.init(initMs);
-        pl2.init(initMs);
         List<EvaluatorEntry> entries = new ArrayList<>(logPointsMs.size());
         for (int i = 0; i < logPointsMs.size(); ++i) {
             entries.add(new EvaluatorEntry(logPointsMs.get(i)));
         }
+        IEvaluablePlayer pl1 = playerFactory.create(gameDesc, 1), pl2 = playerFactory.create(gameDesc, 2);
+        IEvaluablePlayer.IListener listener = new IEvaluablePlayer.IListener() {
+            @Override
+            public void initEnd(IEvaluablePlayer.IResolvingInfo resInfo) {
+                for (EvaluatorEntry entry: entries) {
+                    entry.addInitVisitedStates(resInfo.getVisitedStatesInCurrentResolving()/2);
+                }
+            }
+
+            @Override
+            public void resolvingStart(IEvaluablePlayer.IResolvingInfo resInfo) {
+            }
+
+            @Override
+            public void resolvingEnd(IEvaluablePlayer.IResolvingInfo resInfo) {
+            }
+
+            @Override
+            public void resolvingIterationEnd(IEvaluablePlayer.IResolvingInfo resInfo) {
+            }
+        };
+        pl1.registerResolvingListener(listener);
+        pl2.registerResolvingListener(listener);
+        pl1.init(initMs);
+        pl2.init(initMs);
+        pl1.unregisterResolvingListener(listener);
+        pl2.unregisterResolvingListener(listener);
+
         long pathStates[] = new long[entries.size()*2];
         HashMap<IInformationSet, ActCacheEntry> actCache = new HashMap<>();
         aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) PerfectRecallGameDescriptionWrapper.wrapInitialState(initialState), pl1.copy(), pl2.copy(), 1d, 1d, 0, pathStates);

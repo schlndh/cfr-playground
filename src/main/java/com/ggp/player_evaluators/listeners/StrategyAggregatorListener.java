@@ -27,6 +27,15 @@ public class StrategyAggregatorListener extends BaseListener {
     }
 
     @Override
+    public void initEnd(IEvaluablePlayer.IResolvingInfo resInfo) {
+        super.initEnd(resInfo);
+        if (resInfo == null) return;
+        for (EvaluatorEntry entry: entries) {
+            entry.addInitVisitedStates(resInfo.getVisitedStatesInCurrentResolving());
+        }
+    }
+
+    @Override
     public void resolvingStart(IEvaluablePlayer.IResolvingInfo resInfo) {
         timedCounter.reset();
         strategyIdx = 0;

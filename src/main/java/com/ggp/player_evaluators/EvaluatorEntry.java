@@ -6,6 +6,7 @@ public class EvaluatorEntry {
     private double intendedTimeMs;
     private double avgTimeMs = 0;
     private double avgTimeWeigthNorm = 0;
+    private long initVisitedStates = 0;
     private long visitedStates = 0;
     private long visitedStatesNorm = 1;
     private long pathStatesMin = Long.MAX_VALUE;
@@ -34,6 +35,10 @@ public class EvaluatorEntry {
         visitedStates += states;
     }
 
+    public void addInitVisitedStates(long states) {
+        initVisitedStates += states;
+    }
+
     public double getIntendedTimeMs() {
         return intendedTimeMs;
     }
@@ -48,6 +53,10 @@ public class EvaluatorEntry {
 
     public long getAvgVisitedStates() {
         return visitedStates / visitedStatesNorm;
+    }
+
+    public long getAvgInitVisitedStates() {
+        return initVisitedStates / visitedStatesNorm;
     }
 
     public void setVisitedStatesNorm(long visitedStatesNorm) {
