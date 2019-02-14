@@ -178,7 +178,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
     protected CFRDTracker prepareDataStructures() {
         ICompleteInformationState subgame = new CFRDSubgameRoot(range, opponentCFV, opponentId);
-        CFRDTracker tracker = CFRDTracker.createForAct(myId, range.getNorm(), subgame);
+        CFRDTracker tracker = CFRDTracker.createForAct(myId, subgame);
         findMyNextTurn(tracker);
         return tracker;
     }

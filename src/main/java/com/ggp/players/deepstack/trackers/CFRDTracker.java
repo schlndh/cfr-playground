@@ -41,8 +41,8 @@ public class CFRDTracker implements IGameTraversalTracker {
         }
     }
 
-    public static CFRDTracker createForAct(int myId, double rangeNorm, ICompleteInformationState cfrdRoot) {
-        return new CFRDTracker(myId, rangeNorm, null, TrackingState.ROOT, cfrdRoot, null);
+    public static CFRDTracker createForAct(int myId, ICompleteInformationState cfrdRoot) {
+        return new CFRDTracker(myId, 1, null, TrackingState.ROOT, cfrdRoot, null);
     }
 
     public static CFRDTracker createForInit(int myId, ICompleteInformationState state) {
