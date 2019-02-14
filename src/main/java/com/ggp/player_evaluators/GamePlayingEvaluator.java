@@ -181,14 +181,15 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
                 e.addPathStates(e.getAvgVisitedStates() - lastVisitedStates[j], 1);
                 lastVisitedStates[j] = e.getAvgVisitedStates();
             }
-            Strategy strat = entries.get(entries.size() - 1).getAggregatedStrat();
             if (!quiet) {
+                EvaluatorEntry lastEntry = entries.get(entries.size() - 1);
+                Strategy strat = lastEntry.getAggregatedStrat();
                 if ((i+1) == evalEach*(evals + 1)) {
                     double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
-                    System.out.println(String.format("\rGame %d: defined IS %d/%d, last strategy exploitability %f", i+1, strat.size(), totalInfoSets, exp));
+                    System.out.println(String.format("\r[%4d]: (%d ms, %d avg. states, %d/%d IS defined) -> %.4f exp", i+1, (int) lastEntry.getEntryTimeMs(), lastEntry.getAvgVisitedStates()/(i+1), strat.size(), totalInfoSets, exp));
                     evals++;
                 } else {
-                    System.out.print(String.format("\rGame %d: defined IS %d/%d", i+1, strat.size(), totalInfoSets));
+                    System.out.print(String.format("\r[%4d]: (%d ms, %d avg. states, %d/%d IS defined)", i+1, (int) lastEntry.getEntryTimeMs(), lastEntry.getAvgVisitedStates()/(i+1), strat.size(), totalInfoSets));
                 }
             }
 
