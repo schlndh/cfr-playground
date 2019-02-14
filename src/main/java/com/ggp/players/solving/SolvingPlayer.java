@@ -179,19 +179,23 @@ public class SolvingPlayer implements IEvaluablePlayer {
         resolvingListeners.forEach(listener -> listener.initEnd(resInfo));
     }
 
+    private void runWithPausedTimer(IterationTimer timer, Runnable fn) {
+        timer.stop();
+        fn.run();
+        timer.start();
+    }
+
     private void computeStrategy(IterationTimer timer) {
-        resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo));
+        runWithPausedTimer(timer, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
         fillSubgame();
         resolves++;
         while (timer.canDoAnotherIteration()) {
             timer.startIteration();
             cfrSolver.runIteration(rootTracker);
             timer.endIteration();
-            timer.stop();
-            resolvingListeners.forEach(listener -> listener.resolvingIterationEnd(resInfo));
-            timer.start();
+            runWithPausedTimer(timer, () -> resolvingListeners.forEach(listener -> listener.resolvingIterationEnd(resInfo)));
         }
-        resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo));
+        runWithPausedTimer(timer, () -> resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo)));
     }
 
     @Override
