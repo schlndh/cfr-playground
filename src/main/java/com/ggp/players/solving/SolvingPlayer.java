@@ -180,9 +180,9 @@ public class SolvingPlayer implements IEvaluablePlayer {
     }
 
     private void computeStrategy(IterationTimer timer) {
+        resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo));
         fillSubgame();
         resolves++;
-        resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo));
         while (timer.canDoAnotherIteration()) {
             timer.startIteration();
             cfrSolver.runIteration(rootTracker);
