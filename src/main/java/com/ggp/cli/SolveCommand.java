@@ -161,7 +161,7 @@ public class SolveCommand implements Runnable {
         }
         String gameDir = resultsDirectory + "/" + gameDesc.getConfigString();
         String solverDir =  gameDir + "/" + usedSolverFactory.getConfigString();
-        if (!dryRun)
+        if (!dryRun || saveStrategy)
             new File(solverDir).mkdirs();
         if (!quiet) {
             if (dryRun) {

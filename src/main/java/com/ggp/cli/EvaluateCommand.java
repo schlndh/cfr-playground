@@ -120,7 +120,7 @@ public class EvaluateCommand implements Runnable {
 
         String gameDir = resultsDirectory + "/" + gameDesc.getConfigString();
         String solverDir =  gameDir + "/" + usedPlayerFactory.getConfigString();
-        if (!dryRun)
+        if (!dryRun || saveStrategy)
             new File(solverDir).mkdirs();
 
         if (!quiet) System.out.println("Evaluating " + usedPlayerFactory.getConfigString() + " using " + usedEvaluatorFactory.getConfigString());
