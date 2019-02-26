@@ -162,7 +162,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             suffixProb *= res.untargetedProb;
             s = s.next(s.getLegalActions().get(res.actionIdx));
         }
-        return new CFRResult(suffixProb, prefixProb * suffixProb, s.getPayoff(player));
+        return new CFRResult(suffixProb, prefixProb * suffixProb, s.getPayoff(player)/suffixProb);
     }
 
     private CFRResult cfr(IGameTraversalTracker tracker, double playerProb, double opponentProb,
