@@ -56,8 +56,20 @@ public class DiscountedRegretMatching extends BaseRegretMatching {
         if (oldRegret < 0) {
             exp = negExp;
         }
-        double tmp = Math.pow(iteration, exp);
-        double mul = tmp / (tmp + 1);
+        double mul;
+        if (exp == Double.POSITIVE_INFINITY) {
+            mul = 1;
+        } else if (exp == Double.NEGATIVE_INFINITY) {
+            mul = 0;
+        } else {
+            double tmp = Math.pow(iteration, exp);
+            if (tmp == Double.POSITIVE_INFINITY) {
+                mul = 1;
+            } else {
+                mul = tmp / (tmp + 1);
+            }
+        }
+
         return oldRegret * mul + regretDiff;
     }
 
