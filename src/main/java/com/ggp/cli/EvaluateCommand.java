@@ -15,6 +15,7 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
@@ -40,11 +41,8 @@ public class EvaluateCommand implements Runnable {
     @CommandLine.Option(names={"-i", "--init"}, description="Init time (ms)", required=true)
     private int init;
 
-    @CommandLine.Option(names={"-t", "--time-limit"}, description="Time per move (ms)", required=true)
-    private int timeLimit;
-
-    @CommandLine.Option(names={"-f", "--eval-freq"}, description="Evaluation frequency (ms)", defaultValue="-1")
-    private int evalFreq;
+    @CommandLine.Option(names={"-t", "--time-limits"}, description="Time limits per move (ms)", required=true, arity="1..*")
+    private int[] timeLimits;
 
     @CommandLine.Option(names={"-c", "--count"}, description="How many times to repeat the evaluation", defaultValue="1")
     private int count;
@@ -54,9 +52,6 @@ public class EvaluateCommand implements Runnable {
 
     @CommandLine.Option(names={"-q", "--quiet"}, description="Quiet mode - doesn't print output")
     private boolean quiet;
-
-    @CommandLine.Option(names={"--is-targeting"}, description="Use IS targeting")
-    private boolean useISTargeting;
 
     @CommandLine.Option(names={"--res-dir"}, description="Results directory", defaultValue="player-results")
     private String resultsDirectory;
@@ -84,9 +79,6 @@ public class EvaluateCommand implements Runnable {
 
     @Override
     public void run() {
-        if (evalFreq <= 0) {
-            evalFreq = timeLimit;
-        }
         IGameDescription gameDesc = null;
         try {
             gameDesc = mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
@@ -129,6 +121,8 @@ public class EvaluateCommand implements Runnable {
         Strategy bestStrategy = null;
         double bestStrategyExp = Double.MAX_VALUE;
 
+        Arrays.sort(timeLimits);
+
         for (int repetition = 0; repetition < count; ++repetition) {
             if (!quiet && count > 1) {
                 System.out.println(String.format("Evaluation %d/%d:", repetition + 1, count));
@@ -136,8 +130,7 @@ public class EvaluateCommand implements Runnable {
             long lastEntryStates = 0;
             double lastTime = 0;
 
-            int logTimeMs = Math.min(evalFreq, timeLimit);
-            do {
+            for (int logTimeMs: timeLimits) {
                 IPlayerEvaluator evaluator = usedEvaluatorFactory.create(init, Collections.singletonList(logTimeMs));
                 EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet).get(0);
                 double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
@@ -151,9 +144,7 @@ public class EvaluateCommand implements Runnable {
                 }
                 lastEntryStates = entry.getAvgVisitedStates();
                 lastTime = entry.getEntryTimeMs();
-
-                logTimeMs += evalFreq;
-            } while (logTimeMs <= timeLimit);
+            }
         }
 
 
