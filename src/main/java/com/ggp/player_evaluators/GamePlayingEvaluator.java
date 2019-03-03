@@ -5,11 +5,13 @@ import com.ggp.player_evaluators.listeners.StrategyAggregatorListener;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.random.RandomSampler;
 import com.ggp.utils.strategy.Strategy;
-import com.ggp.players.random.RandomPlayer;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 
@@ -18,6 +20,43 @@ import java.util.List;
  * at encountered decision points.
  */
 public class GamePlayingEvaluator implements IPlayerEvaluator {
+    private static class Saver implements IPlayerEvaluationSaver {
+        private String path;
+        private int initMs;
+        private String postfix;
+        private int gameCount;
+
+        public Saver(String path, int initMs, String postfix, int gameCount) {
+            this.path = path;
+            this.initMs = initMs;
+            this.postfix = postfix;
+            this.gameCount = gameCount;
+        }
+
+        private String getDateKey() {
+            return String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
+        }
+
+        private String getFileName(int intendedTime) {
+            return String.format("gp-%d-%d-%d-%s-%s.gpentry", initMs, intendedTime, gameCount, getDateKey(), postfix.replace("-", ""));
+        }
+
+        @Override
+        public void add(EvaluatorEntry e, double exploitability) throws IOException {
+            String resFileName = path + "/" + getFileName((int) e.getIntendedTimeMs());
+            FileOutputStream fileOutputStream = new FileOutputStream(resFileName);
+            ObjectOutputStream objectOutputStream
+                    = new ObjectOutputStream(fileOutputStream);
+            objectOutputStream.writeObject(e);
+            objectOutputStream.flush();
+            objectOutputStream.close();
+        }
+
+        @Override
+        public void close() throws IOException {
+        }
+    }
+
     public static class Factory implements IFactory {
         private int gameCount;
 
@@ -39,7 +78,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
 
         @Override
         public IPlayerEvaluationSaver createSaver(String path, int initMs, String postfix) throws IOException {
-            return null;
+            return new Saver(path, initMs, postfix, gameCount);
         }
     }
 

@@ -2,7 +2,10 @@ package com.ggp.player_evaluators;
 
 import com.ggp.utils.strategy.Strategy;
 
-public class EvaluatorEntry {
+import java.io.Serializable;
+
+public class EvaluatorEntry implements Serializable {
+    private static final long serialVersionUID = 1L;
     private double intendedTimeMs;
     private double avgTimeMs = 0;
     private double avgTimeWeigthNorm = 0;
