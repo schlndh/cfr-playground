@@ -82,4 +82,11 @@ public class InfoSetStrategy implements IInfoSetStrategy {
     public int size() {
         return probabilities.length;
     }
+
+    public void merge(InfoSetStrategy other) {
+        if (other == null || other.probabilities.length != this.probabilities.length) throw new RuntimeException("Invalid InfoSetStrategy merge!");
+        for (int i = 0; i < this.probabilities.length; ++i) {
+            this.probabilities[i] += other.probabilities[i];
+        }
+    }
 }

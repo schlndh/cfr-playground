@@ -84,4 +84,18 @@ public class EvaluatorEntry implements Serializable {
         pathStatesSum += weight * pathStates;
         pathStatesNorm += weight;
     }
+
+    public void merge(EvaluatorEntry other) {
+        if (intendedTimeMs != other.getIntendedTimeMs()) throw new RuntimeException("Can't merge evaluator entries with different intended times.");
+        this.avgTimeMs += other.avgTimeMs;
+        this.avgTimeWeigthNorm += other.avgTimeWeigthNorm;
+        this.initVisitedStates += other.initVisitedStates;
+        this.visitedStates += other.visitedStates;
+        this.visitedStatesNorm += other.visitedStatesNorm;
+        this.pathStatesMin = Math.min(this.pathStatesMin, other.pathStatesMin);
+        this.pathStatesMax = Math.max(this.pathStatesMax, other.pathStatesMax);
+        this.pathStatesSum += other.pathStatesSum;
+        this.pathStatesNorm += other.pathStatesNorm;
+        this.aggregatedStrat.merge(other.aggregatedStrat);
+    }
 }
