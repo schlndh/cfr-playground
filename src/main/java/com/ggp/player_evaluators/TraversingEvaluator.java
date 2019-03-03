@@ -6,17 +6,51 @@ import com.ggp.utils.CompleteInformationStateWrapper;
 import com.ggp.IInfoSetStrategy;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.recall.PerfectRecallGameDescriptionWrapper;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Evaluates Deepstack configuration by traversing the game tree and computing strategy at each decision point,
  * while aggregating the resulting strategies at given time intervals.
  */
 public class TraversingEvaluator implements IPlayerEvaluator {
+    private static class Saver implements IPlayerEvaluationSaver {
+        private CSVPrinter csvOut;
+
+        public Saver(String path, int initMs, String postfix) throws IOException {
+            new File(path).mkdirs();
+            String csvFileName = path + "/" + getCSVName(initMs, postfix);
+            csvOut = new CSVPrinter(new FileWriter(csvFileName),
+                    CSVFormat.EXCEL.withHeader("intended_time", "time", "states", "init_states", "path_states", "path_states_min", "path_states_max", "exp"));
+        }
+
+        private String getDateKey() {
+            return String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
+        }
+
+        private String getCSVName(int initMs, String postfix) {
+            return String.format("tr-%d-%s-%s.csv", initMs, getDateKey(), postfix.replace("-", ""));
+        }
+
+        @Override
+        public void add(EvaluatorEntry e, double exploitability) throws IOException {
+            if (csvOut == null) throw new RuntimeException("Cannot add entry to closed saver!");
+            csvOut.printRecord(e.getIntendedTimeMs(), e.getEntryTimeMs(), e.getAvgVisitedStates(), e.getAvgInitVisitedStates(), e.getPathStatesAvg(), e.getPathStatesMin(), e.getPathStatesMax(), exploitability);
+            csvOut.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            csvOut.close();
+            csvOut = null;
+        }
+    }
+
     public static class Factory implements IFactory {
         @Override
         public IPlayerEvaluator create(int initMs, List<Integer> logPointsMs) {
@@ -26,6 +60,11 @@ public class TraversingEvaluator implements IPlayerEvaluator {
         @Override
         public String getConfigString() {
             return "TraversingEvaluator{}";
+        }
+
+        @Override
+        public IPlayerEvaluationSaver createSaver(String path, int initMs, String postfix) throws IOException {
+            return new Saver(path, initMs, postfix);
         }
     }
 

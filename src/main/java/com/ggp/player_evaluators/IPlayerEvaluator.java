@@ -3,12 +3,14 @@ package com.ggp.player_evaluators;
 import com.ggp.IGameDescription;
 import com.ggp.players.deepstack.ISubgameResolver;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface IPlayerEvaluator {
     interface IFactory {
         IPlayerEvaluator create(int initMs, List<Integer> logPointsMs);
         String getConfigString();
+        IPlayerEvaluationSaver createSaver(String path, int initMs, String postfix) throws IOException;
     }
     /**
      * Evaluates player's performance in given game.

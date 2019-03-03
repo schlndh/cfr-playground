@@ -7,6 +7,7 @@ import com.ggp.parsers.ParseUtils;
 import com.ggp.parsers.exceptions.ConfigAssemblyException;
 import com.ggp.player_evaluators.IEvaluablePlayer;
 import com.ggp.player_evaluators.EvaluatorEntry;
+import com.ggp.player_evaluators.IPlayerEvaluationSaver;
 import com.ggp.player_evaluators.IPlayerEvaluator;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.Strategy;
@@ -14,6 +15,7 @@ import picocli.CommandLine;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Collections;
@@ -115,7 +117,13 @@ public class EvaluateCommand implements Runnable {
         if (!dryRun || saveStrategy)
             new File(solverDir).mkdirs();
 
-        if (!quiet) System.out.println("Evaluating " + usedPlayerFactory.getConfigString() + " using " + usedEvaluatorFactory.getConfigString());
+        if (!quiet) {
+            if (dryRun) {
+                System.out.println(String.format("Evaluating %s using %s on %s.", usedPlayerFactory.getConfigString(), usedEvaluatorFactory.getConfigString(), gameDesc.getConfigString()));
+            } else {
+                System.out.println(String.format("Evaluating %s using %s on %s logged to %s.", usedPlayerFactory.getConfigString(), usedEvaluatorFactory.getConfigString(), gameDesc.getConfigString(), solverDir));
+            }
+        }
         warmup(gameDesc, usedPlayerFactory);
 
         Strategy bestStrategy = null;
@@ -130,20 +138,31 @@ public class EvaluateCommand implements Runnable {
             long lastEntryStates = 0;
             double lastTime = 0;
 
-            for (int logTimeMs: timeLimits) {
-                IPlayerEvaluator evaluator = usedEvaluatorFactory.create(init, Collections.singletonList(logTimeMs));
-                EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet).get(0);
-                double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
-                if (exp < bestStrategyExp) {
-                    bestStrategy = entry.getAggregatedStrat();
-                    bestStrategyExp = exp;
+            IPlayerEvaluationSaver saver = null;
+            try {
+                if (!dryRun) {
+                    saver = usedEvaluatorFactory.createSaver(solverDir, init, resultPostfix);
                 }
-                if (!quiet) {
-                    System.out.println(String.format("(%5d ms, %12d total states, %8d avg. path states) -> %.4f exp | %.4g states/s",
-                            (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), entry.getPathStatesAvg(),exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(entry.getEntryTimeMs() - lastTime)));
+                for (int logTimeMs: timeLimits) {
+                    IPlayerEvaluator evaluator = usedEvaluatorFactory.create(init, Collections.singletonList(logTimeMs));
+                    EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet).get(0);
+                    double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
+                    if (saver != null) {
+                        saver.add(entry, exp);
+                    }
+                    if (exp < bestStrategyExp) {
+                        bestStrategy = entry.getAggregatedStrat();
+                        bestStrategyExp = exp;
+                    }
+                    if (!quiet) {
+                        System.out.println(String.format("(%5d ms, %12d total states, %8d avg. path states) -> %.4f exp | %.4g states/s",
+                                (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), entry.getPathStatesAvg(),exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(entry.getEntryTimeMs() - lastTime)));
+                    }
+                    lastEntryStates = entry.getAvgVisitedStates();
+                    lastTime = entry.getEntryTimeMs();
                 }
-                lastEntryStates = entry.getAvgVisitedStates();
-                lastTime = entry.getEntryTimeMs();
+            } catch(IOException e) {
+                System.out.println(e.getMessage());
             }
         }
 

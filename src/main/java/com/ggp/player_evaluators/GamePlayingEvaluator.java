@@ -8,6 +8,7 @@ import com.ggp.utils.strategy.Strategy;
 import com.ggp.players.random.RandomPlayer;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +35,11 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
             return "GamePlayingEvaluator{" +
                     gameCount +
                     '}';
+        }
+
+        @Override
+        public IPlayerEvaluationSaver createSaver(String path, int initMs, String postfix) throws IOException {
+            return null;
         }
     }
 
