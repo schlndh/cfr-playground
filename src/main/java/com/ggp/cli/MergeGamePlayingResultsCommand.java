@@ -1,13 +1,13 @@
 package com.ggp.cli;
 
-import com.ggp.player_evaluators.GamePlayingEvaluator;
+import com.ggp.player_evaluators.savers.GamePlayingSaver;
 import picocli.CommandLine;
 
 import java.io.File;
 
 @CommandLine.Command(name = "merge-gp-results",
         mixinStandardHelpOptions = true,
-        description = "Show game info",
+        description = "Merge results from game-playing evaluator",
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
@@ -29,7 +29,7 @@ public class MergeGamePlayingResultsCommand implements Runnable {
             for (File solverDir: gameDir.listFiles()) {
                 if (!solverDir.isDirectory()) continue;
                 System.out.println("\tChecking " + solverDir.getName());
-                GamePlayingEvaluator.mergeSavedEntryFiles(solverDir.getAbsolutePath(), dryRun);
+                GamePlayingSaver.mergeSavedEntryFiles(solverDir.getAbsolutePath(), dryRun);
             }
         }
     }

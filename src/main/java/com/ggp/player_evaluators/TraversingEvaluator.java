@@ -2,6 +2,7 @@ package com.ggp.player_evaluators;
 
 import com.ggp.*;
 import com.ggp.player_evaluators.listeners.StrategyAggregatorListener;
+import com.ggp.player_evaluators.savers.CsvSaver;
 import com.ggp.utils.CompleteInformationStateWrapper;
 import com.ggp.IInfoSetStrategy;
 import com.ggp.utils.PlayerHelpers;
@@ -20,13 +21,12 @@ import java.util.*;
  */
 public class TraversingEvaluator implements IPlayerEvaluator {
     private static class Saver implements IPlayerEvaluationSaver {
-        private CSVPrinter csvOut;
+        private CsvSaver saver;
 
         public Saver(String path, int initMs, String postfix) throws IOException {
             new File(path).mkdirs();
             String csvFileName = path + "/" + getCSVName(initMs, postfix);
-            csvOut = new CSVPrinter(new FileWriter(csvFileName),
-                    CSVFormat.EXCEL.withHeader("intended_time", "time", "states", "init_states", "path_states", "path_states_min", "path_states_max", "exp"));
+            saver = new CsvSaver(new FileWriter(csvFileName));
         }
 
         private String getDateKey() {
@@ -39,15 +39,12 @@ public class TraversingEvaluator implements IPlayerEvaluator {
 
         @Override
         public void add(EvaluatorEntry e, double exploitability) throws IOException {
-            if (csvOut == null) throw new RuntimeException("Cannot add entry to closed saver!");
-            csvOut.printRecord(e.getIntendedTimeMs(), e.getEntryTimeMs(), e.getAvgVisitedStates(), e.getAvgInitVisitedStates(), e.getPathStatesAvg(), e.getPathStatesMin(), e.getPathStatesMax(), exploitability);
-            csvOut.flush();
+            saver.add(e, exploitability);
         }
 
         @Override
         public void close() throws IOException {
-            csvOut.close();
-            csvOut = null;
+            saver.close();
         }
     }
 
