@@ -11,6 +11,7 @@ import com.ggp.player_evaluators.IPlayerEvaluationSaver;
 import com.ggp.player_evaluators.IPlayerEvaluator;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.Strategy;
+import com.ggp.utils.time.StopWatch;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -71,12 +72,46 @@ public class EvaluateCommand implements Runnable {
         return String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
     }
 
-    private void warmup(IGameDescription gameDesc, IPlayerFactory plFactory) {
+    private Strategy bestStrategy = null;
+    private double bestStrategyExp = Double.MAX_VALUE;
+
+    private void warmup(IPlayerEvaluator.IFactory usedEvaluatorFactory, IEvaluablePlayer.IFactory usedPlayerFactory, IGameDescription gameDesc) {
         if (skipWarmup) return;
         if (!quiet) System.out.println("Warming up...");
-        GameManager manager = new GameManager(plFactory, plFactory, gameDesc);
-        manager.run(4000, 1000);
-        if (!quiet) System.out.println("Warm-up complete.");
+        StopWatch warmupTimer = new StopWatch();
+        warmupTimer.start();
+        do {
+            runEvaluator(usedEvaluatorFactory, usedPlayerFactory, gameDesc, null, true,2000, new int[]{10});
+        } while (warmupTimer.getLiveDurationMs() < 10000);
+        if (!quiet) System.out.println(String.format("Warm-up complete in %dms.", warmupTimer.getLiveDurationMs()));
+    }
+
+    private void runEvaluator(IPlayerEvaluator.IFactory usedEvaluatorFactory, IEvaluablePlayer.IFactory usedPlayerFactory,
+                              IGameDescription gameDesc, IPlayerEvaluationSaver saver, boolean quiet, int initMs, int[] timeLimitsMs) {
+        long lastEntryStates = 0;
+        double lastTime = 0;
+        try {
+            for (int logTimeMs: timeLimitsMs) {
+                IPlayerEvaluator evaluator = usedEvaluatorFactory.create(initMs, Collections.singletonList(logTimeMs));
+                EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet).get(0);
+                double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
+                if (saver != null) {
+                    saver.add(entry, exp);
+                }
+                if (exp < bestStrategyExp) {
+                    bestStrategy = entry.getAggregatedStrat();
+                    bestStrategyExp = exp;
+                }
+                if (!quiet) {
+                    System.out.println(String.format("(%5d ms, %12d total states, %8d avg. path states) -> %.4f exp | %.4g states/s",
+                            (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), entry.getPathStatesAvg(),exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(entry.getEntryTimeMs() - lastTime)));
+                }
+                lastEntryStates = entry.getAvgVisitedStates();
+                lastTime = entry.getEntryTimeMs();
+            }
+        } catch(IOException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     @Override
@@ -124,7 +159,7 @@ public class EvaluateCommand implements Runnable {
                 System.out.println(String.format("Evaluating %s using %s on %s logged to %s.", usedPlayerFactory.getConfigString(), usedEvaluatorFactory.getConfigString(), gameDesc.getConfigString(), solverDir));
             }
         }
-        warmup(gameDesc, usedPlayerFactory);
+        warmup(usedEvaluatorFactory, usedPlayerFactory, gameDesc);
 
         Strategy bestStrategy = null;
         double bestStrategyExp = Double.MAX_VALUE;
@@ -135,35 +170,16 @@ public class EvaluateCommand implements Runnable {
             if (!quiet && count > 1) {
                 System.out.println(String.format("Evaluation %d/%d:", repetition + 1, count));
             }
-            long lastEntryStates = 0;
-            double lastTime = 0;
-
             IPlayerEvaluationSaver saver = null;
-            try {
-                if (!dryRun) {
+            if (!dryRun) {
+                try {
                     saver = usedEvaluatorFactory.createSaver(solverDir, init, resultPostfix);
+                } catch (IOException e) {
+                    System.out.println(e.getMessage());
+                    continue;
                 }
-                for (int logTimeMs: timeLimits) {
-                    IPlayerEvaluator evaluator = usedEvaluatorFactory.create(init, Collections.singletonList(logTimeMs));
-                    EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet).get(0);
-                    double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
-                    if (saver != null) {
-                        saver.add(entry, exp);
-                    }
-                    if (exp < bestStrategyExp) {
-                        bestStrategy = entry.getAggregatedStrat();
-                        bestStrategyExp = exp;
-                    }
-                    if (!quiet) {
-                        System.out.println(String.format("(%5d ms, %12d total states, %8d avg. path states) -> %.4f exp | %.4g states/s",
-                                (int) entry.getEntryTimeMs(), entry.getAvgVisitedStates(), entry.getPathStatesAvg(),exp, 1000*(entry.getAvgVisitedStates() - lastEntryStates)/(entry.getEntryTimeMs() - lastTime)));
-                    }
-                    lastEntryStates = entry.getAvgVisitedStates();
-                    lastTime = entry.getEntryTimeMs();
-                }
-            } catch(IOException e) {
-                System.out.println(e.getMessage());
             }
+            runEvaluator(usedEvaluatorFactory, usedPlayerFactory, gameDesc, saver, quiet, init, timeLimits);
         }
 
 
