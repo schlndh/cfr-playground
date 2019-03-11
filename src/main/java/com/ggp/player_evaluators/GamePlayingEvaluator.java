@@ -55,7 +55,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
     public GamePlayingEvaluator(int initMs, List<Integer> logPointsMs, int gameCount) {
         this.initMs = initMs;
         this.timeoutMs = logPointsMs.get(logPointsMs.size() - 1);
-        this.stratAggregator = new StrategyAggregatorListener(logPointsMs);
+        this.stratAggregator = new StrategyAggregatorListener(initMs, logPointsMs);
         this.gameCount = gameCount;
     }
 

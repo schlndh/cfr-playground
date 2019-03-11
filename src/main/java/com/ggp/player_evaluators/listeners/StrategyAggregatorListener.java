@@ -17,12 +17,12 @@ public class StrategyAggregatorListener extends BaseListener {
     private TimedCounter timedCounter;
     private int strategyIdx;
 
-    public StrategyAggregatorListener(List<Integer> logPointsMs) {
+    public StrategyAggregatorListener(double initMs, List<Integer> logPointsMs) {
         this.logPointsMs = new ArrayList<>(logPointsMs);
         this.timedCounter = new TimedCounter(logPointsMs);
         this.entries = new ArrayList<>(logPointsMs.size());
         for (int i = 0; i < logPointsMs.size(); ++i) {
-            entries.add(new EvaluatorEntry(logPointsMs.get(i)));
+            entries.add(new EvaluatorEntry(initMs, logPointsMs.get(i)));
         }
     }
 
@@ -32,6 +32,7 @@ public class StrategyAggregatorListener extends BaseListener {
         if (resInfo == null) return;
         for (EvaluatorEntry entry: entries) {
             entry.addInitVisitedStates(resInfo.getVisitedStatesInCurrentResolving());
+            entry.addInitTime(timedCounter.getLiveDurationMs());
         }
     }
 

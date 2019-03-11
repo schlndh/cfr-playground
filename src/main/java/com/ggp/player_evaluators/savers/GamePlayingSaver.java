@@ -31,7 +31,7 @@ public class GamePlayingSaver implements IPlayerEvaluationSaver {
 
     @Override
     public void add(EvaluatorEntry e, double exploitability) throws IOException {
-        String resFileName = path + "/" + getFileName((int) e.getIntendedTimeMs());
+        String resFileName = path + "/" + getFileName((int) e.getIntendedActTimeMs());
         FileOutputStream fileOutputStream = new FileOutputStream(resFileName);
         ObjectOutputStream objectOutputStream
                 = new ObjectOutputStream(fileOutputStream);

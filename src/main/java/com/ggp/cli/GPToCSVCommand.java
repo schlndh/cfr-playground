@@ -56,7 +56,7 @@ public class GPToCSVCommand implements Runnable {
                         ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
                         EvaluatorEntry entry = (EvaluatorEntry) objectInputStream.readObject();
                         if (entry == null) throw new Exception("null");
-                        String csvFilename = solverDir + "/" + getFileName(meta.initMs, (int) entry.getIntendedTimeMs(), meta.gameCount, meta.dateKey);
+                        String csvFilename = solverDir + "/" + getFileName(meta.initMs, (int) entry.getIntendedActTimeMs(), meta.gameCount, meta.dateKey);
                         if (new File(csvFilename).exists()) {
                             System.out.println("\t\tAlready converted " + gpentry.getName());
                             continue;

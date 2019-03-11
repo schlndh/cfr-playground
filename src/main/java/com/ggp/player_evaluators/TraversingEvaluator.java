@@ -7,6 +7,7 @@ import com.ggp.utils.CompleteInformationStateWrapper;
 import com.ggp.IInfoSetStrategy;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.recall.PerfectRecallGameDescriptionWrapper;
+import com.ggp.utils.time.StopWatch;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
@@ -149,7 +150,7 @@ public class TraversingEvaluator implements IPlayerEvaluator {
 
         ActCacheEntry cacheEntry = actCache.computeIfAbsent(sw.getInfoSetForActingPlayer(), k -> {
             IEvaluablePlayer currentPlayer = PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), pl1, pl2);
-            StrategyAggregatorListener strategyAggregatorListener = new StrategyAggregatorListener(logPointsMs);
+            StrategyAggregatorListener strategyAggregatorListener = new StrategyAggregatorListener(initMs, logPointsMs);
             strategyAggregatorListener.initEnd(null);
             currentPlayer.registerResolvingListener(strategyAggregatorListener);
             currentPlayer.computeStrategy(timeoutMs);
@@ -198,7 +199,7 @@ public class TraversingEvaluator implements IPlayerEvaluator {
         ICompleteInformationState initialState = gameDesc.getInitialState();
         List<EvaluatorEntry> entries = new ArrayList<>(logPointsMs.size());
         for (int i = 0; i < logPointsMs.size(); ++i) {
-            entries.add(new EvaluatorEntry(logPointsMs.get(i)));
+            entries.add(new EvaluatorEntry(initMs, logPointsMs.get(i)));
         }
         IEvaluablePlayer pl1 = playerFactory.create(gameDesc, 1), pl2 = playerFactory.create(gameDesc, 2);
         IEvaluablePlayer.IListener listener = new IEvaluablePlayer.IListener() {
@@ -223,8 +224,14 @@ public class TraversingEvaluator implements IPlayerEvaluator {
         };
         pl1.registerResolvingListener(listener);
         pl2.registerResolvingListener(listener);
+        StopWatch initTimer = new StopWatch();
+        initTimer.start();
         pl1.init(initMs);
         pl2.init(initMs);
+        initTimer.stop();
+        for (EvaluatorEntry entry: entries) {
+            entry.addInitTime(initTimer.getDurationMs()/2);
+        }
         pl1.unregisterResolvingListener(listener);
         pl2.unregisterResolvingListener(listener);
 

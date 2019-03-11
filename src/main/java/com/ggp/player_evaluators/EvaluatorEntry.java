@@ -6,9 +6,12 @@ import java.io.Serializable;
 
 public class EvaluatorEntry implements Serializable {
     private static final long serialVersionUID = 1L;
-    private double intendedTimeMs;
-    private double avgTimeMs = 0;
-    private double avgTimeWeigthNorm = 0;
+    private double intendedActTimeMs;
+    private double avgActTimeMs = 0;
+    private double avgActTimeWeigthNorm = 0;
+    private double intendedInitTimeMs = 0;
+    private double initTimeMsSum = 0;
+    private double initTimeNorm = 0;
     private long initVisitedStates = 0;
     private long visitedStates = 0;
     private long visitedStatesNorm = 1;
@@ -18,20 +21,21 @@ public class EvaluatorEntry implements Serializable {
     private double pathStatesNorm = 0;
     private Strategy aggregatedStrat = new Strategy();
 
-    public EvaluatorEntry(double intendedTimeMs) {
-        this.intendedTimeMs = intendedTimeMs;
+    public EvaluatorEntry(double intendedInitTimeMs, double intendedActTimeMs) {
+        this.intendedInitTimeMs = intendedInitTimeMs;
+        this.intendedActTimeMs = intendedActTimeMs;
     }
 
-    public EvaluatorEntry(double intendedTimeMs, double avgTimeMs, Strategy aggregatedStrat) {
-        this.intendedTimeMs = intendedTimeMs;
-        this.avgTimeMs = avgTimeMs;
-        this.avgTimeWeigthNorm = 1;
+    public EvaluatorEntry(double intendedActTimeMs, double avgActTimeMs, Strategy aggregatedStrat) {
+        this.intendedActTimeMs = intendedActTimeMs;
+        this.avgActTimeMs = avgActTimeMs;
+        this.avgActTimeWeigthNorm = 1;
         this.aggregatedStrat = aggregatedStrat;
     }
 
     public void addTime(double time, double weight) {
-        avgTimeMs += time*weight;
-        avgTimeWeigthNorm += weight;
+        avgActTimeMs += time*weight;
+        avgActTimeWeigthNorm += weight;
     }
 
     public void addVisitedStates(long states) {
@@ -42,12 +46,12 @@ public class EvaluatorEntry implements Serializable {
         initVisitedStates += states;
     }
 
-    public double getIntendedTimeMs() {
-        return intendedTimeMs;
+    public double getIntendedActTimeMs() {
+        return intendedActTimeMs;
     }
 
     public double getEntryTimeMs() {
-        return avgTimeMs/avgTimeWeigthNorm;
+        return avgActTimeMs / avgActTimeWeigthNorm;
     }
 
     public Strategy getAggregatedStrat() {
@@ -85,10 +89,26 @@ public class EvaluatorEntry implements Serializable {
         pathStatesNorm += weight;
     }
 
+    public double getIntendedInitTimeMs() {
+        return intendedInitTimeMs;
+    }
+
+    public double getAvgInitTimeMs() {
+        if (initTimeNorm == 0) return 0;
+        return initTimeMsSum/initTimeNorm;
+    }
+
+    public void addInitTime(double time) {
+        initTimeMsSum += time;
+        initTimeNorm += 1;
+    }
+
     public void merge(EvaluatorEntry other) {
-        if (intendedTimeMs != other.getIntendedTimeMs()) throw new RuntimeException("Can't merge evaluator entries with different intended times.");
-        this.avgTimeMs += other.avgTimeMs;
-        this.avgTimeWeigthNorm += other.avgTimeWeigthNorm;
+        if (intendedActTimeMs != other.getIntendedActTimeMs() || intendedInitTimeMs != other.getIntendedInitTimeMs()) throw new RuntimeException("Can't merge evaluator entries with different intended times.");
+        this.avgActTimeMs += other.avgActTimeMs;
+        this.avgActTimeWeigthNorm += other.avgActTimeWeigthNorm;
+        this.initTimeMsSum += other.initTimeMsSum;
+        this.initTimeNorm += other.initTimeNorm;
         this.initVisitedStates += other.initVisitedStates;
         this.visitedStates += other.visitedStates;
         this.visitedStatesNorm += other.visitedStatesNorm;
