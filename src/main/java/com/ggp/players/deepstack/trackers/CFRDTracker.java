@@ -10,7 +10,7 @@ public class CFRDTracker implements IGameTraversalTracker {
     private double rndProb;
     private IAction myTopAction;
     private enum TrackingState {
-        ROOT, MY_FIRST_TURN, WAIT_MY_TURN, END
+        GAME_ROOT, CFRD_ROOT, MY_FIRST_TURN, WAIT_MY_TURN, END
     }
     private TrackingState trackingState;
     private TrackingState nextTrackingState;
@@ -23,6 +23,9 @@ public class CFRDTracker implements IGameTraversalTracker {
         this.rndProb = rndProb;
         this.myTopAction = myTopAction;
         this.trackingState = trackingState;
+        if (trackingState == TrackingState.GAME_ROOT && state.getActingPlayerId() == myId) {
+            this.trackingState = TrackingState.MY_FIRST_TURN;
+        }
         this.state = state;
         this.myFirstIS = myFirstIS;
 
@@ -36,17 +39,17 @@ public class CFRDTracker implements IGameTraversalTracker {
         } else if (trackingState == TrackingState.MY_FIRST_TURN) {
             nextTrackingState = TrackingState.WAIT_MY_TURN;
             this.myFirstIS = state.getInfoSetForActingPlayer();
-        } else if (trackingState == TrackingState.ROOT && state.getActingPlayerId() == PlayerHelpers.getOpponentId(myId)) {
+        } else if (trackingState == TrackingState.CFRD_ROOT && state.getActingPlayerId() == PlayerHelpers.getOpponentId(myId)) {
             nextTrackingState = TrackingState.MY_FIRST_TURN;
         }
     }
 
     public static CFRDTracker createForAct(int myId, ICompleteInformationState cfrdRoot) {
-        return new CFRDTracker(myId, 1, null, TrackingState.ROOT, cfrdRoot, null);
+        return new CFRDTracker(myId, 1, null, TrackingState.CFRD_ROOT, cfrdRoot, null);
     }
 
     public static CFRDTracker createForInit(int myId, ICompleteInformationState state) {
-        return new CFRDTracker(myId, 1, null, TrackingState.WAIT_MY_TURN, state, null);
+        return new CFRDTracker(myId, 1, null, TrackingState.GAME_ROOT, state, null);
     }
 
     @Override
@@ -62,6 +65,9 @@ public class CFRDTracker implements IGameTraversalTracker {
         }
         return new CFRDTracker(myId, newRndProb, newMyTopAction, nextTrackingState, nextState, myFirstIS);
 
+    }
+    public boolean isMyFirstTurnReached() {
+        return trackingState == TrackingState.MY_FIRST_TURN;
     }
 
     public boolean isMyNextTurnReached() {

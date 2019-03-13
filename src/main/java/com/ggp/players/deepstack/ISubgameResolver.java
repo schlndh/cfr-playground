@@ -29,18 +29,7 @@ public interface ISubgameResolver {
         }
     }
 
-    class InitResult {
-        public SubgameMap subgameMap;
-        public NextRangeTree nrt;
-        public HashMap<IInformationSet, Double> nextOpponentCFV;
-
-        public InitResult(SubgameMap subgameMap, NextRangeTree nrt, HashMap<IInformationSet, Double> nextOpponentCFV) {
-            this.subgameMap = subgameMap;
-            this.nrt = nrt;
-            this.nextOpponentCFV = nextOpponentCFV;
-        }
-    }
-
     ActResult act(IterationTimer timeout);
-    InitResult init(ICompleteInformationState initialState, IterationTimer timeout);
+    void init(ICompleteInformationState initialState, IterationTimer timeout);
+    ISubgameResolver copy(ArrayList<IEvaluablePlayer.IListener> resolvingListeners);
 }

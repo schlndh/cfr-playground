@@ -179,4 +179,12 @@ public abstract class BaseCFRSolver {
     }
 
     public abstract BaseCFRSolver copy(IStrategyAccumulationFilter accumulationFilter);
+
+    public BaseCFRSolver copy() {
+        return copy(accumulationFilter);
+    }
+
+    public void clearVisitedStates() {
+        visitedStates = 0;
+    }
 }

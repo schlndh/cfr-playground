@@ -2,6 +2,7 @@ package com.ggp.players.deepstack.resolvers;
 
 import com.ggp.*;
 import com.ggp.player_evaluators.IEvaluablePlayer;
+import com.ggp.players.deepstack.IResolvingListener;
 import com.ggp.players.deepstack.ISubgameResolver;
 import com.ggp.players.deepstack.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
 import com.ggp.players.deepstack.cfrd.CFRDSubgameRoot;
@@ -54,8 +55,10 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private NextRangeTree nrt = new NextRangeTree();
     private HashMap<IInformationSet, Double> nextOpponentCFV = new HashMap<>();
     private IStrategy cummulativeStrategy;
-    private BaseCFRSolver lastSolver = null;
+    private BaseCFRSolver cfrSolver = null;
     private long visitedStates = 0;
+    private long iters = 0;
+    private CFRDTracker rootTracker = null;
 
     private class InfoSetTargeting implements ISearchTargeting {
         private final List<Integer> rootTargeting;
@@ -102,8 +105,8 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
         @Override
         public long getVisitedStatesInCurrentResolving() {
-            if (lastSolver == null) return visitedStates;
-            return visitedStates + lastSolver.getVisitedStates();
+            if (cfrSolver == null) return visitedStates;
+            return visitedStates + cfrSolver.getVisitedStates();
         }
     }
 
@@ -121,8 +124,26 @@ public class ExternalCFRResolver implements ISubgameResolver {
         this.subgameMap = new SubgameMap(opponentId);
     }
 
+    private ExternalCFRResolver(ExternalCFRResolver other) {
+        this.myId = other.myId;
+        this.hiddenInfo = other.hiddenInfo;
+        this.range = other.range;
+        this.opponentCFV = other.opponentCFV;
+        this.resolvingListeners = null;
+        this.opponentId = other.opponentId;
+        this.solverFactory = other.solverFactory;
+        this.subgameMap = other.subgameMap;
+        this.nrt = other.nrt;
+        this.nextOpponentCFV = new HashMap<>(other.nextOpponentCFV);
+        this.cummulativeStrategy = other.cummulativeStrategy;
+        this.cfrSolver = other.cfrSolver.copy();
+        this.visitedStates = other.visitedStates;
+        this.iters = other.iters;
+        this.rootTracker = other.rootTracker;
+    }
+
     private BaseCFRSolver createSolver(CFRDSubgameRoot subgame, HashSet<IInformationSet> accumulatedInfoSets) {
-        BaseCFRSolver cfrSolver = solverFactory.create(new BaseCFRSolver.IStrategyAccumulationFilter() {
+        cfrSolver = solverFactory.create(new BaseCFRSolver.IStrategyAccumulationFilter() {
             @Override
             public boolean isAccumulated(IInformationSet is) {
                 return accumulatedInfoSets != null && accumulatedInfoSets.contains(is);
@@ -157,14 +178,16 @@ public class ExternalCFRResolver implements ISubgameResolver {
             if (s.wantsTargeting()) s.setTargeting(new InfoSetTargeting(subgame));
         }
         cummulativeStrategy = cfrSolver.getCumulativeStrat();
-        lastSolver = cfrSolver;
         return cfrSolver;
     }
 
-    protected void findMyNextTurn(CFRDTracker tracker) {
+    protected void findMyNextTurn(CFRDTracker tracker, HashSet<IInformationSet> myFirstActInfoSets) {
         ICompleteInformationState s = tracker.getCurrentState();
         visitedStates++;
         if (s.isTerminal()) return;
+        if (myFirstActInfoSets != null && tracker.isMyFirstTurnReached()) {
+            myFirstActInfoSets.add(s.getInfoSetForActingPlayer());
+        }
         if (tracker.isMyNextTurnReached()) {
             subgameMap.addSubgameState(s);
             nrt.add(s, tracker.getMyFirstIS(), tracker.getMyTopAction(), tracker.getRndProb());
@@ -172,14 +195,14 @@ public class ExternalCFRResolver implements ISubgameResolver {
             return;
         }
         for (IAction a: s.getLegalActions()) {
-            findMyNextTurn(tracker.next(a));
+            findMyNextTurn(tracker.next(a), myFirstActInfoSets);
         }
     }
 
     protected CFRDTracker prepareDataStructures() {
         ICompleteInformationState subgame = new CFRDSubgameRoot(range, opponentCFV, opponentId);
         CFRDTracker tracker = CFRDTracker.createForAct(myId, subgame);
-        findMyNextTurn(tracker);
+        findMyNextTurn(tracker, null);
         return tracker;
     }
 
@@ -189,66 +212,67 @@ public class ExternalCFRResolver implements ISubgameResolver {
         timer.start();
     }
 
-    @Override
-    public ActResult act(IterationTimer timeout) {
-        runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
-        CFRDTracker tracker = prepareDataStructures();
-
-        HashSet<IInformationSet> myInformationSets = new HashSet<>();
-        for (ICompleteInformationState s: range.getPossibleStates()) {
-            myInformationSets.add(s.getInfoSetForActingPlayer());
-        }
-        int iters = 0;
-        BaseCFRSolver cfrSolver = createSolver((CFRDSubgameRoot) tracker.getCurrentState(), myInformationSets);
+    private void runSolver(IterationTimer timeout) {
         do {
             timeout.startIteration();
-            cfrSolver.runIteration(tracker);
+            cfrSolver.runIteration(rootTracker);
 
             runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingIterationEnd(resInfo)));
             timeout.endIteration();
             iters++;
         } while (timeout.canDoAnotherIteration());
+    }
 
+    @Override
+    public ActResult act(IterationTimer timeout) {
+        if (cfrSolver != null) {
+            // clear visited states count since we're continuing from init
+            visitedStates = 0;
+            cfrSolver.clearVisitedStates();
+        }
+        runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
+        if (cfrSolver == null) {
+            rootTracker = prepareDataStructures();
+
+            HashSet<IInformationSet> myInformationSets = new HashSet<>();
+            for (ICompleteInformationState s: range.getPossibleStates()) {
+                myInformationSets.add(s.getInfoSetForActingPlayer());
+            }
+            createSolver((CFRDSubgameRoot) rootTracker.getCurrentState(), myInformationSets);
+        }
+
+        runSolver(timeout);
         runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo)));
 
         Strategy cumulativeStrat = cfrSolver.getFinalCumulativeStrat();
         cumulativeStrat.normalize();
         this.cummulativeStrategy = cumulativeStrat;
-        int cfvNorm = iters;
+        long cfvNorm = iters;
         nextOpponentCFV.replaceAll((is, cfv) -> cfv/cfvNorm);
-        lastSolver = null;
+        cfrSolver = null;
 
         return new ActResult(cumulativeStrat, subgameMap, nrt, nextOpponentCFV);
     }
 
 
     @Override
-    public InitResult init(ICompleteInformationState initialState, IterationTimer timeout) {
+    public void init(ICompleteInformationState initialState, IterationTimer timeout) {
         runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
-        CFRDTracker tracker = CFRDTracker.createForInit(myId, initialState);
-        findMyNextTurn(tracker);
-        InitResult res = doInit(tracker, timeout);
+        rootTracker = CFRDTracker.createForInit(myId, initialState);
+        HashSet<IInformationSet> myFirstActInfoSets = new HashSet<>();
+        findMyNextTurn(rootTracker, myFirstActInfoSets);
+        createSolver(null, myFirstActInfoSets);
+        runSolver(timeout);
         runWithPausedTimer(timeout, () -> {
             resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo));
             resolvingListeners.forEach(listener -> listener.initEnd(resInfo));
         });
-
-        lastSolver = null;
-        return res;
     }
 
-    protected InitResult doInit(CFRDTracker tracker, IterationTimer timeout) {
-        int iters = 0;
-        BaseCFRSolver cfrSolver = createSolver(null, null);
-        while (timeout.canDoAnotherIteration()) {
-            timeout.startIteration();
-            cfrSolver.runIteration(tracker);
-            runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingIterationEnd(resInfo)));
-            timeout.endIteration();
-            iters++;
-        }
-        int cfvNorm = iters;
-        nextOpponentCFV.replaceAll((is, cfv) -> cfv/cfvNorm);
-        return new InitResult(subgameMap, nrt, nextOpponentCFV);
+    @Override
+    public ISubgameResolver copy(ArrayList<IEvaluablePlayer.IListener> listeners) {
+        ExternalCFRResolver ret = new ExternalCFRResolver(this);
+        ret.resolvingListeners = listeners == null ? new ArrayList<>() : listeners;
+        return ret;
     }
 }

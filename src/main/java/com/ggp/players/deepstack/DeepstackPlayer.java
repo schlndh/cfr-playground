@@ -67,24 +67,22 @@ public class DeepstackPlayer implements IEvaluablePlayer {
     private SubgameMap subgameMap;
     private NextRangeTree nrt;
     private RandomSampler sampler = new RandomSampler();
+    private ISubgameResolver initResolver = null;
 
-    private DeepstackPlayer(int id, CISRange range, IInformationSet hiddenInfo,
-                            IGameDescription gameDesc,
-                            IAction myLastAction,
-                            IStrategy lastCumulativeStrategy, ArrayList<IEvaluablePlayer.IListener> resolvingListeners,
-                            ISubgameResolver.Factory resolverFactory, SubgameMap subgameMap, NextRangeTree nrt, HashMap<IInformationSet, Double> opponentCFV) {
-        this.id = id;
-        this.opponentId = PlayerHelpers.getOpponentId(id);
-        this.range = range;
-        this.hiddenInfo = hiddenInfo;
-        this.gameDesc = gameDesc;
-        this.myLastAction = myLastAction;
-        this.lastCumulativeStrategy = lastCumulativeStrategy;
-        this.resolvingListeners = resolvingListeners;
-        this.resolverFactory = resolverFactory;
-        this.subgameMap = subgameMap;
-        this.nrt = nrt;
-        this.opponentCFV = opponentCFV;
+    private DeepstackPlayer(DeepstackPlayer other) {
+        this.id = other.id;
+        this.opponentId = other.opponentId;
+        this.range = other.range;
+        this.hiddenInfo = other.hiddenInfo;
+        this.opponentCFV = other.opponentCFV;
+        this.gameDesc = other.gameDesc;
+        this.myLastAction = other.myLastAction;
+        this.lastCumulativeStrategy = other.lastCumulativeStrategy;
+        this.resolvingListeners = new ArrayList<>(other.resolvingListeners);
+        this.resolverFactory = other.resolverFactory;
+        this.subgameMap = other.subgameMap;
+        this.nrt = other.nrt;
+        this.initResolver = other.initResolver == null ? null : other.initResolver.copy(this.resolvingListeners);
     }
 
     public DeepstackPlayer(int id, IGameDescription gameDesc, ISubgameResolver.Factory resolverFactory) {
@@ -121,10 +119,8 @@ public class DeepstackPlayer implements IEvaluablePlayer {
         IterationTimer timer = new IterationTimer(timeoutMillis);
         timer.start();
         ISubgameResolver r = createResolver();
-        ISubgameResolver.InitResult res = r.init(gameDesc.getInitialState(), timer);
-        this.subgameMap = res.subgameMap;
-        this.opponentCFV = res.nextOpponentCFV;
-        this.nrt = res.nrt;
+        r.init(gameDesc.getInitialState(), timer);
+        initResolver = r;
     }
 
     @Override
@@ -136,21 +132,23 @@ public class DeepstackPlayer implements IEvaluablePlayer {
     public void computeStrategy(long timeoutMillis) {
         IterationTimer timer = new IterationTimer(timeoutMillis);
         timer.start();
-        range = new CISRange(subgameMap.getSubgame(hiddenInfo), nrt, lastCumulativeStrategy);
-        ISubgameResolver r = createResolver();
-        ISubgameResolver.ActResult res = r.act(timer);
+        ISubgameResolver r = initResolver;
+        if (r == null) {
+            range = new CISRange(subgameMap.getSubgame(hiddenInfo), nrt, lastCumulativeStrategy);
+            r = createResolver();
+        }
 
+        ISubgameResolver.ActResult res = r.act(timer);
         lastCumulativeStrategy = res.cumulativeStrategy;
         subgameMap = res.subgameMap;
         nrt = res.nrt;
         opponentCFV = res.nextOpponentCFV;
+        initResolver = null;
     }
 
     @Override
     public DeepstackPlayer copy() {
-        return new DeepstackPlayer(id, range, hiddenInfo,
-                gameDesc, myLastAction,
-                lastCumulativeStrategy, resolvingListeners, resolverFactory, subgameMap, nrt, opponentCFV);
+        return new DeepstackPlayer(this);
     }
 
     private IAction act(IAction forcedAction, long timeoutMillis) {
@@ -185,12 +183,6 @@ public class DeepstackPlayer implements IEvaluablePlayer {
     @Override
     public void receivePercepts(IPercept percept) {
         hiddenInfo = hiddenInfo.applyPercept(percept);
-    }
-
-    public String getConfigString() {
-        return "DeepstackPlayer{" +
-                "subgameResolver=" + resolverFactory.getConfigString() +
-                '}';
     }
 
     @Override
