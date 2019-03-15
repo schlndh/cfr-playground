@@ -2,8 +2,8 @@ package com.ggp.players.solving;
 
 import com.ggp.*;
 import com.ggp.player_evaluators.IEvaluablePlayer;
-import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
-import com.ggp.players.deepstack.trackers.SimpleTracker;
+import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
+import com.ggp.players.continual_resolving.trackers.SimpleTracker;
 import com.ggp.solvers.cfr.BaseCFRSolver;
 import com.ggp.solvers.cfr.ITargetableSolver;
 import com.ggp.utils.random.RandomSampler;

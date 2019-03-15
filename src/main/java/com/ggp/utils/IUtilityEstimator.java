@@ -1,6 +1,6 @@
 package com.ggp.utils;
 
-import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
+import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 
 public interface IUtilityEstimator {
     interface IFactory {

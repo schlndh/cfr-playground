@@ -1,13 +1,11 @@
 package com.ggp.solvers.cfr;
 
 import com.ggp.*;
-import com.ggp.players.deepstack.cfrd.CFRDSubgameRoot;
-import com.ggp.players.deepstack.cfrd.OpponentsChoiceState;
-import com.ggp.players.deepstack.cfrd.actions.FollowAction;
-import com.ggp.players.deepstack.cfrd.actions.TerminateAction;
-import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
+import com.ggp.players.continual_resolving.cfrd.CFRDSubgameRoot;
+import com.ggp.players.continual_resolving.cfrd.actions.FollowAction;
+import com.ggp.players.continual_resolving.cfrd.actions.TerminateAction;
+import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 import com.ggp.solvers.cfr.baselines.NoBaseline;
-import com.ggp.IInfoSetStrategy;
 import com.ggp.solvers.cfr.is_info.BaseCFRISInfo;
 import com.ggp.solvers.cfr.is_info.MCCFRISInfo;
 import com.ggp.solvers.cfr.utils.RandomNodeIS;
@@ -15,7 +13,6 @@ import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.random.RandomSampler;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 
 public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {

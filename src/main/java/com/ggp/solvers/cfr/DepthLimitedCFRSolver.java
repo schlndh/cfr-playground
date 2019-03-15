@@ -3,11 +3,10 @@ package com.ggp.solvers.cfr;
 import com.ggp.*;
 import com.ggp.solvers.cfr.is_info.BaseCFRISInfo;
 import com.ggp.utils.IUtilityEstimator;
-import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
+import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 import com.ggp.utils.PlayerHelpers;
 
 import java.util.List;
-import java.util.function.BiFunction;
 
 public class DepthLimitedCFRSolver extends BaseCFRSolver {
     public static class Factory extends BaseCFRSolver.Factory {

@@ -12,7 +12,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Evaluates Deepstack configuration by playing number of games against random opponent, while aggregating computed strategies
+ * Evaluates player configuration by playing number of games against random opponent, while aggregating computed strategies
  * at encountered decision points.
  */
 public class GamePlayingEvaluator implements IPlayerEvaluator {
@@ -48,7 +48,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
 
     /**
      * Constructor
-     * @param initMs timeout for deepstack initialization
+     * @param initMs timeout for player initialization
      * @param logPointsMs ASC ordered list of times when strategies should be aggregated
      * @param gameCount number of games to play
      */

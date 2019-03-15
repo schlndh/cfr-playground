@@ -3,7 +3,7 @@ package com.ggp.solvers.cfr;
 import com.ggp.IInfoSetStrategy;
 import com.ggp.IInformationSet;
 import com.ggp.IStrategy;
-import com.ggp.players.deepstack.trackers.IGameTraversalTracker;
+import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 import com.ggp.solvers.cfr.is_info.BaseCFRISInfo;
 import com.ggp.utils.strategy.InfoSetStrategy;
 import com.ggp.utils.strategy.Strategy;

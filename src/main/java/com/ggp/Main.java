@@ -5,13 +5,13 @@ import com.ggp.parsers.ConfigurableFactory;
 import com.ggp.parsers.Parameter;
 import com.ggp.parsers.ParameterList;
 import com.ggp.players.PerfectRecallPlayerFactory;
+import com.ggp.players.continual_resolving.ContinualResolvingPlayer;
 import com.ggp.players.solving.SolvingPlayer;
-import com.ggp.players.deepstack.DeepstackPlayer;
 import com.ggp.player_evaluators.GamePlayingEvaluator;
 import com.ggp.player_evaluators.IPlayerEvaluator;
 import com.ggp.player_evaluators.TraversingEvaluator;
 import com.ggp.solvers.cfr.IRegretMatching;
-import com.ggp.players.deepstack.ISubgameResolver;
+import com.ggp.players.continual_resolving.ISubgameResolver;
 import com.ggp.solvers.cfr.regret_matching.DiscountedRegretMatching;
 import com.ggp.solvers.cfr.regret_matching.ExplorativeRegretMatching;
 import com.ggp.solvers.cfr.regret_matching.RegretMatching;
@@ -47,7 +47,7 @@ public class Main {
         registerCFRSolvers(factory);
         registerPlayers(factory);
         registerBaselines(factory);
-        registerDeepstackEvaluators(factory);
+        registerPlayerEvaluators(factory);
     }
 
     private static void registerGames(ConfigurableFactory factory) throws NoSuchMethodException {
@@ -149,11 +149,11 @@ public class Main {
         factory.register(IPlayerFactory.class, "RandomPlayer",
                 new ParameterList(null, null, (a, b) -> new RandomPlayer.Factory())
         );
-        factory.register(IPlayerFactory.class, "Deepstack", ConfigurableFactory.createPositionalParameterList(
-                DeepstackPlayer.Factory.class.getConstructor(BaseCFRSolver.Factory.class)
+        factory.register(IPlayerFactory.class, "ContinualResolving", ConfigurableFactory.createPositionalParameterList(
+                ContinualResolvingPlayer.Factory.class.getConstructor(BaseCFRSolver.Factory.class)
         ));
-        factory.register(IPlayerFactory.class, "Deepstack", ConfigurableFactory.createPositionalParameterList(
-                DeepstackPlayer.Factory.class.getConstructor(ISubgameResolver.Factory.class)
+        factory.register(IPlayerFactory.class, "ContinualResolving", ConfigurableFactory.createPositionalParameterList(
+                ContinualResolvingPlayer.Factory.class.getConstructor(ISubgameResolver.Factory.class)
         ));
         factory.register(IPlayerFactory.class, "PerfectRecall", ConfigurableFactory.createPositionalParameterList(
                 PerfectRecallPlayerFactory.class.getConstructor(IPlayerFactory.class)
@@ -192,7 +192,7 @@ public class Main {
                 new ParameterList(null, null, (a, b) -> new NoBaseline.Factory()));
     }
 
-    private static void registerDeepstackEvaluators(ConfigurableFactory factory) throws NoSuchMethodException {
+    private static void registerPlayerEvaluators(ConfigurableFactory factory) throws NoSuchMethodException {
         factory.register(IPlayerEvaluator.IFactory.class, "GamePlayingEvaluator",
                 ConfigurableFactory.createPositionalParameterList(
                         GamePlayingEvaluator.Factory.class.getConstructor(int.class)

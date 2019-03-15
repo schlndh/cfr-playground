@@ -1,7 +1,6 @@
 package com.ggp.player_evaluators;
 
 import com.ggp.*;
-import com.ggp.players.deepstack.ISubgameResolver;
 
 public interface IEvaluablePlayer extends IPlayer {
     interface IFactory extends IPlayerFactory {

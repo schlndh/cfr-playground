@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.util.*;
 
 /**
- * Evaluates Deepstack configuration by traversing the game tree and computing strategy at each decision point,
+ * Evaluates player configuration by traversing the game tree and computing strategy at each decision point,
  * while aggregating the resulting strategies at given time intervals.
  */
 public class TraversingEvaluator implements IPlayerEvaluator {
@@ -73,7 +73,7 @@ public class TraversingEvaluator implements IPlayerEvaluator {
 
     /**
      * Constructor
-     * @param initMs timeout for deepstack initialization
+     * @param initMs timeout for player initialization
      * @param logPointsMs ASC ordered list of times when strategies should be aggregated
      */
     public TraversingEvaluator(int initMs, List<Integer> logPointsMs) {
