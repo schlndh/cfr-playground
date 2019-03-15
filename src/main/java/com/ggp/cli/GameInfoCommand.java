@@ -7,6 +7,7 @@ import com.ggp.utils.DefaultStateVisualizer;
 import picocli.CommandLine;
 
 import java.util.HashSet;
+import java.util.List;
 
 @CommandLine.Command(name = "game-info",
         mixinStandardHelpOptions = true,
@@ -23,23 +24,30 @@ public class GameInfoCommand implements Runnable {
 
     private long states = 0;
     private HashSet<IInformationSet> infoSets = new HashSet<>();
+    private int maxDepth = 0;
+    private double avgDepth = 0;
+    private long leaves = 0;
+    private long innerStates = 0;
+    private double avgBranchingFactor = 0;
 
-    public void visit(ICompleteInformationState s) {
+    public void visit(ICompleteInformationState s, int depth) {
         states++;
         if (s.isTerminal()) {
+            leaves++;
+            if (depth > maxDepth) maxDepth = depth;
+            avgDepth += (1d/leaves)*(depth - avgDepth);
             return;
         }
-        if (s.isRandomNode()) {
-            for (IRandomNode.IRandomNodeAction rna: s.getRandomNode()) {
-                visit(s.next(rna.getAction()));
-            }
-        } else {
+        innerStates++;
+        List<IAction> legalActions = s.getLegalActions();
+        avgBranchingFactor += (1d/innerStates)*(legalActions.size() - avgBranchingFactor);
+        if (!s.isRandomNode()) {
             infoSets.add(s.getInfoSetForActingPlayer());
-            for (IAction a: s.getLegalActions()) {
-                visit(s.next(a));
-            }
         }
-    }
+        for (IAction a: legalActions) {
+            visit(s.next(a), depth + 1);
+        }
+}
 
 
     @Override
@@ -55,7 +63,8 @@ public class GameInfoCommand implements Runnable {
         System.out.println("Game: " + gameDesc.getConfigString());
         ICompleteInformationState s = gameDesc.getInitialState();
 
-        visit(s);
-        System.out.println("Game tree size: " + states + ", acting info-sets " + infoSets.size());
+        visit(s, 0);
+        System.out.println(String.format("Game tree size: %d, acting info-sets: %d, max depth: %d, avg. depth: %f, avg. branching factor: %f",
+                states, infoSets.size(), maxDepth, avgDepth, avgBranchingFactor));
     }
 }
