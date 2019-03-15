@@ -6,6 +6,7 @@ import com.ggp.parsers.Parameter;
 import com.ggp.parsers.ParameterList;
 import com.ggp.players.PerfectRecallPlayerFactory;
 import com.ggp.players.continual_resolving.ContinualResolvingPlayer;
+import com.ggp.players.continual_resolving.utils.ContinualResolvingkUtilityEstimatorWrapper;
 import com.ggp.players.solving.SolvingPlayer;
 import com.ggp.player_evaluators.GamePlayingEvaluator;
 import com.ggp.player_evaluators.IPlayerEvaluator;
@@ -176,10 +177,13 @@ public class Main {
         ));
     }
 
-    private static void registerUtilityEstimators(ConfigurableFactory factory) {
+    private static void registerUtilityEstimators(ConfigurableFactory factory) throws NoSuchMethodException {
         factory.register(IUtilityEstimator.IFactory.class, "RandomPlayout",
                 new ParameterList(Arrays.asList(new Parameter(int.class, null, true)), null,
                         (posParams, kvParams) -> new RandomPlayoutUtilityEstimator.Factory((int)posParams.get(0))));
+        factory.register(IUtilityEstimator.IFactory.class, "CRUEW", ConfigurableFactory.createPositionalParameterList(
+                ContinualResolvingkUtilityEstimatorWrapper.Factory.class.getConstructor(IUtilityEstimator.IFactory.class)
+        ));
     }
 
     private static void registerBaselines(ConfigurableFactory factory) throws NoSuchMethodException {

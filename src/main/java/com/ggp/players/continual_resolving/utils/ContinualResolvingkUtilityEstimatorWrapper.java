@@ -19,7 +19,7 @@ public class ContinualResolvingkUtilityEstimatorWrapper implements IUtilityEstim
 
         @Override
         public String getConfigString() {
-            return ueFactory.getConfigString();
+            return "CRUEW{" + ueFactory.getConfigString() + "}";
         }
     }
 
