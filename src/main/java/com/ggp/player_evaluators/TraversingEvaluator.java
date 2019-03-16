@@ -8,6 +8,7 @@ import com.ggp.IInfoSetStrategy;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.recall.PerfectRecallGameDescriptionWrapper;
 import com.ggp.utils.time.StopWatch;
+import com.ggp.utils.time.TimeLimit;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
@@ -119,7 +120,10 @@ public class TraversingEvaluator implements IPlayerEvaluator {
         }
     }
 
-    private void aggregateStrategy(HashMap<IInformationSet, ActCacheEntry> actCache, List<EvaluatorEntry> entries, CompleteInformationStateWrapper sw, IEvaluablePlayer pl1, IEvaluablePlayer pl2, double reachProb1, double reachProb2, int depth, long[] pathStates) {
+    private void aggregateStrategy(HashMap<IInformationSet, ActCacheEntry> actCache, List<EvaluatorEntry> entries,
+                                   CompleteInformationStateWrapper sw, IEvaluablePlayer pl1, IEvaluablePlayer pl2,
+                                   double reachProb1, double reachProb2, int depth, long[] pathStates, TimeLimit evaluationTimeLimit) {
+        if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) return;
         ICompleteInformationState s = sw.getOrigState();
         if (s.isTerminal()) {
             for (int i = 0; i < entries.size(); ++i) {
@@ -139,9 +143,12 @@ public class TraversingEvaluator implements IPlayerEvaluator {
                 IEvaluablePlayer npl1 = pl1.copy(), npl2 = pl2.copy();
                 applyPercepts(npl1, npl2, s.getPercepts(a));
                 printAction(actionIdx, legalActions.size());
-                aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) sw.next(a), npl1, npl2, reachProb1 * actionProb, reachProb2 * actionProb, depth + 1, pathStates);
+                aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) sw.next(a), npl1, npl2,
+                        reachProb1 * actionProb, reachProb2 * actionProb,
+                        depth + 1, pathStates, evaluationTimeLimit);
                 unprintAction(actionIdx, legalActions.size());
                 actionIdx++;
+                if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) return;
             }
             return;
         }
@@ -187,14 +194,16 @@ public class TraversingEvaluator implements IPlayerEvaluator {
             }
             applyPercepts(npl1, npl2, s.getPercepts(a));
             printAction(actionIdx, legalActions.size());
-            aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) sw.next(a), npl1, npl2, nrp1, nrp2, depth + 1, newPathStates);
+            aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) sw.next(a), npl1, npl2, nrp1, nrp2,
+                    depth + 1, newPathStates, evaluationTimeLimit);
             unprintAction(actionIdx, legalActions.size());
             actionIdx++;
+            if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) return;
         }
     }
 
     @Override
-    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet) {
+    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet, TimeLimit evaluationTimeLimit) {
         this.quiet = quiet;
         ICompleteInformationState initialState = gameDesc.getInitialState();
         List<EvaluatorEntry> entries = new ArrayList<>(logPointsMs.size());
@@ -237,7 +246,8 @@ public class TraversingEvaluator implements IPlayerEvaluator {
 
         long pathStates[] = new long[entries.size()*2];
         HashMap<IInformationSet, ActCacheEntry> actCache = new HashMap<>();
-        aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) PerfectRecallGameDescriptionWrapper.wrapInitialState(initialState), pl1.copy(), pl2.copy(), 1d, 1d, 0, pathStates);
+        aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) PerfectRecallGameDescriptionWrapper.wrapInitialState(initialState),
+                pl1.copy(), pl2.copy(), 1d, 1d, 0, pathStates, evaluationTimeLimit);
 
         for (EvaluatorEntry entry: entries) {
             entry.getAggregatedStrat().normalize();

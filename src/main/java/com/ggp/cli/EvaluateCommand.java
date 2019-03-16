@@ -12,6 +12,7 @@ import com.ggp.player_evaluators.IPlayerEvaluator;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.utils.time.StopWatch;
+import com.ggp.utils.time.TimeLimit;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -81,19 +82,21 @@ public class EvaluateCommand implements Runnable {
         StopWatch warmupTimer = new StopWatch();
         warmupTimer.start();
         do {
-            runEvaluator(usedEvaluatorFactory, usedPlayerFactory, gameDesc, null, true,2000, new int[]{10});
-        } while (warmupTimer.getLiveDurationMs() < 10000);
+            runEvaluator(usedEvaluatorFactory, usedPlayerFactory, gameDesc, null, true,2000, new int[]{250}, new TimeLimit(10000));
+        } while (warmupTimer.getLiveDurationMs() < 30000);
         if (!quiet) System.out.println(String.format("Warm-up complete in %dms.", warmupTimer.getLiveDurationMs()));
     }
 
     private void runEvaluator(IPlayerEvaluator.IFactory usedEvaluatorFactory, IEvaluablePlayer.IFactory usedPlayerFactory,
-                              IGameDescription gameDesc, IPlayerEvaluationSaver saver, boolean quiet, int initMs, int[] timeLimitsMs) {
+                              IGameDescription gameDesc, IPlayerEvaluationSaver saver, boolean quiet, int initMs,
+                              int[] timeLimitsMs, TimeLimit evaluationTimeLimit) {
+        if (evaluationTimeLimit != null) evaluationTimeLimit.start();
         long lastEntryStates = 0;
         double lastTime = 0;
         try {
             for (int logTimeMs: timeLimitsMs) {
                 IPlayerEvaluator evaluator = usedEvaluatorFactory.create(initMs, Collections.singletonList(logTimeMs));
-                EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet).get(0);
+                EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet, evaluationTimeLimit).get(0);
                 double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
                 if (saver != null) {
                     saver.add(entry, exp);
@@ -108,6 +111,7 @@ public class EvaluateCommand implements Runnable {
                 }
                 lastEntryStates = entry.getAvgVisitedStates();
                 lastTime = entry.getEntryTimeMs();
+                if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) break;
             }
         } catch(IOException e) {
             System.out.println(e.getMessage());
@@ -179,7 +183,7 @@ public class EvaluateCommand implements Runnable {
                     continue;
                 }
             }
-            runEvaluator(usedEvaluatorFactory, usedPlayerFactory, gameDesc, saver, quiet, init, timeLimits);
+            runEvaluator(usedEvaluatorFactory, usedPlayerFactory, gameDesc, saver, quiet, init, timeLimits, null);
         }
 
 

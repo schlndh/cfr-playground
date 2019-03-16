@@ -7,6 +7,7 @@ import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.random.RandomSampler;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
+import com.ggp.utils.time.TimeLimit;
 
 import java.io.*;
 import java.util.*;
@@ -162,7 +163,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
     }
 
     @Override
-    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet) {
+    public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet, TimeLimit evaluationTimeLimit) {
         IPlayerFactory random = new TerminalAvoidingRandomPlayer.Factory();
         long lastVisitedStates[] = new long[stratAggregator.getEntries().size()];
         playerFactory.registerResolvingListener(stratAggregator);
@@ -170,6 +171,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
         int evals = 0;
         final int totalInfoSets = countInfoSets(gameDesc);
         for (int i = 0; i < gameCount; ++i) {
+            if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) break;
             IPlayerFactory pl1 = playerFactory, pl2 = random;
             if (i % 2 == 1) {
                 pl1 = random;
