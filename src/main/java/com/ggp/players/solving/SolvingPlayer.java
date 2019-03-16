@@ -85,7 +85,7 @@ public class SolvingPlayer implements IEvaluablePlayer {
 
         @Override
         public long getVisitedStatesInCurrentResolving() {
-            return cfrSolver.getVisitedStates() - lastSolverStates + directlyVisitedStates;
+            return cfrSolver.getVisitedStates() - directlyVisitedStates;
         }
     }
 
@@ -97,7 +97,6 @@ public class SolvingPlayer implements IEvaluablePlayer {
     private ArrayList<IListener> resolvingListeners = new ArrayList<>();
     private SolvingInfo resInfo = new SolvingInfo();
     private long directlyVisitedStates = 0;
-    private long lastSolverStates = 0;
     private int resolves = -1;
     private HashSet<IInformationSet> subgame = new HashSet<>();
     private ObjectTree<ActionIdxWrapper> currentPathTree = new ObjectTree<>();
@@ -122,7 +121,6 @@ public class SolvingPlayer implements IEvaluablePlayer {
         this.rootTracker = player.rootTracker;
         this.role = player.role;
         this.resolvingListeners = new ArrayList<>(player.resolvingListeners);
-        this.lastSolverStates = player.lastSolverStates;
         this.resolves = player.resolves;
         this.subgame = new HashSet<>(player.subgame);
         this.useISTargeting = player.useISTargeting;
@@ -132,7 +130,6 @@ public class SolvingPlayer implements IEvaluablePlayer {
     private void fillSubgame() {
         subgame = new HashSet<>();
         subgame.add(currentInfoSet);
-        directlyVisitedStates = 0;
 
         if (resolvingListeners.isEmpty() && !useISTargeting) return;
         fillSubgame(rootTracker.getCurrentState(), 0, new ArrayList<>());
@@ -186,6 +183,8 @@ public class SolvingPlayer implements IEvaluablePlayer {
     }
 
     private void computeStrategy(IterationTimer timer) {
+        directlyVisitedStates = 0;
+        cfrSolver.clearVisitedStates();
         runWithPausedTimer(timer, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
         fillSubgame();
         resolves++;
