@@ -29,7 +29,10 @@ public class SubgameMap {
                 sub2 = isToSubgame.getOrDefault(is2, null);
         HashSet<ICompleteInformationState> merged = null;
         if (sub1 != null && sub2 != null) {
-            if (sub1.size() > sub2.size()) {
+            if (sub1 == sub2) {
+                sub1.add(s);
+                merged = sub1;
+            } else if (sub1.size() > sub2.size()) {
                 sub1.add(s);
                 sub1.addAll(sub2);
                 merged = sub1;

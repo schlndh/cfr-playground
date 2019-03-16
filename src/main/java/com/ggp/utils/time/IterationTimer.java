@@ -43,4 +43,12 @@ public class IterationTimer {
         long remainingMs = timeoutMs - totalTime.getLiveDurationMs();
         return (remainingMs > getEstimatedIterationLengthMs());
     }
+
+    public long getLiveTotalDurationMs() {
+        return totalTime.getLiveDurationMs();
+    }
+
+    public long getLiveIterDurationMs() {
+        return iterTime.getLiveDurationMs();
+    }
 }
