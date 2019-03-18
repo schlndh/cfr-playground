@@ -41,6 +41,6 @@ public class CardRevealedPercept implements IPercept {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.getClass(), owner, card, isPublic);
+        return Objects.hash(-2, card, isPublic);
     }
 }

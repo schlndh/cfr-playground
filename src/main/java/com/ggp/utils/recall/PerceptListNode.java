@@ -2,6 +2,7 @@ package com.ggp.utils.recall;
 
 import com.ggp.IPercept;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -9,12 +10,21 @@ public class PerceptListNode implements Serializable {
     private static final long serialVersionUID = 1L;
     public final PerceptListNode previous;
     public final IPercept percept;
-    private final int hash;
+    private transient int hash;
 
     public PerceptListNode(PerceptListNode previous, IPercept percept) {
         this.previous = previous;
         this.percept = percept;
+        init();
+    }
+
+    private void init() {
         this.hash = Objects.hash(previous, percept);
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        init();
     }
 
     @Override

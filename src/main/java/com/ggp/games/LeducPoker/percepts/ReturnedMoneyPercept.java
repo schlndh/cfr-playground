@@ -34,6 +34,6 @@ public class ReturnedMoneyPercept implements IPercept {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.getClass(), owner, amount);
+        return Objects.hash(-5, owner, amount);
     }
 }

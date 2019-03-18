@@ -34,6 +34,6 @@ public class PotUpdatePercept implements IPercept {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.getClass(), owner, newPotSize);
+        return Objects.hash(-4, owner, newPotSize);
     }
 }
