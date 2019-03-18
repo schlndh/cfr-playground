@@ -78,7 +78,7 @@ public class Strategy implements IStrategy {
 
     public void merge(Strategy other) {
         for (Map.Entry<IInformationSet, InfoSetStrategy> kv: other.strategy.entrySet()) {
-            strategy.merge(kv.getKey(), kv.getValue(), (oldV, newV) -> {oldV.merge(newV); return newV;});
+            strategy.merge(kv.getKey(), kv.getValue(), (oldV, newV) -> {oldV.merge(newV); return oldV;});
         }
     }
 }
