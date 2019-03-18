@@ -202,7 +202,6 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
         }
 
         for (EvaluatorEntry entry: stratAggregator.getEntries()) {
-            entry.getAggregatedStrat().normalize();
             entry.setVisitedStatesNorm(gameCount);
         }
         return stratAggregator.getEntries();

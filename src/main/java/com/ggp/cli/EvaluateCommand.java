@@ -10,6 +10,7 @@ import com.ggp.player_evaluators.EvaluatorEntry;
 import com.ggp.player_evaluators.IPlayerEvaluationSaver;
 import com.ggp.player_evaluators.IPlayerEvaluator;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
+import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.utils.time.StopWatch;
 import com.ggp.utils.time.TimeLimit;
@@ -97,7 +98,7 @@ public class EvaluateCommand implements Runnable {
             for (int logTimeMs: timeLimitsMs) {
                 IPlayerEvaluator evaluator = usedEvaluatorFactory.create(initMs, Collections.singletonList(logTimeMs));
                 EvaluatorEntry entry = evaluator.evaluate(gameDesc, usedPlayerFactory, quiet, evaluationTimeLimit).get(0);
-                double exp = ExploitabilityUtils.computeExploitability(entry.getAggregatedStrat(), gameDesc);
+                double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(entry.getAggregatedStrat()), gameDesc);
                 if (saver != null) {
                     saver.add(entry, exp);
                 }
