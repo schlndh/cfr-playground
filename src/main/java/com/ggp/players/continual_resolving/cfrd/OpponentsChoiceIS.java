@@ -5,6 +5,7 @@ import com.ggp.IInformationSet;
 import com.ggp.IPercept;
 import com.ggp.players.continual_resolving.cfrd.actions.FollowAction;
 import com.ggp.players.continual_resolving.cfrd.actions.TerminateAction;
+import com.ggp.players.continual_resolving.cfrd.percepts.ISSelectedPercept;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +31,9 @@ public class OpponentsChoiceIS implements IInformationSet {
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        return null;
+        if (!isValid(p)) return null;
+        ISSelectedPercept per = (ISSelectedPercept) p;
+        return per.getInformationSet();
     }
 
     @Override
@@ -45,7 +48,7 @@ public class OpponentsChoiceIS implements IInformationSet {
 
     @Override
     public boolean isValid(IPercept p) {
-        return false;
+        return p != null && p.getClass() == ISSelectedPercept.class;
     }
 
     @Override

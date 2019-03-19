@@ -3,6 +3,7 @@ package com.ggp.players.continual_resolving.cfrd.AugmentedIS;
 import com.ggp.IAction;
 import com.ggp.IInformationSet;
 import com.ggp.IPercept;
+import com.ggp.players.continual_resolving.cfrd.percepts.ISSelectedPercept;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,7 +27,9 @@ public class CFRDAugmentedIS implements IInformationSet {
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        return null;
+        if (!isValid(p)) return null;
+        ISSelectedPercept per = (ISSelectedPercept) p;
+        return per.getInformationSet();
     }
 
     @Override
@@ -41,7 +44,7 @@ public class CFRDAugmentedIS implements IInformationSet {
 
     @Override
     public boolean isValid(IPercept p) {
-        return false;
+        return p != null && p.getClass() == ISSelectedPercept.class;
     }
 
     @Override

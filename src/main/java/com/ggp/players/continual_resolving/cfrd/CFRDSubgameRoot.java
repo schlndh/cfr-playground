@@ -6,6 +6,7 @@ import com.ggp.players.continual_resolving.cfrd.AugmentedIS.CFRDAugmentedIS;
 import com.ggp.players.continual_resolving.cfrd.actions.SelectCISAction;
 import com.ggp.players.continual_resolving.cfrd.percepts.ISSelectedPercept;
 import com.ggp.players.continual_resolving.utils.CISRange;
+import com.ggp.utils.PlayerHelpers;
 
 import java.util.*;
 
@@ -72,8 +73,9 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
         if (!isLegal(a)) return null;
         SelectCISAction sel = (SelectCISAction) a;
         ICompleteInformationState s = sel.getSelectedState();
-        return Arrays.asList(new ISSelectedPercept(1, s.getInfoSetForPlayer(1)),
-                new ISSelectedPercept(2, s.getInfoSetForPlayer(2)));
+        int myId = PlayerHelpers.getOpponentId(opponentId);
+        return Arrays.asList(new ISSelectedPercept(opponentId, ((CFRDAugmentedCISWrapper)s).getOpponentsAugmentedIS()),
+                new ISSelectedPercept(myId, s.getInfoSetForPlayer(myId)));
     }
 
     @Override
