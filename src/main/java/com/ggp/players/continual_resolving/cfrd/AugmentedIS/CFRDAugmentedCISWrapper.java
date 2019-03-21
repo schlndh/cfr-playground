@@ -17,10 +17,13 @@ public class CFRDAugmentedCISWrapper extends CompleteInformationStateWrapper {
 
     @Override
     public ICompleteInformationState next(IAction a) {
-        if (state.getActingPlayerId() == opponentId) {
-            return new CFRDAugmentedCISWrapper(state.next(a), opponentId, new CFRDAugmentedIS(opponentId, state.getInfoSetForActingPlayer(), a));
+        ICompleteInformationState nextState = state.next(a);
+        if (nextState.getActingPlayerId() == opponentId) {
+            return new CFRDAugmentedCISWrapper(nextState, opponentId, new CFRDAugmentedIS(opponentId, nextState.getInfoSetForActingPlayer(), null));
+        } else if (state.getActingPlayerId() == opponentId) {
+            return new CFRDAugmentedCISWrapper(nextState, opponentId, new CFRDAugmentedIS(opponentId, state.getInfoSetForActingPlayer(), a));
         } else {
-            return new CFRDAugmentedCISWrapper(state.next(a), opponentId, opponentsAugmentedIS);
+            return new CFRDAugmentedCISWrapper(nextState, opponentId, opponentsAugmentedIS);
         }
     }
 
