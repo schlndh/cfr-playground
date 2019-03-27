@@ -7,4 +7,5 @@ public interface IGameTraversalTracker {
     IGameTraversalTracker next(IAction a);
     ICompleteInformationState getCurrentState();
     double getRndProb();
+    double getPayoff(int player);
 }

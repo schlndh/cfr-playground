@@ -90,7 +90,7 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         listeners.forEach(listener -> listener.enteringState(tracker, info));
 
         if (s.isTerminal()) {
-            return s.getPayoff(1);
+            return tracker.getPayoff(1);
         }
 
         if (depth > depthLimit && utilityEstimator != null && utilityEstimator.canEstimate(tracker)) {

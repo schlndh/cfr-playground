@@ -191,7 +191,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
     protected CFRDTracker prepareDataStructures() {
         ICompleteInformationState subgame = new CFRDSubgameRoot(range, opponentCFV, opponentCFVNorm, opponentId);
-        CFRDTracker tracker = CFRDTracker.create(myId, subgame);
+        CFRDTracker tracker = CFRDTracker.create(myId, subgame, range.getNorm());
         findMyNextTurn(tracker);
         return tracker;
     }
@@ -236,7 +236,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     @Override
     public void init(ICompleteInformationState initialState, IterationTimer timeout) {
         runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
-        rootTracker = CFRDTracker.create(myId, initialState);
+        rootTracker = CFRDTracker.create(myId, initialState, 1);
         findMyNextTurn(rootTracker);
         createSolver(null);
         runSolver(timeout);

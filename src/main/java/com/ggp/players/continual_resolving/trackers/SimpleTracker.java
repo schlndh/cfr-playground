@@ -37,4 +37,9 @@ public class SimpleTracker implements IGameTraversalTracker {
     public double getRndProb() {
         return rndProb;
     }
+
+    @Override
+    public double getPayoff(int player) {
+        return state.getPayoff(player);
+    }
 }

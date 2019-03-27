@@ -12,23 +12,25 @@ public class CFRDTracker implements IGameTraversalTracker {
     private TrackingState trackingState;
     private ICompleteInformationState state;
     private ICompleteInformationState lastSubgameRoot;
+    private double utilityMultiplier = 1;
 
     private CFRDTracker(int myId, double rndProb, TrackingState trackingState, ICompleteInformationState state,
-                       ICompleteInformationState lastSubgameRoot) {
+                       ICompleteInformationState lastSubgameRoot, double utilityMultiplier) {
         this.myId = myId;
         this.rndProb = rndProb;
         this.trackingState = trackingState;
         this.state = state;
         this.lastSubgameRoot = lastSubgameRoot;
+        this.utilityMultiplier = utilityMultiplier;
     }
 
-    public static CFRDTracker create(int myId, ICompleteInformationState root) {
+    public static CFRDTracker create(int myId, ICompleteInformationState root, double utilityMultiplier) {
         if (root == null || root.isTerminal()) return null;
         TrackingState trackingState = TrackingState.WAIT_MY_FIRST_TURN;
         if (root.getActingPlayerId() == myId) {
             trackingState = TrackingState.WAIT_SUBGAME;
         }
-        return new CFRDTracker(myId, 1, trackingState, root, root);
+        return new CFRDTracker(myId, 1, trackingState, root, root, utilityMultiplier);
     }
 
     private static boolean isChildSubgameRoot(ICompleteInformationState parent, ICompleteInformationState child) {
@@ -62,7 +64,7 @@ public class CFRDTracker implements IGameTraversalTracker {
         if (isChildSubgameRoot(state, nextState)) {
             newSubgameRoot = nextState;
         }
-        return new CFRDTracker(myId, newRndProb, getNextTrackingState(nextState), nextState, newSubgameRoot);
+        return new CFRDTracker(myId, newRndProb, getNextTrackingState(nextState), nextState, newSubgameRoot, utilityMultiplier);
 
     }
 
@@ -90,5 +92,10 @@ public class CFRDTracker implements IGameTraversalTracker {
 
     public ICompleteInformationState getLastSubgameRoot() {
         return lastSubgameRoot;
+    }
+
+    @Override
+    public double getPayoff(int player) {
+        return state.getPayoff(player) * utilityMultiplier;
     }
 }

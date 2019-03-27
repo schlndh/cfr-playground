@@ -143,8 +143,9 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
         return sample(s, targeting, probMap, strat.length);
     }
 
-    private CFRResult playout(ICompleteInformationState s, double prefixProb, int player) {
+    private CFRResult playout(IGameTraversalTracker tracker, double prefixProb, int player) {
         double suffixProb = 1;
+        ICompleteInformationState s = tracker.getCurrentState();
         while (!s.isTerminal()) {
             visitedStates++;
             SampleResult res;
@@ -157,9 +158,10 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             }
 
             suffixProb *= res.untargetedProb;
-            s = s.next(s.getLegalActions().get(res.actionIdx));
+            tracker = tracker.next(s.getLegalActions().get(res.actionIdx));
+            s = tracker.getCurrentState();
         }
-        return new CFRResult(suffixProb, prefixProb * suffixProb, s.getPayoff(player)/suffixProb);
+        return new CFRResult(suffixProb, prefixProb * suffixProb, tracker.getPayoff(player)/suffixProb);
     }
 
     private CFRResult cfr(IGameTraversalTracker tracker, double playerProb, double opponentProb,
@@ -174,7 +176,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
         if (s.isTerminal()) {
             return new CFRResult(1,
                     totalSampleProb,
-                    s.getPayoff(player));
+                    tracker.getPayoff(player));
         }
         List<IAction> legalActions = s.getLegalActions();
         if (legalActions == null || legalActions.isEmpty()) return null;
@@ -232,7 +234,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
                     sampledAction.untargetedProb * untargetedSampleProb, player,
                     depth+1, (targeting != null) ? targeting.next(action, sampledAction.actionIdx) : null);
         } else {
-            ret = playout(s.next(legalActions.get(sampledAction.actionIdx)), (totalSampleProb)/legalActions.size(), player);
+            ret = playout(tracker.next(legalActions.get(sampledAction.actionIdx)), (totalSampleProb)/legalActions.size(), player);
         }
         double utility = 0;
         int actionIdx = 0;
@@ -311,7 +313,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
                     (actingPlayer != player) ? isInfo.getStrat()[0] : 1,
                     targetedSampleProb, untargetedSampleProb, player, 2, targeting != null ? targeting.next(FollowAction.instance, 0) : null);
             actionUtil[0] = followRes.utility / totalSampleProb;
-            actionUtil[1] = s.next(TerminateAction.instance).getPayoff(player) / totalSampleProb;
+            actionUtil[1] = tracker.next(TerminateAction.instance).getPayoff(player) / totalSampleProb;
 
             util = (isInfo.getStrat()[0] * actionUtil[0] + isInfo.getStrat()[1] * actionUtil[1]);
 

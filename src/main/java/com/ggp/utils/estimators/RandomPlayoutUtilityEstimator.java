@@ -59,13 +59,14 @@ public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
     public UtilityEstimate estimate(IGameTraversalTracker tracker) {
         ICompleteInformationState s = tracker.getCurrentState();
         if (s.isTerminal()) {
-            return new UtilityEstimate(s.getPayoff(1), 1);
+            return new UtilityEstimate(tracker.getPayoff(1), 1);
         }
         double u1 = 0;
         double totalProb = 0;
         long visitedStates = 0;
         for (int i = 0; i < iters; ++i) {
-            ICompleteInformationState ws = s;
+            IGameTraversalTracker wt = tracker;
+            ICompleteInformationState ws = wt.getCurrentState();
             double prob = 1;
             while (!ws.isTerminal()) {
                 visitedStates++;
@@ -80,9 +81,10 @@ public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
                     a = rnd.select(legalActions);
                 }
 
-                ws = ws.next(a);
+                wt = wt.next(a);
+                ws = wt.getCurrentState();
             }
-            u1 += prob*ws.getPayoff(1);
+            u1 += prob*wt.getPayoff(1);
             totalProb += prob;
         }
         return new UtilityEstimate(u1/totalProb, visitedStates);
