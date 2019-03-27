@@ -11,6 +11,7 @@ import com.ggp.player_evaluators.savers.CsvSaver;
 import com.ggp.player_evaluators.savers.GamePlayingSaver;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
+import com.ggp.utils.strategy.RestrictedStrategy;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.utils.strategy.UniformISStrategy;
 import picocli.CommandLine;
@@ -117,26 +118,7 @@ public class GPToCSVCommand implements Runnable {
                         }
                         IStrategy strat = entry.getAggregatedStrat();
                         if (intersection != null) {
-                            strat = new IStrategy() {
-                                @Override
-                                public Iterable<IInformationSet> getDefinedInformationSets() {
-                                    return intersection;
-                                }
-
-                                @Override
-                                public boolean isDefined(IInformationSet is) {
-                                    return intersection.contains(is);
-                                }
-
-                                @Override
-                                public IInfoSetStrategy getInfoSetStrategy(IInformationSet is) {
-                                    if (isDefined(is)) {
-                                        return entry.getAggregatedStrat().getInfoSetStrategy(is);
-                                    } else {
-                                        return new UniformISStrategy(is.getLegalActions().size());
-                                    }
-                                }
-                            };
+                            strat = new RestrictedStrategy(entry.getAggregatedStrat(), intersection);
                         }
                         double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
                         CsvSaver saver = new CsvSaver(new FileWriter(csvFilename));
