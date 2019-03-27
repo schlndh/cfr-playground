@@ -76,6 +76,10 @@ public class CFRDTracker implements IGameTraversalTracker {
         return trackingState == TrackingState.END;
     }
 
+    public boolean wasNextSubgameReached() {
+        return trackingState.compareTo(TrackingState.WAIT_SUBGAME) > 0;
+    }
+
     @Override
     public ICompleteInformationState getCurrentState() {
         return state;

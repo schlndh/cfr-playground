@@ -11,6 +11,7 @@ import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.random.RandomSampler;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 import com.ggp.utils.strategy.RestrictedStrategy;
+import com.ggp.utils.strategy.Strategy;
 import com.ggp.utils.time.IterationTimer;
 
 import java.util.*;
@@ -71,8 +72,6 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
     private SubgameMap subgameMap;
     private RandomSampler sampler = new RandomSampler();
     private ISubgameResolver lastResolver = null;
-    private int subgameActDepth = 1;
-    private HashSet<IInformationSet> subgameActingIs = null;
 
     private ContinualResolvingPlayer(ContinualResolvingPlayer other) {
         this.id = other.id;
@@ -89,8 +88,6 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
         this.resolverFactory = other.resolverFactory;
         this.subgameMap = other.subgameMap;
         this.lastResolver = other.lastResolver == null ? null : other.lastResolver.copy(this.resolvingListeners);
-        this.subgameActDepth = other.subgameActDepth;
-        this.subgameActingIs = null; // will re-create automatically if necessary
     }
 
     public ContinualResolvingPlayer(int id, IGameDescription gameDesc, ISubgameResolver.Factory resolverFactory) {
@@ -148,8 +145,6 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
                 // entering new subgame
                 range = new CISRange(subgameMap.getSubgame(hiddenInfo), reachProbs, norm);
                 r = createResolver();
-                subgameActDepth = 1;
-                subgameActingIs = null;
             }
         }
 
@@ -183,8 +178,6 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
     public void actWithPrecomputedStrategy(IAction selectedAction) {
         myLastAction = selectedAction;
         hiddenInfo = hiddenInfo.next(selectedAction);
-        subgameActDepth++;
-        subgameActingIs = null;
     }
 
     @Override
@@ -202,28 +195,9 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
         hiddenInfo = hiddenInfo.applyPercept(percept);
     }
 
-    private void findMySubgameTurn(ICompleteInformationState s, int turns) {
-        if (s.isTerminal()) return;
-        if (s.getActingPlayerId() == id) {
-            turns++;
-            if (turns == subgameActDepth) {
-                subgameActingIs.add(s.getInfoSetForActingPlayer());
-                return;
-            }
-        }
-        for (IAction a: s.getLegalActions()) {
-            findMySubgameTurn(s.next(a), turns);
-        }
-    }
-
     @Override
     public IStrategy getNormalizedSubgameStrategy() {
-        if (subgameActingIs == null) {
-            subgameActingIs = new HashSet<>();
-            for (ICompleteInformationState s: range.getPossibleStates()) {
-                findMySubgameTurn(s, 0);
-            }
-        }
-        return new NormalizingStrategyWrapper(new RestrictedStrategy(lastCumulativeStrategy, subgameActingIs));
+        if (lastResolver == null) return new Strategy();
+        return lastResolver.getResolvingInfo().getNormalizedSubgameStrategy();
     }
 }

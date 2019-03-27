@@ -35,4 +35,5 @@ public interface ISubgameResolver {
     ActResult act(IterationTimer timeout);
     void init(ICompleteInformationState initialState, IterationTimer timeout);
     ISubgameResolver copy(ArrayList<IEvaluablePlayer.IListener> resolvingListeners);
+    IEvaluablePlayer.IResolvingInfo getResolvingInfo();
 }
