@@ -46,6 +46,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
     private int timeoutMs;
     StrategyAggregatorListener stratAggregator;
     private int gameCount;
+    private HashMap<IInformationSet, HashSet<IAction>> visitedActions = new HashMap<>();
 
     /**
      * Constructor
@@ -170,6 +171,23 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
         final int evalEach = gameCount/Math.min(gameCount, 10);
         int evals = 0;
         final int totalInfoSets = countInfoSets(gameDesc);
+        GameManager.IActionSelector actionSelector = new GameManager.IActionSelector() {
+            @Override
+            public IAction select(ICompleteInformationState s) {
+                if (s.isRandomNode()) return null;
+                IInformationSet is = s.getInfoSetForActingPlayer();
+                HashSet<IAction> usedActions = visitedActions.computeIfAbsent(is, k -> new HashSet<>());
+                List<IAction> legalActions = s.getLegalActions();
+                if (usedActions.size() == legalActions.size()) return null;
+                for (IAction a: legalActions) {
+                    if (usedActions.contains(a)) continue;
+                    usedActions.add(a);
+                    if (s.next(a).isTerminal()) continue;
+                    return a;
+                }
+                return null;
+            }
+        };
         for (int i = 0; i < gameCount; ++i) {
             if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) break;
             IPlayerFactory pl1 = playerFactory, pl2 = random;
@@ -180,7 +198,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
             stratAggregator.reinit();
             GameManager manager = new GameManager(pl1, pl2, gameDesc);
             manager.registerGameListener(new TerminalAvoidingGameListener());
-            manager.run(initMs, timeoutMs);
+            manager.run(initMs, timeoutMs, actionSelector);
             List<EvaluatorEntry> entries = stratAggregator.getEntries();
             for (int j = 0; j < entries.size(); ++j) {
                 EvaluatorEntry e = entries.get(j);

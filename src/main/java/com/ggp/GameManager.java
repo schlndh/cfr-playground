@@ -7,6 +7,30 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 public class GameManager {
+    public interface IActionSelector {
+        /**
+         * Select action to play in given state
+         * @param s
+         * @return selected action or null, if player should decide
+         */
+        IAction select(ICompleteInformationState s);
+    }
+
+    private class ItertorActionSelector implements IActionSelector {
+        private Iterator<IAction> iter;
+
+        public ItertorActionSelector(Iterator<IAction> iter) {
+            this.iter = iter;
+        }
+
+        @Override
+        public IAction select(ICompleteInformationState s) {
+            if (iter.hasNext()) return iter.next();
+            return null;
+        }
+    }
+
+
     private IPlayer player1;
     private IPlayer player2;
     private ICompleteInformationState state;
@@ -20,25 +44,29 @@ public class GameManager {
     }
 
     public void run(long initTimeoutMillis, long actTimeoutMillis) {
-        run(initTimeoutMillis, actTimeoutMillis, null);
+        run(initTimeoutMillis, actTimeoutMillis, s -> null);
     }
 
-    public void run(long initTimeoutMillis, long actTimeoutMillis, Iterator<IAction> forcedActions) {
+    public void run(long initTimeoutMillis, long actTimeoutMillis, IActionSelector actionSelector) {
         gameListeners.forEach((listener) -> listener.gameStart(player1, player2));
         player1.init(initTimeoutMillis);
         player2.init(initTimeoutMillis);
 
-        while(!playOneTurn(actTimeoutMillis, forcedActions)) {}
+        while(!playOneTurn(actTimeoutMillis, actionSelector)) {}
         gameListeners.forEach((listener) -> listener.gameEnd(getPayoff(1), getPayoff(2)));
     }
 
-    private boolean playOneTurn(long actTimeoutMillis, Iterator<IAction> currentForcedAction) {
+    public void run(long initTimeoutMillis, long actTimeoutMillis, Iterator<IAction> forcedActions) {
+        run(initTimeoutMillis, actTimeoutMillis, new ItertorActionSelector(forcedActions));
+    }
+
+    private boolean playOneTurn(long actTimeoutMillis, IActionSelector actionSelector) {
         if (player1 == null || player2 == null) return true;
         gameListeners.forEach((listener) -> listener.stateReached(state));
         if (state.isTerminal()) return true;
-        IAction a;
+        IAction a = actionSelector.select(state);
         int turn = state.getActingPlayerId();
-        if (currentForcedAction == null) {
+        if (a == null) {
             if (state.isRandomNode()) {
                 IRandomNode rndNode = state.getRandomNode();
                 a = randomActionSelector.select(state.getLegalActions(), action -> rndNode.getActionProb(action)).getResult();
@@ -49,16 +77,18 @@ public class GameManager {
                 }
             }
         } else {
-            a = currentForcedAction.next();
             if (!state.isLegal(a)) {
                 throw new IllegalStateException(String.format("Illegal forced action %s", a));
             }
             if (!state.isRandomNode()) {
-                PlayerHelpers.callWithSelectedParamVoid(turn, player1, player2, p -> p.forceAction(a, actTimeoutMillis));
+                final IAction forcedAction = a;
+                PlayerHelpers.callWithSelectedParamVoid(turn, player1, player2, p -> p.forceAction(forcedAction, actTimeoutMillis));
             }
         }
 
-        gameListeners.forEach((listener) -> listener.actionSelected(state, a));
+        final IAction selectedAction = a;
+
+        gameListeners.forEach((listener) -> listener.actionSelected(state, selectedAction));
         Iterable<IPercept> percepts = state.getPercepts(a);
         state = state.next(a);
         for (IPercept p: percepts) {
