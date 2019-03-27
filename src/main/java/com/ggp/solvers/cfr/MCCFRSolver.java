@@ -165,12 +165,12 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
     private CFRResult cfr(IGameTraversalTracker tracker, double playerProb, double opponentProb,
                           double targetedSampleProb, double untargetedSampleProb, int player, int depth, ISearchTargeting targeting) {
         ICompleteInformationState s = tracker.getCurrentState();
-        Info info = PlayerHelpers.callWithOrderedParams(player, playerProb, opponentProb, (prob1, prob2) -> new Info(prob1, prob2, tracker.getRndProb()));
+        double totalSampleProb = targetingProb * targetedSampleProb + (1-targetingProb) * untargetedSampleProb;
+        Info info = PlayerHelpers.callWithOrderedParams(player, playerProb, opponentProb, (prob1, prob2) -> new Info(prob1, prob2, tracker.getRndProb(), totalSampleProb));
         visitedStates++;
         listeners.forEach(listener -> listener.enteringState(tracker, info));
 
 
-        double totalSampleProb = targetingProb * targetedSampleProb + (1-targetingProb) * untargetedSampleProb;
         if (s.isTerminal()) {
             return new CFRResult(1,
                     totalSampleProb,
@@ -288,7 +288,8 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
 
     private double handleCFRDStart(IGameTraversalTracker tracker, double targetedSampleProb, double untargetedSampleProb, int player, ISearchTargeting targeting) {
         ICompleteInformationState s = tracker.getCurrentState();
-        Info info = new Info(1,1, tracker.getRndProb());
+        final double totalSampleProb = targetingProb * targetedSampleProb + (1-targetingProb) * untargetedSampleProb;
+        Info info = new Info(1,1, tracker.getRndProb(), totalSampleProb);
         visitedStates++;
         listeners.forEach(listener -> listener.enteringState(tracker, info));
         double util = 0;
@@ -304,7 +305,6 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
             IInformationSet actingPlayerInfoSet = s.getInfoSetForActingPlayer();
             MCCFRISInfo isInfo = (MCCFRISInfo) getIsInfo(actingPlayerInfoSet);
             final int actingPlayer = s.getActingPlayerId();
-            final double totalSampleProb = targetingProb * targetedSampleProb + (1-targetingProb) * untargetedSampleProb;
             double actionUtil[] = new double[2];
             // since both actions are always "sampled" we leave sampling probs as they are
             CFRResult followRes = cfr(tracker.next(FollowAction.instance), (actingPlayer == player) ? isInfo.getStrat()[0] : 1,

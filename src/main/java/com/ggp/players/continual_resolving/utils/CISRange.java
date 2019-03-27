@@ -1,14 +1,9 @@
 package com.ggp.players.continual_resolving.utils;
 
-import com.ggp.IAction;
 import com.ggp.ICompleteInformationState;
-import com.ggp.IInformationSet;
-import com.ggp.IStrategy;
-import com.ggp.IInfoSetStrategy;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,26 +15,10 @@ public class CISRange implements Serializable {
         range.put(initialState, 1d);
     }
 
-    public CISRange(Set<ICompleteInformationState> subgameStates, NextRangeTree nrt, IStrategy lastCumulativeStrategy) {
+    public CISRange(Set<ICompleteInformationState> subgameStates, Map<ICompleteInformationState, Double> reachProbs, long reachProbNorm) {
         norm = 0;
         for (ICompleteInformationState s: subgameStates) {
-            double stateReachProb = 0;
-            for (Map.Entry<IInformationSet, ? extends Map<IAction, Double>> paths: nrt.getNextTurnStatePaths(s).entrySet()) {
-                IInformationSet origIs = paths.getKey();
-                IInfoSetStrategy origIsStrat = (origIs == null) ? null : lastCumulativeStrategy.getInfoSetStrategy(origIs);
-                List<IAction> legalActions = (origIs == null) ? null : origIs.getLegalActions();
-                for (Map.Entry<IAction, Double> actionToRndProb: paths.getValue().entrySet()) {
-                    double pathProb = actionToRndProb.getValue();
-                    IAction a = actionToRndProb.getKey();
-                    if (a != null) {
-                        int actionIdx = legalActions.indexOf(a);
-                        double actionProb = origIsStrat.getProbability(actionIdx);
-                        pathProb *= actionProb;
-                    }
-
-                    stateReachProb += pathProb;
-                }
-            }
+            double stateReachProb = reachProbs.get(s)/reachProbNorm;
             range.put(s, stateReachProb);
             norm += stateReachProb;
         }

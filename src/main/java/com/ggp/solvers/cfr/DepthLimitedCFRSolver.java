@@ -85,7 +85,7 @@ public class DepthLimitedCFRSolver extends BaseCFRSolver {
         // CVF_i(h) = reachProb_{-i}(h) * utility_i(H)
         // this method passes reachProb from top and returns player 1's utility
         ICompleteInformationState s = tracker.getCurrentState();
-        Info info = new Info(reachProb1, reachProb2, tracker.getRndProb());
+        Info info = new Info(reachProb1, reachProb2, tracker.getRndProb(), 1);
         visitedStates++;
         listeners.forEach(listener -> listener.enteringState(tracker, info));
 

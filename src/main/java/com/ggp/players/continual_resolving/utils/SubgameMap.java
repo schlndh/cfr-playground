@@ -16,7 +16,7 @@ public class SubgameMap {
         this.opponentId = opponentId;
     }
 
-    public void addSubgameState(ICompleteInformationState s) {
+    public void addSubgameState(ICompleteInformationState s, ICompleteInformationState subgameRoot) {
         IInformationSet is1, is2;
         if (opponentId == 1) {
             is1 = ((CFRDAugmentedCISWrapper)s).getOpponentsAugmentedIS();
@@ -30,26 +30,26 @@ public class SubgameMap {
         HashSet<ICompleteInformationState> merged = null;
         if (sub1 != null && sub2 != null) {
             if (sub1 == sub2) {
-                sub1.add(s);
+                sub1.add(subgameRoot);
                 merged = sub1;
             } else if (sub1.size() > sub2.size()) {
-                sub1.add(s);
+                sub1.add(subgameRoot);
                 sub1.addAll(sub2);
                 merged = sub1;
             } else {
-                sub2.add(s);
+                sub2.add(subgameRoot);
                 sub2.addAll(sub1);
                 merged = sub2;
             }
         } else if (sub1 != null) {
-            sub1.add(s);
+            sub1.add(subgameRoot);
             merged = sub1;
         } else if (sub2 != null) {
-            sub2.add(s);
+            sub2.add(subgameRoot);
             merged = sub2;
         } else {
             merged = new HashSet<>();
-            merged.add(s);
+            merged.add(subgameRoot);
         }
         isToSubgame.put(is1, merged);
         isToSubgame.put(is2, merged);

@@ -2,54 +2,53 @@ package com.ggp.players.continual_resolving.trackers;
 
 import com.ggp.IAction;
 import com.ggp.ICompleteInformationState;
-import com.ggp.IInformationSet;
-import com.ggp.utils.PlayerHelpers;
 
 public class CFRDTracker implements IGameTraversalTracker {
     private int myId;
     private double rndProb;
-    private IAction myTopAction;
     private enum TrackingState {
-        GAME_ROOT, CFRD_ROOT, MY_FIRST_TURN, WAIT_MY_TURN, END
+        WAIT_MY_FIRST_TURN, WAIT_SUBGAME, WAIT_MY_NEXT_TURN, END
     }
     private TrackingState trackingState;
-    private TrackingState nextTrackingState;
     private ICompleteInformationState state;
-    private IInformationSet myFirstIS;
+    private ICompleteInformationState lastSubgameRoot;
 
-    public CFRDTracker(int myId, double rndProb, IAction myTopAction, TrackingState trackingState,
-                       ICompleteInformationState state, IInformationSet myFirstIS) {
+    private CFRDTracker(int myId, double rndProb, TrackingState trackingState, ICompleteInformationState state,
+                       ICompleteInformationState lastSubgameRoot) {
         this.myId = myId;
         this.rndProb = rndProb;
-        this.myTopAction = myTopAction;
         this.trackingState = trackingState;
-        if (trackingState == TrackingState.GAME_ROOT && state.getActingPlayerId() == myId) {
-            this.trackingState = TrackingState.MY_FIRST_TURN;
-        }
         this.state = state;
-        this.myFirstIS = myFirstIS;
-
-        initNextState();
+        this.lastSubgameRoot = lastSubgameRoot;
     }
 
-    private void initNextState() {
-        this.nextTrackingState = trackingState;
-        if (trackingState == TrackingState.WAIT_MY_TURN && state.getActingPlayerId() == myId) {
-            this.nextTrackingState = TrackingState.END;
-        } else if (trackingState == TrackingState.MY_FIRST_TURN) {
-            nextTrackingState = TrackingState.WAIT_MY_TURN;
-            this.myFirstIS = state.getInfoSetForActingPlayer();
-        } else if (trackingState == TrackingState.CFRD_ROOT && state.getActingPlayerId() == PlayerHelpers.getOpponentId(myId)) {
-            nextTrackingState = TrackingState.MY_FIRST_TURN;
+    public static CFRDTracker create(int myId, ICompleteInformationState root) {
+        if (root == null || root.isTerminal()) return null;
+        TrackingState trackingState = TrackingState.WAIT_MY_FIRST_TURN;
+        if (root.getActingPlayerId() == myId) {
+            trackingState = TrackingState.WAIT_SUBGAME;
         }
+        return new CFRDTracker(myId, 1, trackingState, root, root);
     }
 
-    public static CFRDTracker createForAct(int myId, ICompleteInformationState cfrdRoot) {
-        return new CFRDTracker(myId, 1, null, TrackingState.CFRD_ROOT, cfrdRoot, null);
+    private static boolean isChildSubgameRoot(ICompleteInformationState parent, ICompleteInformationState child) {
+        // a child is at the root of a subgame if it has different acting player than the parent
+        if (parent.isRandomNode() || child.isRandomNode() || child.isTerminal()) return false;
+        return parent.getActingPlayerId() != child.getActingPlayerId();
     }
 
-    public static CFRDTracker createForInit(int myId, ICompleteInformationState state) {
-        return new CFRDTracker(myId, 1, null, TrackingState.GAME_ROOT, state, null);
+    private TrackingState getNextTrackingState(ICompleteInformationState nextState) {
+        if (trackingState == TrackingState.WAIT_MY_FIRST_TURN && nextState.getActingPlayerId() == myId) {
+            return TrackingState.WAIT_SUBGAME;
+        }
+        if (trackingState == TrackingState.WAIT_SUBGAME && isChildSubgameRoot(state, nextState)) {
+            if (nextState.getActingPlayerId() == myId) return TrackingState.END;
+            return TrackingState.WAIT_MY_NEXT_TURN;
+        }
+        if (trackingState == TrackingState.WAIT_MY_NEXT_TURN && nextState.getActingPlayerId() == myId) {
+            return TrackingState.END;
+        }
+        return trackingState;
     }
 
     @Override
@@ -59,19 +58,16 @@ public class CFRDTracker implements IGameTraversalTracker {
         if (state.isRandomNode()) {
             newRndProb *= state.getRandomNode().getActionProb(a);
         }
-        IAction newMyTopAction = myTopAction;
-        if (trackingState == TrackingState.MY_FIRST_TURN && nextTrackingState == TrackingState.WAIT_MY_TURN) {
-            newMyTopAction = a;
+        ICompleteInformationState newSubgameRoot = lastSubgameRoot;
+        if (isChildSubgameRoot(state, nextState)) {
+            newSubgameRoot = nextState;
         }
-        return new CFRDTracker(myId, newRndProb, newMyTopAction, nextTrackingState, nextState, myFirstIS);
+        return new CFRDTracker(myId, newRndProb, getNextTrackingState(nextState), nextState, newSubgameRoot);
 
     }
-    public boolean isMyFirstTurnReached() {
-        return trackingState == TrackingState.MY_FIRST_TURN;
-    }
 
-    public boolean isMyNextTurnReached() {
-        return trackingState == TrackingState.WAIT_MY_TURN && nextTrackingState == TrackingState.END;
+    public boolean wasMyFirstTurnReached() {
+        return trackingState != TrackingState.WAIT_MY_FIRST_TURN;
     }
 
     public boolean wasMyNextTurnReached() {
@@ -88,12 +84,11 @@ public class CFRDTracker implements IGameTraversalTracker {
         return rndProb;
     }
 
-    public IAction getMyTopAction() {
-        return myTopAction;
+    public boolean isSubgameRoot() {
+        return state.equals(lastSubgameRoot);
     }
 
-
-    public IInformationSet getMyFirstIS() {
-        return myFirstIS;
+    public ICompleteInformationState getLastSubgameRoot() {
+        return lastSubgameRoot;
     }
 }

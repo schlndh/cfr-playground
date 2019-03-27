@@ -14,13 +14,15 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
     private static final long serialVersionUID = 1L;
     private CISRange range;
     private Map<IInformationSet, Double> opponentCFV;
+    private long opponentCFVNorm;
     private int opponentId;
     private final List<IAction> legalActions;
     private final HashMap<IInformationSet, Double> opponentIsReachProbs;
 
-    public CFRDSubgameRoot(CISRange range, Map<IInformationSet, Double> opponentCFV, int opponentId) {
+    public CFRDSubgameRoot(CISRange range, Map<IInformationSet, Double> opponentCFV, long opponentCFVNorm, int opponentId) {
         this.range = range;
         this.opponentCFV = opponentCFV;
+        this.opponentCFVNorm = opponentCFVNorm;
         this.opponentId = opponentId;
 
         this.opponentIsReachProbs = new HashMap<>();
@@ -65,7 +67,7 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
         ICompleteInformationState s = sel.getSelectedState();
         CFRDAugmentedIS is = ((CFRDAugmentedCISWrapper)s).getOpponentsAugmentedIS();
         double isReachProb = opponentIsReachProbs.get(is);
-        return new OpponentsChoiceState(s, opponentId, opponentCFV.get(is)/isReachProb);
+        return new OpponentsChoiceState(s, opponentId, opponentCFV.get(is)/opponentCFVNorm/isReachProb);
     }
 
     @Override
@@ -111,14 +113,15 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CFRDSubgameRoot that = (CFRDSubgameRoot) o;
-        return opponentId == that.opponentId &&
-                Objects.equals(range, that.range) &&
-                Objects.equals(opponentCFV, that.opponentCFV);
+        return opponentCFVNorm == that.opponentCFVNorm &&
+                opponentId == that.opponentId &&
+                range.equals(that.range) &&
+                opponentCFV.equals(that.opponentCFV);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(range, opponentCFV, opponentId);
+        return Objects.hash(range, opponentCFV, opponentCFVNorm, opponentId);
     }
 
     int getOpponentId() {

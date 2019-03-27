@@ -11,21 +11,24 @@ import java.util.HashMap;
 public interface ISubgameResolver {
     interface Factory {
         ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
-                                ArrayList<IEvaluablePlayer.IListener> resolvingListeners);
+                                long opponentCfvNorm, ArrayList<IEvaluablePlayer.IListener> resolvingListeners);
         String getConfigString();
     }
 
     class ActResult {
         public IStrategy cumulativeStrategy;
         public SubgameMap subgameMap;
-        public NextRangeTree nrt;
+        public HashMap<ICompleteInformationState, Double> nextRange;
         public HashMap<IInformationSet, Double> nextOpponentCFV;
+        public long norm;
 
-        public ActResult(IStrategy cumulativeStrategy, SubgameMap subgameMap, NextRangeTree nrt, HashMap<IInformationSet, Double> nextOpponentCFV) {
+        public ActResult(IStrategy cumulativeStrategy, SubgameMap subgameMap, HashMap<ICompleteInformationState, Double> nextRange,
+                         HashMap<IInformationSet, Double> nextOpponentCFV, long norm) {
             this.cumulativeStrategy = cumulativeStrategy;
             this.subgameMap = subgameMap;
-            this.nrt = nrt;
+            this.nextRange = nextRange;
             this.nextOpponentCFV = nextOpponentCFV;
+            this.norm = norm;
         }
     }
 

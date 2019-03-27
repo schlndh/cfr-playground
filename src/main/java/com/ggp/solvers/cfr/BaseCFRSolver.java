@@ -26,12 +26,13 @@ public abstract class BaseCFRSolver {
     }
 
     public static class Info {
-        public final double reachProb1, reachProb2, rndProb;
+        public final double reachProb1, reachProb2, rndProb, stateSamplingProb;
 
-        public Info(double reachProb1, double reachProb2, double rndProb) {
+        public Info(double reachProb1, double reachProb2, double rndProb, double stateSamplingProb) {
             this.reachProb1 = reachProb1;
             this.reachProb2 = reachProb2;
             this.rndProb = rndProb;
+            this.stateSamplingProb = stateSamplingProb;
         }
     }
 
