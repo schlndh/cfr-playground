@@ -43,4 +43,16 @@ public class CardRevealedPercept implements IPercept {
     public int hashCode() {
         return Objects.hash(-2, card, isPublic);
     }
+
+    @Override
+    public String toString() {
+        if (isPublic) {
+            return "CardRevealedPercept{" +
+                    "public <- " + card +
+                    '}';
+        }
+        return "CardRevealedPercept{" +
+                "player " + owner + " <- " + card +
+                '}';
+    }
 }

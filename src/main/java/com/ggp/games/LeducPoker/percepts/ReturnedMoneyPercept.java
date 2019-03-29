@@ -36,4 +36,12 @@ public class ReturnedMoneyPercept implements IPercept {
     public int hashCode() {
         return Objects.hash(-5, owner, amount);
     }
+
+    @Override
+    public String toString() {
+        return "ReturnedMoneyPercept{" +
+                "player " + owner +
+                " <- " + amount +
+                '}';
+    }
 }

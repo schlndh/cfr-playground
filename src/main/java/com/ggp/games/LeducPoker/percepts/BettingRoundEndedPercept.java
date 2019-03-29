@@ -29,4 +29,9 @@ public class BettingRoundEndedPercept implements IPercept {
     public int getTargetPlayer() {
         return owner;
     }
+
+    @Override
+    public String toString() {
+        return "BettingRoundEndedPercept{}";
+    }
 }

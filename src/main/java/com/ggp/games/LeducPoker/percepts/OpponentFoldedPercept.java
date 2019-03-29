@@ -29,4 +29,11 @@ public class OpponentFoldedPercept implements IPercept {
     public int hashCode() {
         return Objects.hash(-3, owner);
     }
+
+    @Override
+    public String toString() {
+        return "OpponentFoldedPercept{" +
+                "owner=" + owner +
+                '}';
+    }
 }
