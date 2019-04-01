@@ -101,11 +101,13 @@ public class CFRDEvalCommand implements Runnable {
         if (skipWarmup) return;
         if (!quiet) System.out.println("Warming up ...");
 
-        for (int i = 0; i < 5; ++i) {
+        StopWatch warmupTimer = new StopWatch();
+        warmupTimer.start();
+        do {
             runSubgameSolver(usedSolverFactory, root, gameDesc, trunkStrategy, 1000, 2, true, new StringWriter(), 1, 0);
-        }
+        }  while (warmupTimer.getLiveDurationMs() < 30000);
 
-        if (!quiet) System.out.println("Warm-up complete.");
+        if (!quiet) System.out.println(String.format("Warm-up complete in %dms.", warmupTimer.getLiveDurationMs()));
     }
 
     private Strategy runTrunkSolver(BaseCFRSolver.Factory usedSolverFactory, IGameDescription gameDesc, long limitMs) {
