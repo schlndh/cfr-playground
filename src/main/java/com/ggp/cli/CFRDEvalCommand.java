@@ -79,6 +79,9 @@ public class CFRDEvalCommand implements Runnable {
     @CommandLine.Option(names={"--res-postfix"}, description="Postfix for result files", defaultValue="0")
     private String resultPostfix;
 
+    @CommandLine.Option(names={"--use-cbr"}, description="Compute exact CFV using best response")
+    private boolean useCBR;
+
     private String getDateKey() {
         return String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
     }
@@ -301,7 +304,7 @@ public class CFRDEvalCommand implements Runnable {
 
         if (!quiet) System.out.println("Subgame root size: " + subgameRootStates.size());
 
-        Strategy trunkStrategy;
+        Strategy trunkStrategy, trunkBestResponse = null;
 
         if (trunkStratFile != null) {
             try (FileInputStream fileInputStream = new FileInputStream(trunkStratFile)) {
@@ -316,7 +319,11 @@ public class CFRDEvalCommand implements Runnable {
         } else {
             trunkStrategy = runTrunkSolver(usedSolverFactory, gameDesc, init * 1000);
         }
-        double trunkExp = ExploitabilityUtils.computeExploitability(trunkStrategy, gameDesc);
+        if (useCBR) {
+            trunkBestResponse = new Strategy();
+        }
+
+        double trunkExp = ExploitabilityUtils.computeExploitability(trunkStrategy, gameDesc, trunkBestResponse);
         if (!quiet) {
             System.out.println("Trunk strategy's exploitability " + trunkExp);
         }
@@ -324,7 +331,8 @@ public class CFRDEvalCommand implements Runnable {
         // compute opponentCFV and reachProbs using trunk
         HashMap<IInformationSet, Double> opponentCFV = new HashMap<>();
         HashMap<ICompleteInformationState, Double> reachProbs = new HashMap<>();
-        findSubgameInfo(rootTracker, subgameRootStates, trunkStrategy, opponentCFV, reachProbs, 1, 1);
+        IStrategy cfvStrategy = useCBR ? new ReplacedStrategy(trunkStrategy, new PlayerLimitedStrategy(trunkBestResponse, opponentId)) : trunkStrategy;
+        findSubgameInfo(rootTracker, subgameRootStates, cfvStrategy, opponentCFV, reachProbs, 1, 1);
         // resolve subgame
         CFRDSubgameRoot subgameRoot = new CFRDSubgameRoot(new CISRange(subgameRootStates, reachProbs, 1), opponentCFV, 1, opponentId);
 
