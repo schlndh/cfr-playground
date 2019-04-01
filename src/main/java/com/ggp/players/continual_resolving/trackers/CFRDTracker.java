@@ -102,4 +102,8 @@ public class CFRDTracker implements IGameTraversalTracker {
     public double getPayoff(int player) {
         return state.getPayoff(player) * utilityMultiplier;
     }
+
+    public int getMyId() {
+        return myId;
+    }
 }

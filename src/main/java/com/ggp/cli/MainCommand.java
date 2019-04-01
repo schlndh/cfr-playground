@@ -10,6 +10,7 @@ import picocli.CommandLine;
         EvaluateCommand.class,
         GameInfoCommand.class,
         MergeGamePlayingResultsCommand.class,
+        CFRDEvalCommand.class,
         GPToCSVCommand.class}, mixinStandardHelpOptions=true)
 public class MainCommand implements Runnable {
     ConfigurableFactory configurableFactory = new ConfigurableFactory();

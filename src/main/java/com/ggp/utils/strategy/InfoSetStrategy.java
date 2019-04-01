@@ -24,6 +24,13 @@ public class InfoSetStrategy implements IInfoSetStrategy {
         this(is.getLegalActions().size());
     }
 
+    public InfoSetStrategy(IInfoSetStrategy isStrat) {
+        this.probabilities = new double[isStrat.size()];
+        for (int i = 0; i < this.probabilities.length; ++i) {
+            this.probabilities[i] = isStrat.getProbability(i);
+        }
+    }
+
     public static InfoSetStrategy fromArrayCopy(double[] probabilities) {
         return new InfoSetStrategy(Arrays.copyOf(probabilities, probabilities.length));
     }
