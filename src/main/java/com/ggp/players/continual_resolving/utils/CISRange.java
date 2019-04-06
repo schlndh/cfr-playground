@@ -15,7 +15,7 @@ public class CISRange implements Serializable {
         range.put(initialState, 1d);
     }
 
-    public CISRange(Set<ICompleteInformationState> subgameStates, Map<ICompleteInformationState, Double> reachProbs, long reachProbNorm) {
+    public CISRange(Set<ICompleteInformationState> subgameStates, Map<ICompleteInformationState, Double> reachProbs, double reachProbNorm) {
         norm = 0;
         for (ICompleteInformationState s: subgameStates) {
             double stateReachProb = reachProbs.get(s)/reachProbNorm;

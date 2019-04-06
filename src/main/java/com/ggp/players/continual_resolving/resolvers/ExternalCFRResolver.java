@@ -2,7 +2,6 @@ package com.ggp.players.continual_resolving.resolvers;
 
 import com.ggp.*;
 import com.ggp.player_evaluators.IEvaluablePlayer;
-import com.ggp.players.continual_resolving.IResolvingInfo;
 import com.ggp.players.continual_resolving.ISubgameResolver;
 import com.ggp.players.continual_resolving.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
 import com.ggp.players.continual_resolving.cfrd.CFRDSubgameRoot;
@@ -31,7 +30,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
         @Override
         public ISubgameResolver create(int myId, IInformationSet hiddenInfo, CISRange myRange, HashMap<IInformationSet, Double> opponentCFV,
-                                       long opponentCfvNorm, ArrayList<IEvaluablePlayer.IListener> resolvingListeners)
+                                       double opponentCfvNorm, ArrayList<IEvaluablePlayer.IListener> resolvingListeners)
         {
             return new ExternalCFRResolver(myId, hiddenInfo, myRange, opponentCFV, opponentCfvNorm, resolvingListeners, solverFactory);
         }
@@ -46,7 +45,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private IInformationSet hiddenInfo;
     private CISRange range;
     private HashMap<IInformationSet, Double> opponentCFV;
-    private long opponentCFVNorm;
+    private double opponentCFVNorm;
     private List<IEvaluablePlayer.IListener> resolvingListeners;
     private ResolvingInfo resInfo = new ResolvingInfo();
     private final int opponentId;
@@ -118,7 +117,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     }
 
     public ExternalCFRResolver(int myId, IInformationSet hiddenInfo, CISRange range, HashMap<IInformationSet, Double> opponentCFV,
-                               long opponentCFVNorm, ArrayList<IEvaluablePlayer.IListener> resolvingListeners,
+                               double opponentCFVNorm, ArrayList<IEvaluablePlayer.IListener> resolvingListeners,
                                BaseCFRSolver.Factory solverFactory)
     {
         this.myId = myId;
@@ -256,7 +255,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
         runSolver(timeout);
         runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo)));
 
-        return new ActResult(cfrSolver.getCumulativeStrat(), subgameMap, nextReachProbs, nextOpponentCFV, iters);
+        return new ActResult(cfrSolver.getCumulativeStrat(), subgameMap, nextReachProbs, nextOpponentCFV, iters, iters);
     }
 
 

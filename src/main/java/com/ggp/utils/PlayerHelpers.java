@@ -95,6 +95,10 @@ public class PlayerHelpers {
 
     public static IAction sampleAction(RandomSampler sampler, IInformationSet is, IStrategy strategy) {
         IInfoSetStrategy isStrat = strategy.getInfoSetStrategy(is);
+        return sampleAction(sampler, is, isStrat);
+    }
+
+    public static IAction sampleAction(RandomSampler sampler, IInformationSet is, IInfoSetStrategy isStrat) {
         return sampler.selectByIdx(is.getLegalActions(), actionIdx -> isStrat.getProbability(actionIdx)).getResult();
     }
 }

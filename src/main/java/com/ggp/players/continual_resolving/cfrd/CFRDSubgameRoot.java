@@ -14,12 +14,12 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
     private static final long serialVersionUID = 1L;
     private CISRange range;
     private Map<IInformationSet, Double> opponentCFV;
-    private long opponentCFVNorm;
+    private double opponentCFVNorm;
     private int opponentId;
     private final List<IAction> legalActions;
     private final HashMap<IInformationSet, Double> opponentIsReachProbs;
 
-    public CFRDSubgameRoot(CISRange range, Map<IInformationSet, Double> opponentCFV, long opponentCFVNorm, int opponentId) {
+    public CFRDSubgameRoot(CISRange range, Map<IInformationSet, Double> opponentCFV, double opponentCFVNorm, int opponentId) {
         this.range = range;
         this.opponentCFV = opponentCFV;
         this.opponentCFVNorm = opponentCFVNorm;

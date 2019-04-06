@@ -9,8 +9,8 @@ import com.ggp.players.continual_resolving.utils.*;
 import com.ggp.solvers.cfr.BaseCFRSolver;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.random.RandomSampler;
-import com.ggp.utils.strategy.NormalizingStrategyWrapper;
-import com.ggp.utils.strategy.RestrictedStrategy;
+import com.ggp.utils.strategy.InfoSetStrategy;
+import com.ggp.utils.strategy.NormalizingInfoSetStrategyWrapper;
 import com.ggp.utils.strategy.Strategy;
 import com.ggp.utils.time.IterationTimer;
 
@@ -63,31 +63,31 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
     private IInformationSet hiddenInfo;
     private HashMap<IInformationSet, Double> opponentCFV;
     private HashMap<ICompleteInformationState, Double> reachProbs;
-    private long norm;
+    private double cfvNorm;
+    private double reachProbsNorm;
     private IGameDescription gameDesc;
-    private IAction myLastAction;
-    private IStrategy lastCumulativeStrategy;
     private ArrayList<IEvaluablePlayer.IListener> resolvingListeners = new ArrayList<>();
     private ISubgameResolver.Factory resolverFactory;
     private SubgameMap subgameMap;
     private RandomSampler sampler = new RandomSampler();
     private ISubgameResolver lastResolver = null;
+    private IInfoSetStrategy isStrat = null;
 
     private ContinualResolvingPlayer(ContinualResolvingPlayer other) {
         this.id = other.id;
         this.opponentId = other.opponentId;
         this.range = other.range;
         this.hiddenInfo = other.hiddenInfo;
-        this.opponentCFV = new HashMap<>(other.opponentCFV);
+        this.opponentCFV = other.opponentCFV != null ? new HashMap<>(other.opponentCFV) : null;
         this.reachProbs = other.reachProbs != null ? new HashMap<>(other.reachProbs) : null;
-        this.norm = other.norm;
+        this.cfvNorm = other.cfvNorm;
+        this.reachProbsNorm = other.reachProbsNorm;
         this.gameDesc = other.gameDesc;
-        this.myLastAction = other.myLastAction;
-        this.lastCumulativeStrategy = other.lastCumulativeStrategy;
         this.resolvingListeners = new ArrayList<>(other.resolvingListeners);
         this.resolverFactory = other.resolverFactory;
         this.subgameMap = other.subgameMap;
         this.lastResolver = other.lastResolver == null ? null : other.lastResolver.copy(this.resolvingListeners);
+        this.isStrat = other.isStrat == null ? null : new InfoSetStrategy(other.isStrat);
     }
 
     public ContinualResolvingPlayer(int id, IGameDescription gameDesc, ISubgameResolver.Factory resolverFactory) {
@@ -98,11 +98,9 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
         IInformationSet initialSet = this.gameDesc.getInitialInformationSet(id);
         CFRDAugmentedCISWrapper initialState = (CFRDAugmentedCISWrapper) this.gameDesc.getInitialState();
         hiddenInfo = initialSet;
-        IInformationSet initialOpponentSet = initialState.getOpponentsAugmentedIS();
         range = new CISRange(initialState);
-        opponentCFV = new HashMap<>(1);
-        opponentCFV.put(initialOpponentSet, 0d);
-        norm = 1;
+        cfvNorm = 1;
+        reachProbsNorm = 1;
         this.resolverFactory = resolverFactory;
     }
 
@@ -117,7 +115,7 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
     }
 
     private ISubgameResolver createResolver() {
-        return resolverFactory.create(id, hiddenInfo, range, opponentCFV, norm, resolvingListeners);
+        return resolverFactory.create(id, hiddenInfo, range, opponentCFV, cfvNorm, resolvingListeners);
     }
 
     @Override
@@ -143,17 +141,18 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
             Set<ICompleteInformationState> subgame = subgameMap.getSubgame(hiddenInfo);
             if (subgame != null) {
                 // entering new subgame
-                range = new CISRange(subgameMap.getSubgame(hiddenInfo), reachProbs, norm);
+                range = new CISRange(subgameMap.getSubgame(hiddenInfo), reachProbs, reachProbsNorm);
                 r = createResolver();
             }
         }
 
         ISubgameResolver.ActResult res = r.act(timer);
-        lastCumulativeStrategy = res.cumulativeStrategy;
         subgameMap = res.subgameMap;
+        isStrat = res.cumulativeStrategy.getInfoSetStrategy(hiddenInfo);
         opponentCFV = res.nextOpponentCFV;
         reachProbs = res.nextRange;
-        norm = res.norm;
+        cfvNorm = res.cfvNorm;
+        reachProbsNorm = res.rangeNorm;
     }
 
     @Override
@@ -165,7 +164,7 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
         computeStrategy(timeoutMillis);
         IAction selectedAction;
         if (forcedAction == null) {
-            selectedAction = PlayerHelpers.sampleAction(sampler, hiddenInfo, new NormalizingStrategyWrapper(lastCumulativeStrategy));
+            selectedAction = PlayerHelpers.sampleAction(sampler, hiddenInfo, new NormalizingInfoSetStrategyWrapper(isStrat));
         } else {
             selectedAction = forcedAction;
         }
@@ -176,8 +175,8 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
 
     @Override
     public void actWithPrecomputedStrategy(IAction selectedAction) {
-        myLastAction = selectedAction;
         hiddenInfo = hiddenInfo.next(selectedAction);
+        isStrat = null;
     }
 
     @Override
@@ -193,6 +192,7 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
     @Override
     public void receivePercepts(IPercept percept) {
         hiddenInfo = hiddenInfo.applyPercept(percept);
+        isStrat = null;
     }
 
     @Override
