@@ -70,7 +70,7 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
     private ISubgameResolver.Factory resolverFactory;
     private SubgameMap subgameMap;
     private RandomSampler sampler = new RandomSampler();
-    private ISubgameResolver lastResolver = null;
+    private ISubgameResolver currentResolver = null;
     private IInfoSetStrategy isStrat = null;
 
     private ContinualResolvingPlayer(ContinualResolvingPlayer other) {
@@ -86,7 +86,7 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
         this.resolvingListeners = new ArrayList<>(other.resolvingListeners);
         this.resolverFactory = other.resolverFactory;
         this.subgameMap = other.subgameMap;
-        this.lastResolver = other.lastResolver == null ? null : other.lastResolver.copy(this.resolvingListeners);
+        this.currentResolver = other.currentResolver == null ? null : other.currentResolver.copy(this.resolvingListeners);
         this.isStrat = other.isStrat == null ? null : new InfoSetStrategy(other.isStrat);
     }
 
@@ -122,9 +122,8 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
     public void init(long timeoutMillis) {
         IterationTimer timer = new IterationTimer(timeoutMillis);
         timer.start();
-        ISubgameResolver r = createResolver();
-        r.init(gameDesc.getInitialState(), timer);
-        lastResolver = r;
+        currentResolver = createResolver();
+        currentResolver.init(gameDesc.getInitialState(), timer);
     }
 
     @Override
@@ -136,17 +135,16 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
     public void computeStrategy(long timeoutMillis) {
         IterationTimer timer = new IterationTimer(timeoutMillis);
         timer.start();
-        ISubgameResolver r = lastResolver;
         if (subgameMap != null) {
             Set<ICompleteInformationState> subgame = subgameMap.getSubgame(hiddenInfo);
             if (subgame != null) {
                 // entering new subgame
                 range = new CISRange(subgameMap.getSubgame(hiddenInfo), reachProbs, reachProbsNorm);
-                r = createResolver();
+                currentResolver = createResolver();
             }
         }
 
-        ISubgameResolver.ActResult res = r.act(timer, hiddenInfo);
+        ISubgameResolver.ActResult res = currentResolver.act(timer, hiddenInfo);
         subgameMap = res.subgameMap;
         isStrat = res.cumulativeStrategy.getInfoSetStrategy(hiddenInfo);
         opponentCFV = res.nextOpponentCFV;
@@ -197,7 +195,7 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
 
     @Override
     public IStrategy getNormalizedSubgameStrategy() {
-        if (lastResolver == null) return new Strategy();
-        return lastResolver.getResolvingInfo().getNormalizedSubgameStrategy();
+        if (currentResolver == null) return new Strategy();
+        return currentResolver.getResolvingInfo().getNormalizedSubgameStrategy();
     }
 }
