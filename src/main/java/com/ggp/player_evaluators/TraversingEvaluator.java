@@ -250,7 +250,6 @@ public class TraversingEvaluator implements IPlayerEvaluator {
                 pl1.copy(), pl2.copy(), 1d, 1d, 0, pathStates, evaluationTimeLimit);
 
         for (EvaluatorEntry entry: entries) {
-            entry.getAggregatedStrat().normalize();
             entry.setVisitedStatesNorm(1);
         }
         return entries;
