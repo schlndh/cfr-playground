@@ -146,7 +146,7 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
             }
         }
 
-        ISubgameResolver.ActResult res = r.act(timer);
+        ISubgameResolver.ActResult res = r.act(timer, hiddenInfo);
         subgameMap = res.subgameMap;
         isStrat = res.cumulativeStrategy.getInfoSetStrategy(hiddenInfo);
         opponentCFV = res.nextOpponentCFV;

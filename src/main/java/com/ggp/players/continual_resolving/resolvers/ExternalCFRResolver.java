@@ -5,14 +5,14 @@ import com.ggp.player_evaluators.IEvaluablePlayer;
 import com.ggp.players.continual_resolving.ISubgameResolver;
 import com.ggp.players.continual_resolving.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
 import com.ggp.players.continual_resolving.cfrd.CFRDSubgameRoot;
-import com.ggp.players.continual_resolving.cfrd.OpponentsChoiceState;
-import com.ggp.players.continual_resolving.cfrd.actions.SelectCISAction;
 import com.ggp.players.continual_resolving.trackers.CFRDTracker;
 import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 import com.ggp.players.continual_resolving.utils.*;
 import com.ggp.solvers.cfr.BaseCFRSolver;
-import com.ggp.solvers.cfr.ISearchTargeting;
 import com.ggp.solvers.cfr.ITargetableSolver;
+import com.ggp.solvers.cfr.targeting.InfoSetSearchTargeting;
+import com.ggp.utils.ActionIdxWrapper;
+import com.ggp.utils.ObjectTree;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
 import com.ggp.utils.strategy.RestrictedStrategy;
@@ -61,38 +61,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     private CFRDTracker rootTracker = null;
     private int subgameActDepth = 0;
     private HashSet<IInformationSet> subgameActingIs = null;
-
-    private class InfoSetTargeting implements ISearchTargeting {
-        private final List<Integer> rootTargeting;
-        private final List<Integer> opponentsChoiceTargeting;
-
-        public InfoSetTargeting(CFRDSubgameRoot subgame) {
-            List<Integer> rootActions = new ArrayList<>();
-            int actionIdx = 0;
-            for (IAction a: subgame.getLegalActions()) {
-                SelectCISAction cisAction = (SelectCISAction) a;
-                if (hiddenInfo.equals(cisAction.getSelectedState().getInfoSetForPlayer(myId))) {
-                    rootActions.add(actionIdx);
-                }
-                actionIdx++;
-            }
-            this.rootTargeting = Collections.unmodifiableList(rootActions);
-            // always use the follow action in opponent's choice node
-            this.opponentsChoiceTargeting = Collections.singletonList(0);
-        }
-
-        @Override
-        public List<Integer> target(ICompleteInformationState s) {
-            if (s.getClass() == CFRDSubgameRoot.class) return rootTargeting;
-            if (s.getClass() == OpponentsChoiceState.class) return opponentsChoiceTargeting;
-            return null;
-        }
-
-        @Override
-        public ISearchTargeting next(IAction a, int actionIdx) {
-            return this;
-        }
-    }
+    private boolean useISTargeting = false;
 
     private class ResolvingInfo implements IEvaluablePlayer.IResolvingInfo {
         @Override
@@ -151,9 +120,10 @@ public class ExternalCFRResolver implements ISubgameResolver {
         this.rootTracker = other.rootTracker;
         this.subgameActDepth = other.subgameActDepth;
         this.subgameActingIs = null; // will re-create automatically if necessary
+        this.useISTargeting = other.useISTargeting;
     }
 
-    private BaseCFRSolver createSolver(CFRDSubgameRoot subgame) {
+    private BaseCFRSolver createSolver() {
         cfrSolver = solverFactory.create(null);
 
         cfrSolver.registerListener(new BaseCFRSolver.IListener() {
@@ -174,18 +144,17 @@ public class ExternalCFRResolver implements ISubgameResolver {
                 }
             }
         });
-        if (subgame != null && cfrSolver instanceof ITargetableSolver) {
-            ITargetableSolver s = (ITargetableSolver) cfrSolver;
-            //if (s.wantsTargeting()) s.setTargeting(new InfoSetTargeting(subgame));
-        }
         cummulativeStrategy = cfrSolver.getCumulativeStrat();
         return cfrSolver;
     }
 
-    protected void findMyNextTurn(CFRDTracker tracker) {
+    protected void findMyNextTurn(CFRDTracker tracker, ArrayList<ActionIdxWrapper> actionPath, ObjectTree<ActionIdxWrapper> currentPathTree) {
         ICompleteInformationState s = tracker.getCurrentState();
         visitedStates++;
         if (s.isTerminal()) return;
+        if (actionPath != null && s.getActingPlayerId() == myId && s.getInfoSetForActingPlayer().equals(hiddenInfo)) {
+            currentPathTree.addPath(actionPath);
+        }
         if (tracker.wasMyNextTurnReached()) {
             ICompleteInformationState uf = tracker.getLastSubgameRoot();
             subgameMap.addSubgameState(tracker.getCurrentState(), uf);
@@ -193,8 +162,12 @@ public class ExternalCFRResolver implements ISubgameResolver {
             nextReachProbs.putIfAbsent(uf, 0d);
             return;
         }
+        int actionIdx = 0;
         for (IAction a: s.getLegalActions()) {
-            findMyNextTurn(tracker.next(a));
+            if (actionPath != null) actionPath.add(new ActionIdxWrapper(a, actionIdx));
+            findMyNextTurn(tracker.next(a), actionPath, currentPathTree);
+            if (actionPath != null) actionPath.remove(actionPath.size() - 1);
+            actionIdx++;
         }
     }
 
@@ -214,10 +187,10 @@ public class ExternalCFRResolver implements ISubgameResolver {
         }
     }
 
-    protected CFRDTracker prepareDataStructures() {
+    protected CFRDTracker prepareDataStructures(ObjectTree<ActionIdxWrapper> currentPathTree) {
         ICompleteInformationState subgame = new CFRDSubgameRoot(range, opponentCFV, opponentCFVNorm, opponentId);
         CFRDTracker tracker = CFRDTracker.create(myId, subgame, range.getNorm());
-        findMyNextTurn(tracker);
+        findMyNextTurn(tracker, useISTargeting ? new ArrayList<>() : null, currentPathTree);
         return tracker;
     }
 
@@ -239,7 +212,8 @@ public class ExternalCFRResolver implements ISubgameResolver {
     }
 
     @Override
-    public ActResult act(IterationTimer timeout) {
+    public ActResult act(IterationTimer timeout, IInformationSet hiddenInfo) {
+        this.hiddenInfo = hiddenInfo;
         subgameActDepth++;
         if (cfrSolver != null) {
             // clear visited states count since we're continuing from init
@@ -248,8 +222,13 @@ public class ExternalCFRResolver implements ISubgameResolver {
         }
         runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
         if (cfrSolver == null) {
-            rootTracker = prepareDataStructures();
-            createSolver((CFRDSubgameRoot) rootTracker.getCurrentState());
+            createSolver();
+            useISTargeting = cfrSolver instanceof ITargetableSolver && ((ITargetableSolver)cfrSolver).wantsTargeting();
+            ObjectTree<ActionIdxWrapper> currentPathTree = useISTargeting ? new ObjectTree<>() : null;
+            rootTracker = prepareDataStructures(currentPathTree);
+            if (useISTargeting) {
+                ((ITargetableSolver) cfrSolver).setTargeting(new InfoSetSearchTargeting(currentPathTree));
+            }
         }
 
         runSolver(timeout);
@@ -263,8 +242,8 @@ public class ExternalCFRResolver implements ISubgameResolver {
     public void init(ICompleteInformationState initialState, IterationTimer timeout) {
         runWithPausedTimer(timeout, () -> resolvingListeners.forEach(listener -> listener.resolvingStart(resInfo)));
         rootTracker = CFRDTracker.create(myId, initialState, 1);
-        findMyNextTurn(rootTracker);
-        createSolver(null);
+        findMyNextTurn(rootTracker, null, null);
+        createSolver();
         runSolver(timeout);
         runWithPausedTimer(timeout, () -> {
             resolvingListeners.forEach(listener -> listener.resolvingEnd(resInfo));

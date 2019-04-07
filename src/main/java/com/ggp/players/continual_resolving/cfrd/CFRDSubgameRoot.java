@@ -67,6 +67,7 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
         ICompleteInformationState s = sel.getSelectedState();
         CFRDAugmentedIS is = ((CFRDAugmentedCISWrapper)s).getOpponentsAugmentedIS();
         double isReachProb = opponentIsReachProbs.get(is);
+        if (isReachProb == 0) isReachProb = 1;
         return new OpponentsChoiceState(s, opponentId, opponentCFV.get(is)/opponentCFVNorm/isReachProb);
     }
 
