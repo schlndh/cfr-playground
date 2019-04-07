@@ -1,10 +1,10 @@
-package com.ggp.players.solving;
+package com.ggp.utils;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-class ObjectTree<T> {
+public class ObjectTree<T> {
     private HashMap<T, ObjectTree<T>> paths = new HashMap<>();
 
     private ObjectTree(ObjectTree<T> other) {

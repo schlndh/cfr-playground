@@ -1,4 +1,4 @@
-package com.ggp.players.solving;
+package com.ggp.utils;
 
 import com.ggp.IAction;
 
@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * Action wrapper that remembers the action index and equals to the underlying action.
  */
-class ActionIdxWrapper implements IAction {
+public class ActionIdxWrapper implements IAction {
     private final IAction action;
     private final int idx;
 

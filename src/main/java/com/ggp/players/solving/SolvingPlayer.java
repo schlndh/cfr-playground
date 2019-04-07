@@ -6,6 +6,9 @@ import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 import com.ggp.players.continual_resolving.trackers.SimpleTracker;
 import com.ggp.solvers.cfr.BaseCFRSolver;
 import com.ggp.solvers.cfr.ITargetableSolver;
+import com.ggp.solvers.cfr.targeting.InfoSetSearchTargeting;
+import com.ggp.utils.ActionIdxWrapper;
+import com.ggp.utils.ObjectTree;
 import com.ggp.utils.random.RandomSampler;
 import com.ggp.utils.strategy.NormalizingInfoSetStrategyWrapper;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
@@ -135,7 +138,7 @@ public class SolvingPlayer implements IEvaluablePlayer {
         fillSubgame(rootTracker.getCurrentState(), 0, new ArrayList<>());
         if (useISTargeting) {
             ITargetableSolver s = (ITargetableSolver) cfrSolver;
-            s.setTargeting(new ISSearchTargeting(currentPathTree));
+            s.setTargeting(new InfoSetSearchTargeting(currentPathTree));
         }
     }
 
