@@ -24,6 +24,7 @@ import com.ggp.solvers.cfr.baselines.NoBaseline;
 import com.ggp.utils.GameRepository;
 import com.ggp.utils.IUtilityEstimator;
 import com.ggp.utils.estimators.RandomPlayoutUtilityEstimator;
+import com.ggp.utils.game.PlayerSwap.PlayerSwapGameDescription;
 import com.ggp.utils.recall.PerfectRecallGameDescriptionWrapper;
 import picocli.CommandLine;
 
@@ -90,6 +91,11 @@ public class Main {
         factory.register(IGameDescription.class, "LatentTicTacToe",
                 ConfigurableFactory.createPositionalParameterList(
                         GameRepository.latentTTT().getClass().getConstructor()
+                )
+        );
+        factory.register(IGameDescription.class, "PlayerSwap",
+                ConfigurableFactory.createPositionalParameterList(
+                        PlayerSwapGameDescription.class.getConstructor(IGameDescription.class)
                 )
         );
     }
