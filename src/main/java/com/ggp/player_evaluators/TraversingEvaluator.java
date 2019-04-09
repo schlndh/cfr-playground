@@ -40,8 +40,8 @@ public class TraversingEvaluator implements IPlayerEvaluator {
         }
 
         @Override
-        public void add(EvaluatorEntry e, double exploitability) throws IOException {
-            saver.add(e, exploitability);
+        public void add(EvaluatorEntry e, double exploitability, double firstActExp) throws IOException {
+            saver.add(e, exploitability, firstActExp);
         }
 
         @Override
@@ -120,87 +120,105 @@ public class TraversingEvaluator implements IPlayerEvaluator {
         }
     }
 
-    private void aggregateStrategy(HashMap<IInformationSet, ActCacheEntry> actCache, List<EvaluatorEntry> entries,
-                                   CompleteInformationStateWrapper sw, IEvaluablePlayer pl1, IEvaluablePlayer pl2,
-                                   double reachProb1, double reachProb2, int depth, long[] pathStates, TimeLimit evaluationTimeLimit) {
-        if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) return;
-        ICompleteInformationState s = sw.getOrigState();
-        if (s.isTerminal()) {
-            for (int i = 0; i < entries.size(); ++i) {
-                entries.get(i).addPathStates(pathStates[2*i], reachProb1);
-                entries.get(i).addPathStates(pathStates[2*i + 1], reachProb2);
-            }
-            return;
+    private class Evaluation {
+        List<EvaluatorEntry> entries;
+        TimeLimit evaluationTimeLimit;
+        HashMap<IInformationSet, ActCacheEntry> actCache = new HashMap<>();
+        boolean[] playerActed = new boolean[]{false, false, false};
+
+        public Evaluation(List<EvaluatorEntry> entries, TimeLimit evaluationTimeLimit) {
+            this.entries = entries;
+            this.evaluationTimeLimit = evaluationTimeLimit;
         }
 
-        List<IAction> legalActions = s.getLegalActions();
-        if (s.isRandomNode()) {
-            IRandomNode rndNode = s.getRandomNode();
+        public void aggregateStrategy(CompleteInformationStateWrapper sw, IEvaluablePlayer pl1, IEvaluablePlayer pl2,
+                                      double reachProb1, double reachProb2, int depth, long[] pathStates) {
+            if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) return;
+            ICompleteInformationState s = sw.getOrigState();
+            if (s.isTerminal()) {
+                for (int i = 0; i < entries.size(); ++i) {
+                    entries.get(i).addPathStates(pathStates[2*i], reachProb1);
+                    entries.get(i).addPathStates(pathStates[2*i + 1], reachProb2);
+                }
+                return;
+            }
+
+            List<IAction> legalActions = s.getLegalActions();
+            if (s.isRandomNode()) {
+                IRandomNode rndNode = s.getRandomNode();
+                int actionIdx = 0;
+                for (IRandomNode.IRandomNodeAction rndAction: rndNode) {
+                    IAction a = rndAction.getAction();
+                    double actionProb = rndAction.getProb();
+                    IEvaluablePlayer npl1 = pl1.copy(), npl2 = pl2.copy();
+                    applyPercepts(npl1, npl2, s.getPercepts(a));
+                    printAction(actionIdx, legalActions.size());
+                    aggregateStrategy((CompleteInformationStateWrapper) sw.next(a), npl1, npl2,
+                            reachProb1 * actionProb, reachProb2 * actionProb,
+                            depth + 1, pathStates);
+                    unprintAction(actionIdx, legalActions.size());
+                    actionIdx++;
+                    if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) return;
+                }
+                return;
+            }
+            double playerReachProb = PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), reachProb1, reachProb2);
+            IInformationSet is = s.getInfoSetForActingPlayer();
+
+            ActCacheEntry cacheEntry = actCache.computeIfAbsent(sw.getInfoSetForActingPlayer(), k -> {
+                IEvaluablePlayer currentPlayer = PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), pl1, pl2);
+                StrategyAggregatorListener strategyAggregatorListener = new StrategyAggregatorListener(initMs, logPointsMs);
+                strategyAggregatorListener.initEnd(null);
+                currentPlayer.registerResolvingListener(strategyAggregatorListener);
+                currentPlayer.computeStrategy(timeoutMs);
+                currentPlayer.unregisterResolvingListener(strategyAggregatorListener);
+                return new ActCacheEntry(currentPlayer, strategyAggregatorListener.getEntries());
+            });
+
+            long newPathStates[] = Arrays.copyOf(pathStates, pathStates.length);
+            for (int i = 0; i < entries.size(); ++i) {
+                EvaluatorEntry cachedEntry = cacheEntry.entries.get(i);
+                IInfoSetStrategy cachedStrat = cachedEntry.getAggregatedStrat().getInfoSetStrategy(is);
+                EvaluatorEntry targetEntry = entries.get(i);
+                targetEntry.addTime(cachedEntry.getEntryTimeMs(), playerReachProb);
+                targetEntry.getAggregatedStrat().addProbabilities(is, actionIdx -> playerReachProb * cachedStrat.getProbability(actionIdx));
+                targetEntry.addVisitedStates(cachedEntry.getAvgVisitedStates());
+                newPathStates[2*i + s.getActingPlayerId() - 1] += cachedEntry.getAvgVisitedStates();
+                if (!playerActed[s.getActingPlayerId()]) {
+                    targetEntry.getFirstActionStrat().merge(cachedEntry.getFirstActionStrat());
+                }
+            }
+            playerActed[s.getActingPlayerId()] = true;
+
             int actionIdx = 0;
-            for (IRandomNode.IRandomNodeAction rndAction: rndNode) {
-                IAction a = rndAction.getAction();
-                double actionProb = rndAction.getProb();
-                IEvaluablePlayer npl1 = pl1.copy(), npl2 = pl2.copy();
+            IInfoSetStrategy isStrat = cacheEntry.playerWithComputedStrat.getNormalizedSubgameStrategy().getInfoSetStrategy(is);
+            for (IAction a: legalActions) {
+                double actionProb = isStrat.getProbability(actionIdx);
+                double nrp1 = reachProb1, nrp2 = reachProb2;
+                IEvaluablePlayer npl1 = null, npl2 = null;
+                if (s.getActingPlayerId() == 1) {
+                    npl1 = cacheEntry.playerWithComputedStrat.copy();
+                    npl2 = pl2.copy();
+                    npl1.actWithPrecomputedStrategy(a);
+                    nrp1 *= actionProb;
+                } else if (s.getActingPlayerId() == 2) {
+                    npl1 = pl1.copy();
+                    npl2 = cacheEntry.playerWithComputedStrat.copy();
+                    npl2.actWithPrecomputedStrategy(a);
+                    nrp2 *= actionProb;
+                }
                 applyPercepts(npl1, npl2, s.getPercepts(a));
                 printAction(actionIdx, legalActions.size());
-                aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) sw.next(a), npl1, npl2,
-                        reachProb1 * actionProb, reachProb2 * actionProb,
-                        depth + 1, pathStates, evaluationTimeLimit);
+                aggregateStrategy((CompleteInformationStateWrapper) sw.next(a), npl1, npl2, nrp1, nrp2,
+                        depth + 1, newPathStates);
                 unprintAction(actionIdx, legalActions.size());
                 actionIdx++;
                 if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) return;
             }
-            return;
-        }
-        double playerReachProb = PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), reachProb1, reachProb2);
-        IInformationSet is = s.getInfoSetForActingPlayer();
-
-        ActCacheEntry cacheEntry = actCache.computeIfAbsent(sw.getInfoSetForActingPlayer(), k -> {
-            IEvaluablePlayer currentPlayer = PlayerHelpers.selectByPlayerId(s.getActingPlayerId(), pl1, pl2);
-            StrategyAggregatorListener strategyAggregatorListener = new StrategyAggregatorListener(initMs, logPointsMs);
-            strategyAggregatorListener.initEnd(null);
-            currentPlayer.registerResolvingListener(strategyAggregatorListener);
-            currentPlayer.computeStrategy(timeoutMs);
-            currentPlayer.unregisterResolvingListener(strategyAggregatorListener);
-            return new ActCacheEntry(currentPlayer, strategyAggregatorListener.getEntries());
-        });
-
-        long newPathStates[] = Arrays.copyOf(pathStates, pathStates.length);
-        for (int i = 0; i < entries.size(); ++i) {
-            EvaluatorEntry cachedEntry = cacheEntry.entries.get(i);
-            IInfoSetStrategy cachedStrat = cachedEntry.getAggregatedStrat().getInfoSetStrategy(is);
-            entries.get(i).addTime(cachedEntry.getEntryTimeMs(), playerReachProb);
-            entries.get(i).getAggregatedStrat().addProbabilities(is, actionIdx -> playerReachProb * cachedStrat.getProbability(actionIdx));
-            entries.get(i).addVisitedStates(cachedEntry.getAvgVisitedStates());
-            newPathStates[2*i + s.getActingPlayerId() - 1] += cachedEntry.getAvgVisitedStates();
-        }
-
-        int actionIdx = 0;
-        IInfoSetStrategy isStrat = cacheEntry.playerWithComputedStrat.getNormalizedSubgameStrategy().getInfoSetStrategy(is);
-        for (IAction a: legalActions) {
-            double actionProb = isStrat.getProbability(actionIdx);
-            double nrp1 = reachProb1, nrp2 = reachProb2;
-            IEvaluablePlayer npl1 = null, npl2 = null;
-            if (s.getActingPlayerId() == 1) {
-                npl1 = cacheEntry.playerWithComputedStrat.copy();
-                npl2 = pl2.copy();
-                npl1.actWithPrecomputedStrategy(a);
-                nrp1 *= actionProb;
-            } else if (s.getActingPlayerId() == 2) {
-                npl1 = pl1.copy();
-                npl2 = cacheEntry.playerWithComputedStrat.copy();
-                npl2.actWithPrecomputedStrategy(a);
-                nrp2 *= actionProb;
-            }
-            applyPercepts(npl1, npl2, s.getPercepts(a));
-            printAction(actionIdx, legalActions.size());
-            aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) sw.next(a), npl1, npl2, nrp1, nrp2,
-                    depth + 1, newPathStates, evaluationTimeLimit);
-            unprintAction(actionIdx, legalActions.size());
-            actionIdx++;
-            if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) return;
         }
     }
+
+
 
     @Override
     public List<EvaluatorEntry> evaluate(IGameDescription gameDesc, IEvaluablePlayer.IFactory playerFactory, boolean quiet, TimeLimit evaluationTimeLimit) {
@@ -245,9 +263,9 @@ public class TraversingEvaluator implements IPlayerEvaluator {
         pl2.unregisterResolvingListener(listener);
 
         long pathStates[] = new long[entries.size()*2];
-        HashMap<IInformationSet, ActCacheEntry> actCache = new HashMap<>();
-        aggregateStrategy(actCache, entries, (CompleteInformationStateWrapper) PerfectRecallGameDescriptionWrapper.wrapInitialState(initialState),
-                pl1.copy(), pl2.copy(), 1d, 1d, 0, pathStates, evaluationTimeLimit);
+        Evaluation eval = new Evaluation(entries, evaluationTimeLimit);
+        eval.aggregateStrategy((CompleteInformationStateWrapper) PerfectRecallGameDescriptionWrapper.wrapInitialState(initialState),
+                pl1.copy(), pl2.copy(), 1d, 1d, 0, pathStates);
 
         for (EvaluatorEntry entry: entries) {
             entry.setVisitedStatesNorm(1);

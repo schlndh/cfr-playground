@@ -20,6 +20,7 @@ public class EvaluatorEntry implements Serializable {
     private long pathStatesSum = 0;
     private double pathStatesNorm = 0;
     private Strategy aggregatedStrat = new Strategy();
+    private Strategy firstActionStrat = new Strategy();
 
     public EvaluatorEntry(double intendedInitTimeMs, double intendedActTimeMs) {
         this.intendedInitTimeMs = intendedInitTimeMs;
@@ -103,6 +104,10 @@ public class EvaluatorEntry implements Serializable {
         initTimeNorm += 1;
     }
 
+    public Strategy getFirstActionStrat() {
+        return firstActionStrat;
+    }
+
     public void merge(EvaluatorEntry other) {
         if (intendedActTimeMs != other.getIntendedActTimeMs() || intendedInitTimeMs != other.getIntendedInitTimeMs()) throw new RuntimeException("Can't merge evaluator entries with different intended times.");
         this.avgActTimeMs += other.avgActTimeMs;
@@ -117,5 +122,6 @@ public class EvaluatorEntry implements Serializable {
         this.pathStatesSum += other.pathStatesSum;
         this.pathStatesNorm += other.pathStatesNorm;
         this.aggregatedStrat.merge(other.aggregatedStrat);
+        this.firstActionStrat.merge(other.firstActionStrat);
     }
 }

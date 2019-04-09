@@ -15,6 +15,7 @@ import com.ggp.utils.ActionIdxWrapper;
 import com.ggp.utils.ObjectTree;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
+import com.ggp.utils.strategy.PlayerLimitedStrategy;
 import com.ggp.utils.strategy.RestrictedStrategy;
 import com.ggp.utils.time.IterationTimer;
 
@@ -71,6 +72,13 @@ public class ExternalCFRResolver implements ISubgameResolver {
                 findMySubgameTurn(rootTracker, 0);
             }
             return new NormalizingStrategyWrapper(new RestrictedStrategy(cummulativeStrategy, subgameActingIs));
+        }
+
+
+        @Override
+        public IStrategy getNormalizedCompleteStrategy() {
+            if (rootTracker == null || rootTracker.getCurrentState().getClass() == CFRDSubgameRoot.class) return null;
+            return new NormalizingStrategyWrapper(new PlayerLimitedStrategy(cummulativeStrategy, myId));
         }
 
         @Override

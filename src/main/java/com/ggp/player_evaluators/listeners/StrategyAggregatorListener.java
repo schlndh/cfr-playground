@@ -16,6 +16,7 @@ public class StrategyAggregatorListener extends BaseListener {
     private ArrayList<EvaluatorEntry> entries;
     private TimedCounter timedCounter;
     private int strategyIdx;
+    private int resolves = 0;
 
     public StrategyAggregatorListener(double initMs, List<Integer> logPointsMs) {
         this.logPointsMs = new ArrayList<>(logPointsMs);
@@ -34,6 +35,7 @@ public class StrategyAggregatorListener extends BaseListener {
             entry.addInitVisitedStates(resInfo.getVisitedStatesInCurrentResolving());
             entry.addInitTime(timedCounter.getLiveDurationMs());
         }
+        resolves = 0;
     }
 
     @Override
@@ -42,14 +44,23 @@ public class StrategyAggregatorListener extends BaseListener {
         strategyIdx = 0;
     }
 
-    private void mergeStrategy(IEvaluablePlayer.IResolvingInfo resInfo) {
+    private void mergeStrategy(Strategy target, IStrategy source) {
+        for (IInformationSet is: source.getDefinedInformationSets()) {
+            IInfoSetStrategy isStrat = source.getInfoSetStrategy(is);
+            target.addProbabilities(is, actionIdx -> isStrat.getProbability(actionIdx));
+        }
+    }
+
+    private void updateCurrentEntry(IEvaluablePlayer.IResolvingInfo resInfo) {
         IStrategy strat = resInfo.getNormalizedSubgameStrategy();
         EvaluatorEntry entry = entries.get(strategyIdx);
         entry.addTime(timedCounter.getLiveDurationMs(), 1);
         Strategy target = entry.getAggregatedStrat();
-        for (IInformationSet is: strat.getDefinedInformationSets()) {
-            IInfoSetStrategy isStrat = strat.getInfoSetStrategy(is);
-            target.addProbabilities(is, actionIdx -> isStrat.getProbability(actionIdx));
+        mergeStrategy(target, strat);
+
+        IStrategy firstActStrategy = resInfo.getNormalizedCompleteStrategy();
+        if (firstActStrategy != null && resolves < 1) {
+            mergeStrategy(entry.getFirstActionStrat(), firstActStrategy);
         }
         entry.addVisitedStates(resInfo.getVisitedStatesInCurrentResolving());
     }
@@ -58,7 +69,8 @@ public class StrategyAggregatorListener extends BaseListener {
     public void resolvingEnd(IEvaluablePlayer.IResolvingInfo resInfo) {
         if (!hasInitEnded()) return;
         strategyIdx = logPointsMs.size() - 1;
-        mergeStrategy(resInfo);
+        updateCurrentEntry(resInfo);
+        resolves++;
     }
 
     @Override
@@ -68,7 +80,7 @@ public class StrategyAggregatorListener extends BaseListener {
         int counter = timedCounter.tryIncrement();
         if (strategyIdx != counter) {
             strategyIdx = counter - 1;
-            mergeStrategy(resInfo);
+            updateCurrentEntry(resInfo);
             strategyIdx++;
         }
     }

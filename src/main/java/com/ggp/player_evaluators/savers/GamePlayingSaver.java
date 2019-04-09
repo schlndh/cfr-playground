@@ -30,7 +30,7 @@ public class GamePlayingSaver implements IPlayerEvaluationSaver {
     }
 
     @Override
-    public void add(EvaluatorEntry e, double exploitability) throws IOException {
+    public void add(EvaluatorEntry e, double exploitability, double firstActExp) throws IOException {
         String resFileName = path + "/" + getFileName((int) e.getIntendedActTimeMs());
         FileOutputStream fileOutputStream = new FileOutputStream(resFileName);
         ObjectOutputStream objectOutputStream
@@ -130,7 +130,7 @@ public class GamePlayingSaver implements IPlayerEvaluationSaver {
                 if (!dryRun) {
                     GamePlayingSaver saver = new GamePlayingSaver(path, initMs, "merged", gameCount);
                     try {
-                        saver.add(firstEntry, 0);
+                        saver.add(firstEntry, 0, 0);
                         for (String filename: mergedFiles) {
                             File file = new File(filename);
                             System.out.println("\t\t\tDeleting " + file.getName());

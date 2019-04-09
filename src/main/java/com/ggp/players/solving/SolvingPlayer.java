@@ -12,6 +12,7 @@ import com.ggp.utils.ObjectTree;
 import com.ggp.utils.random.RandomSampler;
 import com.ggp.utils.strategy.NormalizingInfoSetStrategyWrapper;
 import com.ggp.utils.strategy.NormalizingStrategyWrapper;
+import com.ggp.utils.strategy.PlayerLimitedStrategy;
 import com.ggp.utils.time.IterationTimer;
 
 import java.util.ArrayList;
@@ -79,6 +80,11 @@ public class SolvingPlayer implements IEvaluablePlayer {
                     }
                 }
             );
+        }
+
+        @Override
+        public IStrategy getNormalizedCompleteStrategy() {
+            return new NormalizingStrategyWrapper(new PlayerLimitedStrategy(cfrSolver.getCumulativeStrat(), role));
         }
 
         @Override

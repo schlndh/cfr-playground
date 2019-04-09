@@ -121,8 +121,9 @@ public class GPToCSVCommand implements Runnable {
                             strat = new RestrictedStrategy(entry.getAggregatedStrat(), intersection);
                         }
                         double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
+                        double firstActExp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(entry.getFirstActionStrat()), gameDesc);
                         CsvSaver saver = new CsvSaver(new FileWriter(csvFilename));
-                        saver.add(entry, exp);
+                        saver.add(entry, exp, firstActExp);
                         saver.close();
                         String stratSize = (intersection != null) ? (intersection.size() + "/" + entry.getAggregatedStrat().size())
                                 : Integer.toString(entry.getAggregatedStrat().size());

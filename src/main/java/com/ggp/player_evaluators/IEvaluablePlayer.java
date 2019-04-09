@@ -23,6 +23,12 @@ public interface IEvaluablePlayer extends IPlayer {
         IStrategy getNormalizedSubgameStrategy();
 
         /**
+         * Get normalized strategy for the whole game.
+         * @return normalized strategy or null, if not supported
+         */
+        IStrategy getNormalizedCompleteStrategy();
+
+        /**
          * Get player's current IS.
          * @return
          */
