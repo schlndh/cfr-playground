@@ -67,7 +67,6 @@ public class CFRDGadgetRoot implements ICompleteInformationState {
 
     @Override
     public ICompleteInformationState next(IAction a) {
-        if (!isLegal(a)) return null;
         SelectCISAction sel = (SelectCISAction) a;
         ICompleteInformationState s = sel.getSelectedState();
         CFRDAugmentedIS is = ((CFRDAugmentedCISWrapper)s).getOpponentsAugmentedIS();
@@ -78,7 +77,6 @@ public class CFRDGadgetRoot implements ICompleteInformationState {
 
     @Override
     public Iterable<IPercept> getPercepts(IAction a) {
-        if (!isLegal(a)) return null;
         SelectCISAction sel = (SelectCISAction) a;
         ICompleteInformationState s = sel.getSelectedState();
         int myId = PlayerHelpers.getOpponentId(opponentId);

@@ -58,7 +58,6 @@ public class CompleteInformationState implements ICompleteInformationState {
     @Override
     public ICompleteInformationState next(IAction a) {
         if (a == null && !getActingPlayerInfoSet().hasLegalActions()) return new CompleteInformationState(xInfoSet, oInfoSet, actingPlayer == PLAYER_X ? PLAYER_O : PLAYER_X);
-        if (!isLegal(a)) return null;
         // TTT has exactly one percept for each action
         ActionSuccessPercept p = (ActionSuccessPercept) getPercepts(a).iterator().next();
         InformationSet next = getActingPlayerInfoSet().nextWithPercept(p);
@@ -78,7 +77,6 @@ public class CompleteInformationState implements ICompleteInformationState {
 
     @Override
     public Iterable<IPercept> getPercepts(IAction a) {
-        if (!isLegal(a)) return null;
         MarkFieldAction _a = (MarkFieldAction) a;
         int x = _a.getX();
         int y = _a.getY();

@@ -20,7 +20,6 @@ public class PerfectRecallCIS extends CompleteInformationStateWrapper {
 
     @Override
     public ICompleteInformationState next(IAction a) {
-        if (!isLegal(a)) return null;
         PerfectRecallIS p1 = player1IS, p2 = player2IS;
         if (state.getActingPlayerId() == 1) {
             p1 = (PerfectRecallIS) p1.next(a);

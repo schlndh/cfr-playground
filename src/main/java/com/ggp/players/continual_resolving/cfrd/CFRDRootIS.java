@@ -25,7 +25,6 @@ public class CFRDRootIS implements IInformationSet {
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         ISSelectedPercept per = (ISSelectedPercept) p;
         if (owner != root.getOpponentId()) {
             return per.getInformationSet();

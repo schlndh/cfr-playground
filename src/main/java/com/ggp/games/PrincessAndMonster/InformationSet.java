@@ -23,8 +23,7 @@ public class InformationSet implements IInformationSet {
 
     @Override
     public IInformationSet next(IAction a) {
-        if (isLegal(a)) return new InformationSet(gameDesc, owner, (IGraphPosition) a, myTurns + 1);
-        return null;
+        return new InformationSet(gameDesc, owner, (IGraphPosition) a, myTurns + 1);
     }
 
     @Override

@@ -27,7 +27,6 @@ public class CFRDAugmentedIS implements IInformationSet {
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         ISSelectedPercept per = (ISSelectedPercept) p;
         return per.getInformationSet();
     }

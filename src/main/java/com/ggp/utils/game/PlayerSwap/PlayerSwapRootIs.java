@@ -25,7 +25,6 @@ public class PlayerSwapRootIs implements IInformationSet {
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         if (((PlayerSwapPercept)p).isSwapped()) return new PlayerSwapISWrapper(gameRoot.getInfoSetForPlayer(PlayerHelpers.getOpponentId(owner)));
         return gameRoot.getInfoSetForPlayer(owner);
     }

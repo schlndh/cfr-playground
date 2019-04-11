@@ -47,14 +47,12 @@ public class PlayerSwapRootState implements ICompleteInformationState {
 
     @Override
     public ICompleteInformationState next(IAction a) {
-        if (!isLegal(a)) return null;
         if (((PlayerSwapAction)a).isDoSwap()) return new PlayerSwapCISWrapper(gameRoot);
         return gameRoot;
     }
 
     @Override
     public Iterable<IPercept> getPercepts(IAction a) {
-        if (!isLegal(a)) return null;
         boolean isSwapped = ((PlayerSwapAction)a).isDoSwap();
         return Arrays.asList(new PlayerSwapPercept(1, isSwapped), new PlayerSwapPercept(2, isSwapped));
     }

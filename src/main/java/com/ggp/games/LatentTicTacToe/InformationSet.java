@@ -65,13 +65,11 @@ public class InformationSet implements IInformationSet{
 
     @Override
     public IInformationSet next(IAction a) {
-        if (!isLegal(a)) return null;
         return new InformationSet(field, owningPlayerId, turn + 1, myFields, knownEnemyFields, (MarkFieldAction) a);
     }
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         MarkFieldAction opponentsDelayedAction = ((DelayedActionPercept) p).getDelayedAction();
         int[] f = Arrays.copyOf(field, field.length);
         int myNextFields = myFields;

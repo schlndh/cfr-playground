@@ -40,7 +40,6 @@ public class InformationSet implements IInformationSet {
 
     @Override
     public IInformationSet next(IAction a) {
-        if (!isLegal(a)) return null;
         if (a.getClass() == FoldAction.class) {
             return new InformationSet(gameDesc, owner, privateCard, publicCard, potSize, remainingMoney, Rounds.End, 0, owner);
         } else if (a.getClass() == CallAction.class) {
@@ -57,7 +56,6 @@ public class InformationSet implements IInformationSet {
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         if (p.getTargetPlayer() != owner) return this;
         if (p.getClass() == CardRevealedPercept.class) {
             CardRevealedPercept crp = (CardRevealedPercept) p;

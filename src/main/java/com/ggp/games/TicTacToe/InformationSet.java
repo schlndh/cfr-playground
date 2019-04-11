@@ -52,7 +52,6 @@ public class InformationSet implements IInformationSet{
 
     @Override
     public IInformationSet next(IAction a) {
-        if (!isLegal(a)) return null;
         MarkFieldAction _a = (MarkFieldAction) a;
         int x = _a.getX();
         int y = _a.getY();
@@ -64,7 +63,6 @@ public class InformationSet implements IInformationSet{
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         ActionSuccessPercept _p = (ActionSuccessPercept) p;
         if (_p.isSuccessful()) return this;
         int x = _p.getLastAction().getX();

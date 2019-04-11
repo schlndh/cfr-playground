@@ -23,13 +23,11 @@ public class PerfectRecallIS extends InformationSetWrapper {
 
     @Override
     public IInformationSet next(IAction a) {
-        if (!isLegal(a)) return null;
         return new PerfectRecallIS(infoSet.next(a), getNextPerceptList(new OwnActionPercept(infoSet.getOwnerId(), a)));
     }
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         return new PerfectRecallIS(infoSet.applyPercept(p), getNextPerceptList(p));
     }
 

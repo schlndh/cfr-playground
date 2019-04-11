@@ -58,7 +58,6 @@ public class CompleteInformationState implements ICompleteInformationState {
 
     @Override
     public ICompleteInformationState next(IAction a) {
-        if (!isLegal(a)) return null;
         InformationSet is1 = princessIS, is2 = monsterIS;
         if (getActingPlayerId() == 1) {
             is1 = (InformationSet) is1.next(a);

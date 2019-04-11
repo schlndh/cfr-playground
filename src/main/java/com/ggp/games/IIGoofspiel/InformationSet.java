@@ -47,7 +47,6 @@ public class InformationSet implements IInformationSet {
 
     @Override
     public IInformationSet next(IAction a) {
-        if (!isLegal(a)) return null;
         BetAction b = (BetAction) a;
         int[] newUsedCards = (usedCards != null ? Arrays.copyOf(usedCards, usedCards.length + 1) : new int[1]);
         newUsedCards[newUsedCards.length - 1] = b.getCard();
@@ -57,7 +56,6 @@ public class InformationSet implements IInformationSet {
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         BetResultPercept b = (BetResultPercept) p;
         char[] newWins = (wins != null ? Arrays.copyOf(wins, wins.length + 1) : new char[1]);
         newWins[newWins.length - 1] = b.getWinner() == owner ? 'W' : (b.getWinner() == 0  ? 'T' : 'L');

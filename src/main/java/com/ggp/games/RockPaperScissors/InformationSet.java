@@ -22,13 +22,11 @@ public class InformationSet implements IInformationSet {
 
     @Override
     public IInformationSet next(IAction a) {
-        if (!isLegal(a)) return null;
         return new InformationSet(owner, (ChooseAction) a, size);
     }
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         return null;
     }
 

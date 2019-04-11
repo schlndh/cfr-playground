@@ -54,7 +54,6 @@ public class CompleteInformationState implements ICompleteInformationState {
 
     @Override
     public ICompleteInformationState next(IAction a) {
-        if (!isLegal(a)) return null;
         DelayedActionPercept p = revealOpponentsDelayedAction();
 
         InformationSet nextX = xInfoSet, nextO = oInfoSet;

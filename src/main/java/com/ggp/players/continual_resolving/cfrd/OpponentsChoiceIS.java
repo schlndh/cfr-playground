@@ -24,14 +24,12 @@ public class OpponentsChoiceIS implements IInformationSet {
 
     @Override
     public IInformationSet next(IAction a) {
-        if (!isLegal(a)) return null;
         if (a.getClass() == TerminateAction.class) return null;
         return followIS;
     }
 
     @Override
     public IInformationSet applyPercept(IPercept p) {
-        if (!isValid(p)) return null;
         ISSelectedPercept per = (ISSelectedPercept) p;
         return per.getInformationSet();
     }

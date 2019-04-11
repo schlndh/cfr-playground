@@ -60,7 +60,6 @@ public class CompleteInformationState implements ICompleteInformationState {
 
     @Override
     public ICompleteInformationState next(IAction a) {
-        if (!isLegal(a)) return null;
         InformationSet newP1IS = player1IS, newP2IS = player2IS;
         if (getActingPlayerId() == 1) {
             newP1IS = (InformationSet) player1IS.next(a);
@@ -77,7 +76,6 @@ public class CompleteInformationState implements ICompleteInformationState {
 
     @Override
     public Iterable<IPercept> getPercepts(IAction a) {
-        if (!isLegal(a)) return null;
         if (getActingPlayerId() == 1) return Collections.EMPTY_LIST;
         BetAction b = (BetAction) a;
         int winner = getWinner(player1IS.getLastUsedCard(), b.getCard());

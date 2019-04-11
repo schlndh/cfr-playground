@@ -115,7 +115,6 @@ public class CompleteInformationState implements ICompleteInformationState {
 
     @Override
     public ICompleteInformationState next(IAction a) {
-        if (!isLegal(a)) return null;
         IInformationSet is1 = player1IS, is2 = player2IS;
         if (actingPlayer == 1) {
             is1 = is1.next(a);
@@ -151,7 +150,6 @@ public class CompleteInformationState implements ICompleteInformationState {
 
     @Override
     public Iterable<IPercept> getPercepts(IAction a) {
-        if(!isLegal(a)) return null;
         ArrayList<IPercept> ret = new ArrayList<>();
         InformationSet otherPlayer = (actingPlayer == 1) ? player2IS : player1IS;
         if (a.getClass() == FoldAction.class) {
