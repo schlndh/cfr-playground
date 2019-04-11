@@ -322,7 +322,15 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
                     addRegret(isInfo, a, tracker.getRndProb() * (actionUtil[a] - util));
                 }
                 isInfo.doRegretMatching();
+            } else if (accumulationFilter.isAccumulated(actingPlayerInfoSet)) {
+                double[] strat = isInfo.getStrat();
+                double[] cumulativeStrat = isInfo.getCumulativeStrat();
+                double mul = Math.pow(((double) isInfo.getLastVisitedAtIteration()) / iterationCounter, cumulativeStratExp);
+                for (int a = 0; a < 2; ++a) {
+                    cumulativeStrat[a] = mul * cumulativeStrat[a] + tracker.getRndProb()*strat[a]/totalSampleProb;
+                }
             }
+            isInfo.setLastVisitedAtIteration(iterationCounter);
         }
 
         final double p1Utility = PlayerHelpers.selectByPlayerId(player, 1, -1) * util;
