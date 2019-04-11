@@ -1,7 +1,7 @@
 package com.ggp.solvers.cfr;
 
 import com.ggp.*;
-import com.ggp.players.continual_resolving.cfrd.CFRDSubgameRoot;
+import com.ggp.players.continual_resolving.cfrd.CFRDGadgetRoot;
 import com.ggp.players.continual_resolving.cfrd.actions.FollowAction;
 import com.ggp.players.continual_resolving.cfrd.actions.TerminateAction;
 import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
@@ -295,7 +295,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
         visitedStates++;
         listeners.forEach(listener -> listener.enteringState(tracker, info));
         double util = 0;
-        if (s.getClass().equals(CFRDSubgameRoot.class)) {
+        if (s.getClass().equals(CFRDGadgetRoot.class)) {
             List<IAction> legalActions = s.getLegalActions();
             SampleResult sample = sampleRandom(s, targeting);
             IAction a = legalActions.get(sample.actionIdx);
@@ -335,7 +335,7 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
         iterationCounter++;
         isTargetedIteration = sampler.choose(targetingProb);
         int player = (int)(iterationCounter % 2) + 1;
-        if (tracker.getCurrentState().getClass().equals(CFRDSubgameRoot.class)) {
+        if (tracker.getCurrentState().getClass().equals(CFRDGadgetRoot.class)) {
             handleCFRDStart(tracker, 1, 1, player, rootTargeting);
         } else {
             cfr(tracker, 1, 1, 1, 1, player, 0, rootTargeting);

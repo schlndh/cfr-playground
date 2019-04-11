@@ -5,7 +5,7 @@ import com.ggp.parsers.ParseUtils;
 import com.ggp.parsers.exceptions.ConfigAssemblyException;
 import com.ggp.players.continual_resolving.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
 import com.ggp.players.continual_resolving.cfrd.AugmentedIS.CFRDAugmentedGameDescriptionWrapper;
-import com.ggp.players.continual_resolving.cfrd.CFRDSubgameRoot;
+import com.ggp.players.continual_resolving.cfrd.CFRDGadgetRoot;
 import com.ggp.players.continual_resolving.trackers.CFRDTracker;
 import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 import com.ggp.players.continual_resolving.trackers.SimpleTracker;
@@ -334,7 +334,7 @@ public class CFRDEvalCommand implements Runnable {
         IStrategy cfvStrategy = useCBR ? new ReplacedStrategy(trunkStrategy, new PlayerLimitedStrategy(trunkBestResponse, opponentId)) : trunkStrategy;
         findSubgameInfo(rootTracker, subgameRootStates, cfvStrategy, opponentCFV, reachProbs, 1, 1);
         // resolve subgame
-        CFRDSubgameRoot subgameRoot = new CFRDSubgameRoot(new CISRange(subgameRootStates, reachProbs, 1), opponentCFV, 1, opponentId);
+        CFRDGadgetRoot subgameRoot = new CFRDGadgetRoot(new CISRange(subgameRootStates, reachProbs, 1), opponentCFV, 1, opponentId);
 
         warmup(usedSolverFactory, subgameRoot, gameDesc, trunkStrategy);
 

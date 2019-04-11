@@ -11,9 +11,9 @@ import java.util.Objects;
 public class CFRDRootIS implements IInformationSet {
     private static final long serialVersionUID = 1L;
     private int owner;
-    private CFRDSubgameRoot root;
+    private CFRDGadgetRoot root;
 
-    public CFRDRootIS(int owner, CFRDSubgameRoot root) {
+    public CFRDRootIS(int owner, CFRDGadgetRoot root) {
         this.owner = owner;
         this.root = root;
     }

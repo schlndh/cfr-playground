@@ -4,7 +4,7 @@ import com.ggp.*;
 import com.ggp.player_evaluators.IEvaluablePlayer;
 import com.ggp.players.continual_resolving.ISubgameResolver;
 import com.ggp.players.continual_resolving.cfrd.AugmentedIS.CFRDAugmentedCISWrapper;
-import com.ggp.players.continual_resolving.cfrd.CFRDSubgameRoot;
+import com.ggp.players.continual_resolving.cfrd.CFRDGadgetRoot;
 import com.ggp.players.continual_resolving.trackers.CFRDTracker;
 import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 import com.ggp.players.continual_resolving.utils.*;
@@ -77,7 +77,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
 
         @Override
         public IStrategy getNormalizedCompleteStrategy() {
-            if (rootTracker == null || rootTracker.getCurrentState().getClass() == CFRDSubgameRoot.class) return null;
+            if (rootTracker == null || rootTracker.getCurrentState().getClass() == CFRDGadgetRoot.class) return null;
             return new NormalizingStrategyWrapper(new PlayerLimitedStrategy(cummulativeStrategy, myId));
         }
 
@@ -196,7 +196,7 @@ public class ExternalCFRResolver implements ISubgameResolver {
     }
 
     protected CFRDTracker prepareDataStructures(ObjectTree<ActionIdxWrapper> currentPathTree) {
-        ICompleteInformationState subgame = new CFRDSubgameRoot(range, opponentCFV, opponentCFVNorm, opponentId);
+        ICompleteInformationState subgame = new CFRDGadgetRoot(range, opponentCFV, opponentCFVNorm, opponentId);
         CFRDTracker tracker = CFRDTracker.create(myId, subgame, range.getNorm());
         findMyNextTurn(tracker, useISTargeting ? new ArrayList<>() : null, currentPathTree);
         return tracker;

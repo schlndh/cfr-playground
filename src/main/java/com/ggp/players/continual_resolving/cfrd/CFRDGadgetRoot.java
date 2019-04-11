@@ -10,7 +10,7 @@ import com.ggp.utils.PlayerHelpers;
 
 import java.util.*;
 
-public class CFRDSubgameRoot implements ICompleteInformationState {
+public class CFRDGadgetRoot implements ICompleteInformationState {
     private static final long serialVersionUID = 1L;
     private CISRange range;
     private Map<IInformationSet, Double> opponentCFV;
@@ -19,7 +19,7 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
     private final List<IAction> legalActions;
     private final HashMap<IInformationSet, Double> opponentIsReachProbs;
 
-    public CFRDSubgameRoot(CISRange range, Map<IInformationSet, Double> opponentCFV, double opponentCFVNorm, int opponentId) {
+    public CFRDGadgetRoot(CISRange range, Map<IInformationSet, Double> opponentCFV, double opponentCFVNorm, int opponentId) {
         this.range = range;
         this.opponentCFV = opponentCFV;
         this.opponentCFVNorm = opponentCFVNorm;
@@ -118,7 +118,7 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        CFRDSubgameRoot that = (CFRDSubgameRoot) o;
+        CFRDGadgetRoot that = (CFRDGadgetRoot) o;
         return opponentCFVNorm == that.opponentCFVNorm &&
                 opponentId == that.opponentId &&
                 range.equals(that.range) &&
