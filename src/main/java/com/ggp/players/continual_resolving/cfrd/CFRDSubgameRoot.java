@@ -61,6 +61,11 @@ public class CFRDSubgameRoot implements ICompleteInformationState {
     }
 
     @Override
+    public boolean isLegal(IAction a) {
+        return a != null && a.getClass() == SelectCISAction.class && range.getPossibleStates().contains(((SelectCISAction)a).getSelectedState());
+    }
+
+    @Override
     public ICompleteInformationState next(IAction a) {
         if (!isLegal(a)) return null;
         SelectCISAction sel = (SelectCISAction) a;
