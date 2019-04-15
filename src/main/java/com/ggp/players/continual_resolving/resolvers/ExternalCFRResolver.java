@@ -22,7 +22,7 @@ import com.ggp.utils.time.IterationTimer;
 import java.util.*;
 
 public class ExternalCFRResolver implements ISubgameResolver {
-    public static class Factory implements ISubgameResolver.Factory {
+    public static class Factory implements IFactory {
         private BaseCFRSolver.Factory solverFactory;
 
         public Factory(BaseCFRSolver.Factory solverFactory) {

@@ -17,12 +17,12 @@ import com.ggp.utils.time.IterationTimer;
 import java.util.*;
 
 public class ContinualResolvingPlayer implements IEvaluablePlayer {
-    public static class Factory implements IEvaluablePlayer.IFactory {
+    public static class Factory implements IFactory {
         private static final long serialVersionUID = 1L;
-        private ISubgameResolver.Factory resolverFactory;
+        private ISubgameResolver.IFactory resolverFactory;
         private ArrayList<IEvaluablePlayer.IListener> resolvingListeners = new ArrayList<>();
 
-        public Factory(ISubgameResolver.Factory resolverFactory) {
+        public Factory(ISubgameResolver.IFactory resolverFactory) {
             this.resolverFactory = resolverFactory;
         }
 
@@ -67,7 +67,7 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
     private double reachProbsNorm;
     private IGameDescription gameDesc;
     private ArrayList<IEvaluablePlayer.IListener> resolvingListeners = new ArrayList<>();
-    private ISubgameResolver.Factory resolverFactory;
+    private ISubgameResolver.IFactory resolverFactory;
     private SubgameMap subgameMap;
     private RandomSampler sampler = new RandomSampler();
     private ISubgameResolver currentResolver = null;
@@ -90,7 +90,7 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
         this.isStrat = other.isStrat == null ? null : new InfoSetStrategy(other.isStrat);
     }
 
-    public ContinualResolvingPlayer(int id, IGameDescription gameDesc, ISubgameResolver.Factory resolverFactory) {
+    public ContinualResolvingPlayer(int id, IGameDescription gameDesc, ISubgameResolver.IFactory resolverFactory) {
         this.id = id;
         this.opponentId = PlayerHelpers.getOpponentId(id);
         gameDesc = new CFRDAugmentedGameDescriptionWrapper(gameDesc, opponentId);

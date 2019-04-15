@@ -166,7 +166,7 @@ public class Main {
                 ContinualResolvingPlayer.Factory.class.getConstructor(BaseCFRSolver.Factory.class)
         ));
         factory.register(IPlayerFactory.class, "ContinualResolving", ConfigurableFactory.createPositionalParameterList(
-                ContinualResolvingPlayer.Factory.class.getConstructor(ISubgameResolver.Factory.class)
+                ContinualResolvingPlayer.Factory.class.getConstructor(ISubgameResolver.IFactory.class)
         ));
         factory.register(IPlayerFactory.class, "PerfectRecall", ConfigurableFactory.createPositionalParameterList(
                 PerfectRecallPlayerFactory.class.getConstructor(IPlayerFactory.class)
