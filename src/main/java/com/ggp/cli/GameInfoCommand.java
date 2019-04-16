@@ -29,10 +29,22 @@ public class GameInfoCommand implements Runnable {
     private long leaves = 0;
     private long innerStates = 0;
     private double avgBranchingFactor = 0;
+    private int[] maxActions = new int[] {0, 0, 0};
+    private double[] minUtils = new double[] {Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY};
+    private double[] maxUtils = new double[] {Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY};
 
     public void visit(ICompleteInformationState s, int depth) {
         states++;
         if (s.isTerminal()) {
+            double[] payoffs = new double[]{0, s.getPayoff(1), s.getPayoff(2)};
+            for (int i = 1; i <= 2; ++i) {
+                if (payoffs[i] < minUtils[i]) {
+                    minUtils[i] = payoffs[i];
+                }
+                if (payoffs[i] > maxUtils[i]) {
+                    maxUtils[i] = payoffs[i];
+                }
+            }
             leaves++;
             if (depth > maxDepth) maxDepth = depth;
             avgDepth += (1d/leaves)*(depth - avgDepth);
@@ -41,6 +53,9 @@ public class GameInfoCommand implements Runnable {
         innerStates++;
         List<IAction> legalActions = s.getLegalActions();
         avgBranchingFactor += (1d/innerStates)*(legalActions.size() - avgBranchingFactor);
+        if (legalActions.size() > maxActions[s.getActingPlayerId()]) {
+            maxActions[s.getActingPlayerId()] = legalActions.size();
+        }
         if (!s.isRandomNode()) {
             infoSets.add(s.getInfoSetForActingPlayer());
         }
@@ -64,7 +79,10 @@ public class GameInfoCommand implements Runnable {
         ICompleteInformationState s = gameDesc.getInitialState();
 
         visit(s, 0);
-        System.out.println(String.format("Game tree size: %d, acting info-sets: %d, max depth: %d, avg. depth: %f, avg. branching factor: %f",
-                states, infoSets.size(), maxDepth, avgDepth, avgBranchingFactor));
+        double[] utilDelta = new double[]{0, maxUtils[1] - minUtils[1], maxUtils[2] - minUtils[2]};
+        System.out.println(String.format("Game tree size: %d, acting info-sets: %d, max depth: %d, avg. depth: %f, " +
+                        "avg. branching factor: %f, util delta 1: %f, util delta 2: %f, max actions: %d/%d/%d",
+                states, infoSets.size(), maxDepth, avgDepth, avgBranchingFactor, utilDelta[1], utilDelta[2],
+                maxActions[0], maxActions[1], maxActions[2]));
     }
 }
