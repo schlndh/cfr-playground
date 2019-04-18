@@ -47,6 +47,7 @@ public class ConfigurableFactory {
         if (key == null) return null;
         HashMap<String, ArrayList<ParameterList>> typeRegistry = registry.getOrDefault(type, null);
         if (typeRegistry == null) return null;
+        if (!typeRegistry.containsKey(key.getName())) throw new WrongConfigKeyException();
         ArrayList<ParameterList> possibleParameterLists = typeRegistry.getOrDefault(key.getName(), null);
         if (possibleParameterLists == null) return null;
         for (ParameterList pl: possibleParameterLists) {
