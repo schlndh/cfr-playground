@@ -4,6 +4,7 @@ import com.ggp.cli.MainCommand;
 import com.ggp.parsers.ConfigurableFactory;
 import com.ggp.parsers.Parameter;
 import com.ggp.parsers.ParameterList;
+import com.ggp.parsers.ParseUtils;
 import com.ggp.players.PerfectRecallPlayerFactory;
 import com.ggp.players.continual_resolving.ContinualResolvingPlayer;
 import com.ggp.players.continual_resolving.utils.ContinualResolvingkUtilityEstimatorWrapper;
@@ -31,16 +32,25 @@ import picocli.CommandLine;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) throws NoSuchMethodException {
         MainCommand main = new MainCommand();
-        registerClassesToFactory(main.getConfigurableFactory());
+        ConfigurableFactory factory = main.getConfigurableFactory();
+        registerClassesToFactory(factory);
 
         CommandLine cli = new CommandLine(main);
-        cli.run(main, args);
+        for (Class<?> c: factory.getRegisteredTypes()) {
+            Class<Object> cls = (Class<Object>) c;
+            cli.registerConverter(cls, configKey -> factory.create(cls, ParseUtils.parseConfigExpression(configKey)));
+        }
 
+        // can't use cli.run(main, args) because it re-creates the commands without the registered type converters
+        CommandLine.Help.Ansi ansi = CommandLine.Help.Ansi.AUTO;
+        cli.parseWithHandlers(new CommandLine.RunLast().useOut(System.out).useAnsi(ansi),
+                new CommandLine.DefaultExceptionHandler<List<Object>>().useErr(System.err).useAnsi(ansi), args);
     }
 
     public static void registerClassesToFactory(ConfigurableFactory factory) throws NoSuchMethodException {

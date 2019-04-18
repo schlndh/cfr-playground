@@ -7,10 +7,7 @@ import com.ggp.parsers.exceptions.WrongExpressionTypeException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ConfigurableFactory {
     private HashMap<Class<?>, HashMap<String, ArrayList<ParameterList>>> registry = new HashMap<>();
@@ -41,6 +38,10 @@ public class ConfigurableFactory {
 
     public <T> T create(Class<T> type, ConfigExpression expr) throws ConfigAssemblyException {
         return (T) doCreate(type, expr);
+    }
+
+    public Set<Class<?>> getRegisteredTypes() {
+        return Collections.unmodifiableSet(registry.keySet());
     }
 
     private Object doCreate(Class<?> type, ConfigKey key) throws ConfigAssemblyException {
