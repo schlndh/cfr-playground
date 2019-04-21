@@ -10,26 +10,80 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public class ConfigurableFactory {
-    private HashMap<Class<?>, HashMap<String, ArrayList<ParameterList>>> registry = new HashMap<>();
+    public static class ConfigurableImplementation {
+        private ArrayList<ParameterList> factories = new ArrayList<>();
+        private String description = "";
 
-    public void register(Class<?> type, String name, ParameterList parameters) {
-        registry.computeIfAbsent(type, a -> new HashMap<>())
-                .computeIfAbsent(name, b -> new ArrayList<>())
-                .add(parameters);
+        public List<ParameterList> getFactories() {
+            return Collections.unmodifiableList(factories);
+        }
+
+        void addFactory(ParameterList parameters) {
+            factories.add(parameters);
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
     }
 
-    public static ParameterList createPositionalParameterList(Constructor<?> constructor) {
-        ArrayList<Parameter> params = new ArrayList<>();
-        for (Class<?> c: constructor.getParameterTypes()) {
-            params.add(new Parameter(c, null, true));
+    public static class ConfigurableType {
+        private HashMap<String, ConfigurableImplementation> registry = new HashMap<>();
+        private String description = "";
+
+        HashMap<String, ConfigurableImplementation> getModifiableRegistry() {
+            return registry;
         }
+
+        public Map<String, ConfigurableImplementation> getRegisteredImplementations() {
+            return Collections.unmodifiableMap(registry);
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+    }
+
+    private HashMap<Class<?>, ConfigurableType> registry = new HashMap<>();
+
+    public void register(Class<?> type, String name, ParameterList parameters) {
+        registry.computeIfAbsent(type, a -> new ConfigurableType()).getModifiableRegistry()
+                .computeIfAbsent(name, b -> new ConfigurableImplementation())
+                .addFactory(parameters);
+    }
+
+    public void register(Class<?> type, String name, ParameterList parameters, String description) {
+        register(type, name, parameters);
+        registry.get(type).getRegisteredImplementations().get(name).setDescription(description);
+    }
+
+    public static ParameterList createPositionalParameterList(Constructor<?> constructor, String ... parameterDescriptions) {
+        ArrayList<Parameter> params = new ArrayList<>();
+        if (parameterDescriptions == null) {
+            parameterDescriptions = new String[0];
+        }
+        int parameterIdx = 0;
+        for (Class<?> c: constructor.getParameterTypes()) {
+            String desc = parameterDescriptions.length > parameterIdx ? parameterDescriptions[parameterIdx] : "";
+            params.add(new Parameter(c, null, true, desc));
+            parameterIdx++;
+        }
+        String plDesc = parameterDescriptions.length > parameterIdx ? parameterDescriptions[parameterIdx] : "";
         return new ParameterList(params, null, (posParams, kvParams) -> {
             try {
                 return constructor.newInstance(posParams.toArray());
             } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }, plDesc);
     }
 
     public <T> T create(Class<T> type, ConfigKey key) throws ConfigAssemblyException {
@@ -40,18 +94,31 @@ public class ConfigurableFactory {
         return (T) doCreate(type, expr);
     }
 
+    public Map<Class<?>, ConfigurableType> getRegistry() {
+        return Collections.unmodifiableMap(registry);
+    }
+
+    public void setTypeDescription(Class<?> c, String description) {
+        registry.computeIfAbsent(c, a -> new ConfigurableType()).setDescription(description);
+    }
+
+    public void setImplementationDescription(Class<?> c, String name, String description) {
+        registry.get(c).getRegisteredImplementations().get(name).setDescription(description);
+    }
+
     public Set<Class<?>> getRegisteredTypes() {
         return Collections.unmodifiableSet(registry.keySet());
     }
 
     private Object doCreate(Class<?> type, ConfigKey key) throws ConfigAssemblyException {
         if (key == null) return null;
-        HashMap<String, ArrayList<ParameterList>> typeRegistry = registry.getOrDefault(type, null);
-        if (typeRegistry == null) return null;
+        ConfigurableType confType = registry.getOrDefault(type, null);
+        if (confType == null) return null;
+        HashMap<String, ConfigurableImplementation> typeRegistry = confType.getModifiableRegistry();
         if (!typeRegistry.containsKey(key.getName())) throw new WrongConfigKeyException();
-        ArrayList<ParameterList> possibleParameterLists = typeRegistry.getOrDefault(key.getName(), null);
-        if (possibleParameterLists == null) return null;
-        for (ParameterList pl: possibleParameterLists) {
+        ConfigurableImplementation impl = typeRegistry.getOrDefault(key.getName(), null);
+        if (impl == null) return null;
+        for (ParameterList pl: impl.getFactories()) {
             List<Object> posParams = null;
             if (pl.getPositionalParams() != null) {
                 posParams = matchPositionalParameters(key.getPositionalParams(), pl.getPositionalParams());

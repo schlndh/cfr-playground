@@ -7,8 +7,8 @@ import java.util.*;
 
 // TODO: resolve licensing/attribution issues, as this is modified class taken from picocli
 
-@CommandLine.Command(name = "help", header = "Displays help information about the specified command",
-        synopsisHeading = "%nUsage: ", helpCommand = true,
+@CommandLine.Command(name = "help1", header = "Displays help information about the specified command",
+        synopsisHeading = "%nUsage: ", helpCommand = false,
         description = {"%nWhen no COMMAND is given, the usage help for the main command is displayed.",
                 "If a COMMAND is specified, the help for that command is shown.%n"})
 public final class HelpCommand implements CommandLine.IHelpCommandInitializable, Runnable {
