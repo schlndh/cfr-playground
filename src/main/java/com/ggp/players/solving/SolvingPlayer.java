@@ -157,15 +157,20 @@ public class SolvingPlayer implements IEvaluablePlayer {
             if (myActions == resolves) {
                 if (s.getInfoSetForActingPlayer().equals(currentInfoSet)) {
                     if (useISTargeting) currentPathTree.addPath(actionPath);
+                    // current IS is already added to subgame
                 }
                 // prune all infoSets not below my current IS when targeting is used
                 else if (useISTargeting) {
                     return;
+                } else {
+                    // IS targeting is not used and this IS is at the same action-depth as the current IS -> add to subgame
+                    subgame.add(s.getInfoSetForActingPlayer());
+                    return;
                 }
             }
 
-            // add info sets where I act next
             if (myActions == resolves + 1) {
+                // IS targeting is used and this IS is "under" my current IS -> add to subgame
                 subgame.add(s.getInfoSetForActingPlayer());
                 return;
             }
