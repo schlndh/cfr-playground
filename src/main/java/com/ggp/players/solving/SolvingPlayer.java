@@ -94,7 +94,7 @@ public class SolvingPlayer implements IEvaluablePlayer {
 
         @Override
         public long getVisitedStatesInCurrentResolving() {
-            return cfrSolver.getVisitedStates() - directlyVisitedStates;
+            return cfrSolver.getVisitedStates() + directlyVisitedStates;
         }
     }
 
