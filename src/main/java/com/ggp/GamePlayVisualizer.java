@@ -8,13 +8,19 @@ public class GamePlayVisualizer implements IGameListener {
     }
 
     @Override
-    public void gameStart(IPlayer player1, IPlayer player2) {
+    public void playerInitStarted(int player) {
+    }
 
+    @Override
+    public void playerInitFinished(int player) {
+    }
+
+    @Override
+    public void gameStart(IPlayer player1, IPlayer player2) {
     }
 
     @Override
     public void gameEnd(int payoff1, int payoff2) {
-
     }
 
     @Override

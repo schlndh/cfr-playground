@@ -35,6 +35,14 @@ class GameManagerTest {
 
         gameManager.registerGameListener(new IGameListener() {
             @Override
+            public void playerInitStarted(int player) {
+            }
+
+            @Override
+            public void playerInitFinished(int player) {
+            }
+
+            @Override
             public void gameStart(IPlayer player1, IPlayer player2) { }
 
             @Override

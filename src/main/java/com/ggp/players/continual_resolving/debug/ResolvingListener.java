@@ -15,6 +15,14 @@ public class ResolvingListener implements IResolvingListener, IGameListener {
     private StopWatch actionReasoningTime = new StopWatch();
 
     @Override
+    public void playerInitStarted(int player) {
+    }
+
+    @Override
+    public void playerInitFinished(int player) {
+    }
+
+    @Override
     public void initEnd(IResolvingInfo resInfo) {
     }
 

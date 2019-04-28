@@ -141,6 +141,14 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
         private TerminalAvoidingRandomPlayer player;
 
         @Override
+        public void playerInitStarted(int player) {
+        }
+
+        @Override
+        public void playerInitFinished(int player) {
+        }
+
+        @Override
         public void gameStart(IPlayer player1, IPlayer player2) {
             if (player1.getClass() == TerminalAvoidingRandomPlayer.class) {
                 player = (TerminalAvoidingRandomPlayer) player1;

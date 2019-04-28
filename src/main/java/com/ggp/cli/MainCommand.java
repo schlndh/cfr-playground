@@ -5,6 +5,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(name="./GeneralDeepstack", subcommands = {
         RunCommand.class,
+        TournamentCommand.class,
         //HelpCommand.class,
         CommandLine.HelpCommand.class,
         SolveCommand.class,

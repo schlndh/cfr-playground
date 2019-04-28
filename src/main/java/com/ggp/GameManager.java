@@ -49,8 +49,12 @@ public class GameManager {
 
     public void run(long initTimeoutMillis, long actTimeoutMillis, IActionSelector actionSelector) {
         gameListeners.forEach((listener) -> listener.gameStart(player1, player2));
+        gameListeners.forEach((listener) -> listener.playerInitStarted(1));
         player1.init(initTimeoutMillis);
+        gameListeners.forEach((listener) -> listener.playerInitFinished(1));
+        gameListeners.forEach((listener) -> listener.playerInitStarted(2));
         player2.init(initTimeoutMillis);
+        gameListeners.forEach((listener) -> listener.playerInitFinished(2));
 
         while(!playOneTurn(actTimeoutMillis, actionSelector)) {}
         gameListeners.forEach((listener) -> listener.gameEnd(getPayoff(1), getPayoff(2)));
