@@ -3,6 +3,12 @@ package com.ggp.players;
 import com.ggp.*;
 import com.ggp.utils.PlayerHelpers;
 import com.ggp.utils.random.RandomSampler;
+import com.ggp.utils.strategy.NormalizingStrategyWrapper;
+import com.ggp.utils.strategy.Strategy;
+
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.util.HashMap;
 
 public class StrategyBasedPlayer implements IPlayer {
     public static class Factory implements IPlayerFactory {
@@ -21,6 +27,37 @@ public class StrategyBasedPlayer implements IPlayer {
         @Override
         public String getConfigString() {
             return "StrategyBasedPlayer{}";
+        }
+    }
+
+    public static class DynamiclyLoadedStrategyFactory implements IPlayerFactory {
+        private static final long serialVersionUID = 1L;
+        private HashMap<IGameDescription, IStrategy> strategies = new HashMap<>();
+        private String strategyDir;
+
+        public DynamiclyLoadedStrategyFactory(String strategyDir) {
+            this.strategyDir = strategyDir;
+        }
+
+        @Override
+        public IPlayer create(IGameDescription game, int role) {
+            IStrategy gameStrat = strategies.computeIfAbsent(game, k -> {
+                try (FileInputStream fileInputStream = new FileInputStream(strategyDir + "/" + game.getConfigString() + ".strat")) {
+                    ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+                    IStrategy strat = (IStrategy) objectInputStream.readObject();
+                    if (strat == null) return null;
+                    return new NormalizingStrategyWrapper(strat);
+                } catch (Exception e) {
+                    return null;
+                }
+            });
+            if (gameStrat == null) gameStrat = new Strategy();
+            return new StrategyBasedPlayer(role, game, gameStrat);
+        }
+
+        @Override
+        public String getConfigString() {
+            return "StrategyBasedPlayer{\"" + strategyDir + "\"}";
         }
     }
 

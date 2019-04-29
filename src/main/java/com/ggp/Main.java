@@ -3,6 +3,7 @@ package com.ggp;
 import com.ggp.cli.MainCommand;
 import com.ggp.parsers.*;
 import com.ggp.players.PerfectRecallPlayerFactory;
+import com.ggp.players.StrategyBasedPlayer;
 import com.ggp.players.continual_resolving.ContinualResolvingPlayer;
 import com.ggp.players.continual_resolving.utils.ContinualResolvingkUtilityEstimatorWrapper;
 import com.ggp.players.solving.SolvingPlayer;
@@ -224,6 +225,10 @@ public class Main {
                 SolvingPlayer.Factory.class.getConstructor(BaseCFRSolver.Factory.class),
                 "Used CFR solver"
         ), "Player that solves the game while playing");
+        factory.register(IPlayerFactory.class, "StrategyBasedPlayer", ConfigurableFactory.createPositionalParameterList(
+                StrategyBasedPlayer.DynamiclyLoadedStrategyFactory.class.getConstructor(String.class),
+                "Directory with serialized strategies (filenames in format of GAME.strat)"
+        ), "Player that uses a precomputed strategy to play");
     }
 
     private static void registerRegretMatchings(ConfigurableFactory factory) throws NoSuchMethodException {
