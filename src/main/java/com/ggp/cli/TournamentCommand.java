@@ -175,7 +175,7 @@ public class TournamentCommand implements Runnable {
                 int swId2 = PlayerHelpers.getOpponentId(swId1);
                 String status = String.format("[Game %" + countDigits +"d]: init (%d, %d), act (%d, %d) -> payoff (%.4f, %.4f)",
                         matchId + 1, data.initTimers[swId1].getDurationMs(), data.initTimers[swId2].getDurationMs(),
-                        data.actTimers[swId1].getDurationMs()/data.playerActions[swId1], data.actTimers[swId2].getDurationMs()/data.playerActions[swId2],
+                        data.actTimers[swId1].getDurationMs()/Math.max(data.playerActions[swId1], 1), data.actTimers[swId2].getDurationMs()/Math.max(data.playerActions[swId2], 1),
                         data.payoff[swId1], data.payoff[swId2]);
                 if (!quiet) {
                     System.out.println(status);
