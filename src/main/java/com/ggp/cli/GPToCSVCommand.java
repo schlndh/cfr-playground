@@ -117,11 +117,13 @@ public class GPToCSVCommand implements Runnable {
                             continue;
                         }
                         IStrategy strat = entry.getAggregatedStrat();
+                        IStrategy firstActStrat = entry.getFirstActionStrat();
                         if (intersection != null) {
-                            strat = new RestrictedStrategy(entry.getAggregatedStrat(), intersection);
+                            strat = new RestrictedStrategy(strat, intersection);
+                            firstActStrat = new RestrictedStrategy(firstActStrat, intersection);
                         }
                         double exp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(strat), gameDesc);
-                        double firstActExp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(entry.getFirstActionStrat()), gameDesc);
+                        double firstActExp = ExploitabilityUtils.computeExploitability(new NormalizingStrategyWrapper(firstActStrat), gameDesc);
                         CsvSaver saver = new CsvSaver(new FileWriter(csvFilename));
                         saver.add(entry, exp, firstActExp);
                         saver.close();
