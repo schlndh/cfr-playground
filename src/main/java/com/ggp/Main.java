@@ -1,10 +1,7 @@
 package com.ggp;
 
 import com.ggp.cli.MainCommand;
-import com.ggp.parsers.ConfigurableFactory;
-import com.ggp.parsers.Parameter;
-import com.ggp.parsers.ParameterList;
-import com.ggp.parsers.ParseUtils;
+import com.ggp.parsers.*;
 import com.ggp.players.PerfectRecallPlayerFactory;
 import com.ggp.players.continual_resolving.ContinualResolvingPlayer;
 import com.ggp.players.continual_resolving.utils.ContinualResolvingkUtilityEstimatorWrapper;
@@ -44,7 +41,11 @@ public class Main {
         CommandLine cli = new CommandLine(main);
         for (Class<?> c: factory.getRegisteredTypes()) {
             Class<Object> cls = (Class<Object>) c;
-            cli.registerConverter(cls, configKey -> factory.create(cls, ParseUtils.parseConfigExpression(configKey)));
+            cli.registerConverter(cls, configKey -> {
+                ConfigExpression expr = ParseUtils.parseConfigExpression(configKey);
+                if (expr == null) throw new CommandLine.ParameterException(cli, "Invalid config key!");
+                return factory.create(cls, expr);
+            });
         }
 
         // can't use cli.run(main, args) because it re-creates the commands without the registered type converters
