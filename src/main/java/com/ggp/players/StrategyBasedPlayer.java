@@ -51,7 +51,9 @@ public class StrategyBasedPlayer implements IPlayer {
                     return null;
                 }
             });
-            if (gameStrat == null) gameStrat = new Strategy();
+            if (gameStrat == null) {
+                throw new RuntimeException("Failed to load strategy for " + game.getConfigString());
+            }
             return new StrategyBasedPlayer(role, game, gameStrat);
         }
 
