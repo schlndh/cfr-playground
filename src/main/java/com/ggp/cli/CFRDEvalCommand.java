@@ -25,10 +25,7 @@ import org.apache.commons.csv.CSVPrinter;
 import picocli.CommandLine;
 
 import java.io.*;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @CommandLine.Command(name = "cfrd-eval",
         mixinStandardHelpOptions = true,
@@ -81,6 +78,9 @@ public class CFRDEvalCommand implements Runnable {
 
     @CommandLine.Option(names={"--use-cbr"}, description="Compute exact CFV using best response")
     private boolean useCBR;
+
+    @CommandLine.Option(names={"--cfv-noise-std"}, description="Computed opponent's CFV will be multiplied by values drawn from normal distribution with mean 1 and given std.", defaultValue = "0")
+    private double cfvNoiseStd;
 
     private String getDateKey() {
         return String.format("%1$tY%1$tm%1$td-%1$tH%1$tM%1$tS", new Date());
@@ -243,6 +243,9 @@ public class CFRDEvalCommand implements Runnable {
         if (evalFreq <= 0) {
             evalFreq = timeLimit*1000;
         }
+        if (cfvNoiseStd < 0) {
+            cfvNoiseStd = 0;
+        }
         IGameDescription gameDesc = null;
         try {
             gameDesc = mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
@@ -321,6 +324,7 @@ public class CFRDEvalCommand implements Runnable {
         }
         if (useCBR) {
             trunkBestResponse = new Strategy();
+            if (!quiet) System.out.println("Using CBR strategy to compute opponent CFVs");
         }
 
         double trunkExp = ExploitabilityUtils.computeExploitability(trunkStrategy, gameDesc, trunkBestResponse);
@@ -333,6 +337,14 @@ public class CFRDEvalCommand implements Runnable {
         HashMap<ICompleteInformationState, Double> reachProbs = new HashMap<>();
         IStrategy cfvStrategy = useCBR ? new ReplacedStrategy(trunkStrategy, new PlayerLimitedStrategy(trunkBestResponse, opponentId)) : trunkStrategy;
         findSubgameInfo(rootTracker, subgameRootStates, cfvStrategy, opponentCFV, reachProbs, 1, 1);
+        // apply noise to opponentCFV
+        if (cfvNoiseStd > 0) {
+            if (!quiet) System.out.println(String.format("Multiplying opponent's CFV with Norm(1, %.4g)", cfvNoiseStd));
+            Random rnd = new Random();
+            opponentCFV.replaceAll((is, cfv) -> cfv * (1 + rnd.nextGaussian()* cfvNoiseStd));
+        }
+
+
         // resolve subgame
         CFRDGadgetRoot subgameRoot = new CFRDGadgetRoot(new CISRange(subgameRootStates, reachProbs, 1), opponentCFV, 1, opponentId);
 
