@@ -283,8 +283,8 @@ public class CFRDEvalCommand implements Runnable {
             throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup solver '" + solver + "'.", null, solver);
         }
 
-        String gameDir = resultsDirectory + "/" + gameDesc.getConfigString();
-        String solverDir =  gameDir + "/" + usedSolverFactory.getConfigString();
+        String gameDir = resultsDirectory + "/" + gameDesc.getConfigString() + "-" + subgame.replace(" ", "");
+        String solverDir =  gameDir + "/" + usedSolverFactory.getConfigString() + "-" + (useCBR ? "T" : "F") + "-" + String.format("%.4f", cfvNoiseStd);
         if (!dryRun)
             new File(solverDir).mkdirs();
         if (!quiet) {
