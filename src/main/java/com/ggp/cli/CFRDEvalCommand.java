@@ -337,21 +337,22 @@ public class CFRDEvalCommand implements Runnable {
         HashMap<ICompleteInformationState, Double> reachProbs = new HashMap<>();
         IStrategy cfvStrategy = useCBR ? new ReplacedStrategy(trunkStrategy, new PlayerLimitedStrategy(trunkBestResponse, opponentId)) : trunkStrategy;
         findSubgameInfo(rootTracker, subgameRootStates, cfvStrategy, opponentCFV, reachProbs, 1, 1);
-        // apply noise to opponentCFV
         if (cfvNoiseStd > 0) {
             if (!quiet) System.out.println(String.format("Multiplying opponent's CFV with Norm(1, %.4g)", cfvNoiseStd));
-            Random rnd = new Random();
-            opponentCFV.replaceAll((is, cfv) -> cfv * (1 + rnd.nextGaussian()* cfvNoiseStd));
         }
-
 
         // resolve subgame
         CFRDGadgetRoot subgameRoot = new CFRDGadgetRoot(new CISRange(subgameRootStates, reachProbs, 1), opponentCFV, 1, opponentId);
-
         warmup(usedSolverFactory, subgameRoot, gameDesc, trunkStrategy);
 
         final int evalEntriesCount = (int)(timeLimit*1000/evalFreq);
         for (int i = 0; i < count; ++i) {
+            if (cfvNoiseStd > 0) {
+                HashMap<IInformationSet, Double> iterOpponentCFV = new HashMap<>(opponentCFV);
+                Random rnd = new Random();
+                iterOpponentCFV.replaceAll((is, cfv) -> cfv * (1 + rnd.nextGaussian()* cfvNoiseStd));
+                subgameRoot = new CFRDGadgetRoot(new CISRange(subgameRootStates, reachProbs, 1), iterOpponentCFV, 1, opponentId);
+            }
             System.out.println();
             String csvFileName = solverDir + "/" + getCSVName();
             try {
