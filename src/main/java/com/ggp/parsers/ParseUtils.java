@@ -1,11 +1,12 @@
 package com.ggp.parsers;
 
+import com.ggp.parsers.exceptions.InvalidInputStringException;
 import com.ggp.parsers.visitors.ConfigExpressionVisitor;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 public class ParseUtils {
-    public static ConfigExpression parseConfigExpression(String str) {
+    public static ConfigExpression parseConfigExpression(String str) throws InvalidInputStringException {
         CharStream inputStream = CharStreams.fromString(str);
         ConfigKeyLexer lexer = new ConfigKeyLexer(inputStream);
         CommonTokenStream tokenStream = new CommonTokenStream(lexer);
@@ -16,8 +17,7 @@ public class ParseUtils {
         try {
             return visitor.visit(parser.expr());
         } catch (ParseCancellationException e) {
-
+            throw new InvalidInputStringException();
         }
-        return null;
     }
 }
