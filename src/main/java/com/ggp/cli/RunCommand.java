@@ -1,9 +1,6 @@
 package com.ggp.cli;
 
 import com.ggp.*;
-import com.ggp.parsers.ParseUtils;
-import com.ggp.parsers.exceptions.ConfigAssemblyException;
-import com.ggp.parsers.exceptions.WrongConfigKeyException;
 import com.ggp.utils.DefaultStateVisualizer;
 import picocli.CommandLine;
 
@@ -17,44 +14,29 @@ public class RunCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 
-    @CommandLine.Option(names={"-g", "--game"}, description="game to be played", required=true)
-    private String game;
+    @CommandLine.Option(names={"-g", "--game"}, description="game to be played (IGameDescription)", required=true)
+    private IGameDescription game;
 
-    @CommandLine.Option(names={"--player1"}, description="player 1", required=true)
-    private String player1;
+    @CommandLine.Option(names={"--player1"}, description="player 1 (IPlayerFactory)", required=true)
+    private IPlayerFactory player1;
 
-    @CommandLine.Option(names={"--player2"}, description="player 2", required=true)
-    private String player2;
-
-    private IPlayerFactory getPlayerFactory(String player) {
-        IPlayerFactory pl = null;
-        try {
-            pl = mainCommand.getConfigurableFactory().create(IPlayerFactory.class, ParseUtils.parseConfigExpression(player));
-        } catch (ConfigAssemblyException e) { }
-
-        if (pl == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup player '" + player + "'.", null, player);
-        }
-        return pl;
-    }
+    @CommandLine.Option(names={"--player2"}, description="player 2 (IPlayerFactory)", required=true)
+    private IPlayerFactory player2;
 
     @Override
     public void run() {
-        IGameDescription gameDesc = null;
-        try {
-            gameDesc = mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
-        } catch (ConfigAssemblyException e) { }
-
-        if (gameDesc == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
+        if (game == null) {
+            System.out.println("Game can't be null!");
+            return;
+        }
+        if (player1 == null || player2 == null) {
+            System.out.println("Players can't be null!");
+            return;
         }
         IStateVisualizer visualizer = new DefaultStateVisualizer();
+        System.out.println(String.format("%s: %s vs %s", game.getConfigString(), player1.getConfigString(), player2.getConfigString()));
 
-        IPlayerFactory pl1 = getPlayerFactory(player1);
-        IPlayerFactory pl2 = getPlayerFactory(player2);
-        System.out.println(String.format("%s: %s vs %s", gameDesc.getConfigString(), pl1.getConfigString(), pl2.getConfigString()));
-
-        GameManager manager = new GameManager(pl1, pl2, gameDesc);
+        GameManager manager = new GameManager(player1, player2, game);
         if (visualizer != null) {
             manager.registerGameListener(new GamePlayVisualizer(visualizer));
         }

@@ -29,7 +29,7 @@ import java.util.*;
 
 @CommandLine.Command(name = "cfrd-eval",
         mixinStandardHelpOptions = true,
-        description = "Evaluate CFR-D",
+        description = "Evaluate single CFR-D step",
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
@@ -37,14 +37,14 @@ public class CFRDEvalCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 
-    @CommandLine.Option(names={"-g", "--game"}, description="game to be played", required=true)
-    private String game;
+    @CommandLine.Option(names={"-g", "--game"}, description="game to be played (IGameDescription)", required=true)
+    private IGameDescription game;
 
-    @CommandLine.Option(names={"--subgame"}, description="subgame - specified by array of actions to reach it", required=true)
+    @CommandLine.Option(names={"--subgame"}, description="subgame - specified by array of action indices to reach it (int[])", required=true)
     private String subgame;
 
-    @CommandLine.Option(names={"-s", "--solver"}, description="CFR solver", required=true)
-    private String solver;
+    @CommandLine.Option(names={"-s", "--solver"}, description="CFR solver used for resolving (and trunk computation if trunk strategy is not provided) (BaseCFRSolver.Factory)", required=true)
+    private BaseCFRSolver.Factory solver;
 
     @CommandLine.Option(names={"-i", "--init"}, description="Time limit (s) to compute trunk strategy", required=true)
     private long init;
@@ -76,7 +76,7 @@ public class CFRDEvalCommand implements Runnable {
     @CommandLine.Option(names={"--res-postfix"}, description="Postfix for result files", defaultValue="0")
     private String resultPostfix;
 
-    @CommandLine.Option(names={"--use-cbr"}, description="Compute exact CFV using best response")
+    @CommandLine.Option(names={"--use-cbr"}, description="Compute exact CFV using best response instead of opponent's trunk strategy")
     private boolean useCBR;
 
     @CommandLine.Option(names={"--cfv-noise-std"}, description="Computed opponent's CFV will be multiplied by values drawn from normal distribution with mean 1 and given std.", defaultValue = "0")
@@ -138,6 +138,10 @@ public class CFRDEvalCommand implements Runnable {
 
     }
 
+    private String getSubgameStringSpecifier() {
+        return subgame.replace(" ", "");
+    }
+
     private void runSubgameSolver(BaseCFRSolver.Factory usedSolverFactory, ICompleteInformationState root,
                                       IGameDescription gameDesc, IStrategy trunkStrategy, long freqMs, long evalEntries,
                                       boolean quiet, Writer fileOutput, int myId, double trunkExp) {
@@ -186,15 +190,15 @@ public class CFRDEvalCommand implements Runnable {
         ICompleteInformationState subgameState = gameDesc.getInitialState();
         for (int actionIdx: actions) {
             if (subgameState == null) {
-                throw new CommandLine.ParameterException(new CommandLine(this), "Invalid subgame -> null state", null, subgame);
+                throw new CommandLine.ParameterException(new CommandLine(this), "Invalid subgame: null state", null, getSubgameStringSpecifier());
             }
             if (subgameState.isTerminal()) {
-                throw new CommandLine.ParameterException(new CommandLine(this), "Invalid subgame -> terminal state " + subgameState, null, subgame);
+                throw new CommandLine.ParameterException(new CommandLine(this), "Invalid subgame: terminal state " + subgameState, null, getSubgameStringSpecifier());
             }
             List<IAction> legalActions = subgameState.getLegalActions();
             IAction a;
             if (actionIdx >= legalActions.size()) {
-                throw new CommandLine.ParameterException(new CommandLine(this), "Invalid subgame -> action idx =" + actionIdx + "a.", null, subgame);
+                throw new CommandLine.ParameterException(new CommandLine(this), "Invalid subgame: invalid action idx = " + actionIdx, null, getSubgameStringSpecifier());
             } else {
                 a = legalActions.get(actionIdx);
                 if (!quiet) System.out.println("Got action " + a);
@@ -246,62 +250,65 @@ public class CFRDEvalCommand implements Runnable {
         if (cfvNoiseStd < 0) {
             cfvNoiseStd = 0;
         }
-        IGameDescription gameDesc = null;
-        try {
-            gameDesc = mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
-        } catch (ConfigAssemblyException e) { }
-
-        if (gameDesc == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
+        if (game == null) {
+            System.out.println("Game can't be null!");
+            return;
+        }
+        if (solver == null) {
+            System.out.println("Solver can't be null!");
+            return;
+        }
+        if (subgame == null) {
+            System.out.println("Subgame can't be null!");
+            return;
         }
 
-        ICompleteInformationState subgameState = null;
         int[] actions = null;
         try {
             actions = mainCommand.getConfigurableFactory().create(int[].class, ParseUtils.parseConfigExpression(subgame));
-            subgameState = getSubgameState(gameDesc, actions, quiet);
+        } catch (ConfigAssemblyException e) {
+            System.out.println("Invalid subgame specifier!");
+            return;
+        }
 
-        } catch (ConfigAssemblyException e) { }
-
+        ICompleteInformationState subgameState = null;
+        subgameState = getSubgameState(game, actions, quiet);
+        String gameDir = resultsDirectory + "/" + game.getConfigString() + "-" + getSubgameStringSpecifier();
+        String solverDir =  gameDir + "/" + solver.getConfigString() + "-" + (useCBR ? "T" : "F") + "-" + String.format("%.4f", cfvNoiseStd);
+        if (!quiet) {
+            if (dryRun) {
+                System.out.println("Re-solving in subgame given by " + subgameState + " with " + solver.getConfigString());
+            } else {
+                System.out.println("Re-solving in subgame given by " + subgameState + " with " + solver.getConfigString() + " logged to " + solverDir);
+            }
+        }
 
         if (subgameState == null || subgameState.isTerminal() || subgameState.isRandomNode()) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup subgame '" + subgameState + "'.", null, subgame);
+            if (subgameState == null) {
+                System.out.println("Null state was reached - game implementation is incorrect!");
+            } else if (subgameState.isTerminal()) {
+                System.out.println("Subgame state can't be terminal!");
+            } else if (subgameState.isRandomNode()) {
+                System.out.println("Subgame state can't be random node!");
+            }
+            return;
         }
 
         final int myId = subgameState.getActingPlayerId();
         final int opponentId = PlayerHelpers.getOpponentId(myId);
-        gameDesc = new CFRDAugmentedGameDescriptionWrapper(gameDesc, opponentId);
+        IGameDescription wrappedGame = new CFRDAugmentedGameDescriptionWrapper(game, opponentId);
         // get wrapped subgameState
-        subgameState = getSubgameState(gameDesc, actions, true);
+        subgameState = getSubgameState(wrappedGame, actions, true);
 
-        BaseCFRSolver.Factory usedSolverFactory = null;
-        try {
-            usedSolverFactory = mainCommand.getConfigurableFactory().create(BaseCFRSolver.Factory.class, ParseUtils.parseConfigExpression(solver));
-        } catch (ConfigAssemblyException e) { }
-
-        if (usedSolverFactory == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup solver '" + solver + "'.", null, solver);
-        }
-
-        String gameDir = resultsDirectory + "/" + gameDesc.getConfigString() + "-" + subgame.replace(" ", "");
-        String solverDir =  gameDir + "/" + usedSolverFactory.getConfigString() + "-" + (useCBR ? "T" : "F") + "-" + String.format("%.4f", cfvNoiseStd);
         if (!dryRun)
             new File(solverDir).mkdirs();
-        if (!quiet) {
-            ICompleteInformationState innerState = ((CFRDAugmentedCISWrapper) subgameState).getOrigState();
-            if (dryRun) {
-                System.out.println("Re-solving in subgame given by " + innerState + " with " + usedSolverFactory.getConfigString());
-            } else {
-                System.out.println("Re-solving in subgame given by " + innerState + " with " + usedSolverFactory.getConfigString() + " logged to " + solverDir);
-            }
 
-        }
 
-        printUniformExp(gameDesc);
+        printUniformExp(wrappedGame);
 
         // find the subgame
         SubgameMap subgameMap = new SubgameMap(opponentId);
-        CFRDTracker rootTracker = CFRDTracker.create(myId, gameDesc.getInitialState(), 1);
+        CFRDTracker rootTracker = CFRDTracker.create(myId, wrappedGame.getInitialState(), 1);
         findSubgames(rootTracker, subgameMap);
         Set<ICompleteInformationState> subgameRootStates = subgameMap.getSubgame(subgameState.getActingPlayerId() == myId ? subgameState.getInfoSetForActingPlayer() : ((CFRDAugmentedCISWrapper)subgameState).getOpponentsAugmentedIS());
 
@@ -320,14 +327,14 @@ public class CFRDEvalCommand implements Runnable {
                 return;
             }
         } else {
-            trunkStrategy = runTrunkSolver(usedSolverFactory, gameDesc, init * 1000);
+            trunkStrategy = runTrunkSolver(solver, wrappedGame, init * 1000);
         }
         if (useCBR) {
             trunkBestResponse = new Strategy();
             if (!quiet) System.out.println("Using CBR strategy to compute opponent CFVs");
         }
 
-        double trunkExp = ExploitabilityUtils.computeExploitability(trunkStrategy, gameDesc, trunkBestResponse);
+        double trunkExp = ExploitabilityUtils.computeExploitability(trunkStrategy, wrappedGame, trunkBestResponse);
         if (!quiet) {
             System.out.println("Trunk strategy's exploitability " + trunkExp);
         }
@@ -343,7 +350,7 @@ public class CFRDEvalCommand implements Runnable {
 
         // resolve subgame
         CFRDGadgetRoot subgameRoot = new CFRDGadgetRoot(new CISRange(subgameRootStates, reachProbs, 1), opponentCFV, 1, opponentId);
-        warmup(usedSolverFactory, subgameRoot, gameDesc, trunkStrategy);
+        warmup(solver, subgameRoot, wrappedGame, trunkStrategy);
 
         final int evalEntriesCount = (int)(timeLimit*1000/evalFreq);
         for (int i = 0; i < count; ++i) {
@@ -357,7 +364,7 @@ public class CFRDEvalCommand implements Runnable {
             String csvFileName = solverDir + "/" + getCSVName();
             try {
                 Writer output = dryRun ? new StringWriter() : new FileWriter(csvFileName);
-                runSubgameSolver(usedSolverFactory, subgameRoot, gameDesc, trunkStrategy, evalFreq, evalEntriesCount, quiet, output, myId, trunkExp);
+                runSubgameSolver(solver, subgameRoot, wrappedGame, trunkStrategy, evalFreq, evalEntriesCount, quiet, output, myId, trunkExp);
             } catch (IOException e) {
                 continue;
             }

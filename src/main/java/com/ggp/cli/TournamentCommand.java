@@ -20,13 +20,13 @@ public class TournamentCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 
-    @CommandLine.Option(names={"-g", "--game"}, description="Game to be played", required=true)
+    @CommandLine.Option(names={"-g", "--game"}, description="Game to be played (IGameDescription)", required=true)
     private IGameDescription game;
 
-    @CommandLine.Option(names={"--player1"}, description="Player 1", required=true)
+    @CommandLine.Option(names={"--player1"}, description="Player 1 (IPlayerFactory)", required=true)
     private IPlayerFactory player1;
 
-    @CommandLine.Option(names={"--player2"}, description="Player 2", required=true)
+    @CommandLine.Option(names={"--player2"}, description="Player 2 (IPlayerFactory)", required=true)
     private IPlayerFactory player2;
 
     @CommandLine.Option(names={"-i", "--init"}, description="Init time (ms)", required=true)

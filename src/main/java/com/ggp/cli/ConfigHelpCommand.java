@@ -10,6 +10,8 @@ import java.util.Map;
 @CommandLine.Command(name = "config-help",
         mixinStandardHelpOptions = true,
         description = "Provides information about available configurable types",
+        footer = "%nIf neither type nor implementation is requested, it lists available types. If type is given it lists" +
+                " available implementations of that type. If implementation is given it lists its parameters.",
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )

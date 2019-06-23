@@ -1,9 +1,6 @@
 package com.ggp.cli;
 
 import com.ggp.*;
-import com.ggp.parsers.ParseUtils;
-import com.ggp.parsers.exceptions.ConfigAssemblyException;
-import com.ggp.utils.DefaultStateVisualizer;
 import picocli.CommandLine;
 
 import java.util.HashSet;
@@ -19,8 +16,8 @@ public class GameInfoCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 
-    @CommandLine.Parameters(index = "0")
-    private String game;
+    @CommandLine.Parameters(index = "0", description = "game (IGameDescription)")
+    private IGameDescription game;
 
     private long states = 0;
     private HashSet<IInformationSet> infoSets = new HashSet<>();
@@ -67,14 +64,11 @@ public class GameInfoCommand implements Runnable {
 
     @Override
     public void run() {
-        IGameDescription gameDesc = null;
-        try {
-            gameDesc = mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
-        } catch (ConfigAssemblyException e) { }
-
-        if (gameDesc == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
+        if (game == null) {
+            System.err.println("Game can't be null!");
+            return;
         }
+        IGameDescription gameDesc = game;
         System.out.println("Game: " + gameDesc.getConfigString());
         ICompleteInformationState s = gameDesc.getInitialState();
 

@@ -1,10 +1,7 @@
 package com.ggp.cli;
 
-import com.ggp.GameManager;
 import com.ggp.IGameDescription;
 import com.ggp.IPlayerFactory;
-import com.ggp.parsers.ParseUtils;
-import com.ggp.parsers.exceptions.ConfigAssemblyException;
 import com.ggp.player_evaluators.IEvaluablePlayer;
 import com.ggp.player_evaluators.EvaluatorEntry;
 import com.ggp.player_evaluators.IPlayerEvaluationSaver;
@@ -34,14 +31,14 @@ public class EvaluateCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 
-    @CommandLine.Option(names={"-g", "--game"}, description="Game to be played", required=true)
-    private String game;
+    @CommandLine.Option(names={"-g", "--game"}, description="Game to be played (IGameDescription)", required=true)
+    private IGameDescription game;
 
-    @CommandLine.Option(names={"-p", "--player"}, description="Player to evaluate")
-    private String player;
+    @CommandLine.Option(names={"-p", "--player"}, description="Player to evaluate (IPlayerFactory)")
+    private IPlayerFactory player;
 
-    @CommandLine.Option(names={"-e", "--evaluator"}, description="Evaluator")
-    private String evaluator;
+    @CommandLine.Option(names={"-e", "--evaluator"}, description="Evaluator (IPlayerEvaluator.IFactory)")
+    private IPlayerEvaluator.IFactory evaluator;
 
     @CommandLine.Option(names={"-i", "--init"}, description="Init time (ms)", required=true)
     private int init;
@@ -123,50 +120,46 @@ public class EvaluateCommand implements Runnable {
 
     @Override
     public void run() {
-        IGameDescription gameDesc = null;
-        try {
-            gameDesc = mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
-        } catch (ConfigAssemblyException e) { }
-
-        if (gameDesc == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
+        if (game == null) {
+            System.out.println("Game can't be null!");
+            return;
         }
 
-        IEvaluablePlayer.IFactory usedPlayerFactory = null;
+        if (player == null) {
+            System.out.println("Player can't be null!");
+            return;
+        }
+
+        if (evaluator == null) {
+            System.out.println("Evaluator can't be null!");
+            return;
+        }
+
+        IEvaluablePlayer.IFactory usedPlayerFactory;
         try {
-            usedPlayerFactory = (IEvaluablePlayer.IFactory) mainCommand.getConfigurableFactory().create(IPlayerFactory.class, ParseUtils.parseConfigExpression(player));
+            usedPlayerFactory = (IEvaluablePlayer.IFactory) player;
         } catch (ClassCastException e) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Player " + player + " doesn't support evaluation.", null, player);
-        } catch (ConfigAssemblyException e) { }
-
-        if (usedPlayerFactory == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup player '" + player + "'.", null, player);
+            System.out.println("Player is not evaluable!");
+            return;
         }
 
-        IPlayerEvaluator.IFactory usedEvaluatorFactory = null;
-        try {
-            usedEvaluatorFactory = mainCommand.getConfigurableFactory().create(IPlayerEvaluator.IFactory.class, ParseUtils.parseConfigExpression(evaluator));
-        } catch (ConfigAssemblyException e) {}
+        if (!quiet) System.out.println("Exploitability estimate for uniform strategy: " + ExploitabilityUtils.computeExploitability(new Strategy(), game));
 
-        if (usedEvaluatorFactory == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup evalautor '" + evaluator + "'.", null, evaluator);
-        }
-
-        if (!quiet) System.out.println("Exploitability estimate for uniform strategy: " + ExploitabilityUtils.computeExploitability(new Strategy(), gameDesc));
-
-        String gameDir = resultsDirectory + "/" + gameDesc.getConfigString();
+        String gameDir = resultsDirectory + "/" + game.getConfigString();
         String solverDir =  gameDir + "/" + usedPlayerFactory.getConfigString();
         if (!dryRun || saveStrategy)
             new File(solverDir).mkdirs();
 
         if (!quiet) {
             if (dryRun) {
-                System.out.println(String.format("Evaluating %s using %s on %s.", usedPlayerFactory.getConfigString(), usedEvaluatorFactory.getConfigString(), gameDesc.getConfigString()));
+                System.out.println(String.format("Evaluating %s using %s on %s.", usedPlayerFactory.getConfigString(),
+                        evaluator.getConfigString(), game.getConfigString()));
             } else {
-                System.out.println(String.format("Evaluating %s using %s on %s logged to %s.", usedPlayerFactory.getConfigString(), usedEvaluatorFactory.getConfigString(), gameDesc.getConfigString(), solverDir));
+                System.out.println(String.format("Evaluating %s using %s on %s logged to %s.", usedPlayerFactory.getConfigString(),
+                        evaluator.getConfigString(), game.getConfigString(), solverDir));
             }
         }
-        warmup(usedEvaluatorFactory, usedPlayerFactory, gameDesc);
+        warmup(evaluator, usedPlayerFactory, game);
 
         Strategy bestStrategy = null;
         double bestStrategyExp = Double.MAX_VALUE;
@@ -180,13 +173,13 @@ public class EvaluateCommand implements Runnable {
             IPlayerEvaluationSaver saver = null;
             if (!dryRun) {
                 try {
-                    saver = usedEvaluatorFactory.createSaver(solverDir, init, resultPostfix);
+                    saver = evaluator.createSaver(solverDir, init, resultPostfix);
                 } catch (IOException e) {
                     System.out.println(e.getMessage());
                     continue;
                 }
             }
-            runEvaluator(usedEvaluatorFactory, usedPlayerFactory, gameDesc, saver, quiet, init, timeLimits, null);
+            runEvaluator(evaluator, usedPlayerFactory, game, saver, quiet, init, timeLimits, null);
         }
 
 

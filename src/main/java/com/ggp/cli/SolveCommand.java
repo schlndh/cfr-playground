@@ -1,8 +1,6 @@
 package com.ggp.cli;
 
 import com.ggp.*;
-import com.ggp.parsers.ParseUtils;
-import com.ggp.parsers.exceptions.ConfigAssemblyException;
 import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 import com.ggp.players.continual_resolving.trackers.SimpleTracker;
 import com.ggp.utils.exploitability.ExploitabilityUtils;
@@ -27,11 +25,11 @@ public class SolveCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 
-    @CommandLine.Option(names={"-g", "--game"}, description="game to be played", required=true)
-    private String game;
+    @CommandLine.Option(names={"-g", "--game"}, description="game to be solved (IGameDescription)", required=true)
+    private IGameDescription game;
 
-    @CommandLine.Option(names={"-s", "--solver"}, description="CFR solver", required=true)
-    private String solver;
+    @CommandLine.Option(names={"-s", "--solver"}, description="CFR solver (BaseCFRSolver.Factory)", required=true)
+    private BaseCFRSolver.Factory solver;
 
     @CommandLine.Option(names={"-t", "--time-limit"}, description="Time limit (s)", required=true)
     private long timeLimit;
@@ -142,37 +140,28 @@ public class SolveCommand implements Runnable {
         if (evalFreq <= 0) {
             evalFreq = timeLimit*1000;
         }
-        IGameDescription gameDesc = null;
-        try {
-            gameDesc = mainCommand.getConfigurableFactory().create(IGameDescription.class, ParseUtils.parseConfigExpression(game));
-        } catch (ConfigAssemblyException e) { }
-
-        if (gameDesc == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup game '" + game + "'.", null, game);
+        if (game == null) {
+            System.out.println("Game can't be null!");
+            return;
         }
-
-        BaseCFRSolver.Factory usedSolverFactory = null;
-        try {
-            usedSolverFactory = mainCommand.getConfigurableFactory().create(BaseCFRSolver.Factory.class, ParseUtils.parseConfigExpression(solver));
-        } catch (ConfigAssemblyException e) { }
-
-        if (usedSolverFactory == null) {
-            throw new CommandLine.ParameterException(new CommandLine(this), "Failed to setup solver '" + solver + "'.", null, solver);
+        if (solver == null) {
+            System.out.println("Solver can't be null!");
+            return;
         }
-        String gameDir = resultsDirectory + "/" + gameDesc.getConfigString();
-        String solverDir =  gameDir + "/" + usedSolverFactory.getConfigString();
+        String gameDir = resultsDirectory + "/" + game.getConfigString();
+        String solverDir =  gameDir + "/" + solver.getConfigString();
         if (!dryRun || saveStrategy)
             new File(solverDir).mkdirs();
         if (!quiet) {
             if (dryRun) {
-                System.out.println(String.format("Solving %s with %s", gameDesc.getConfigString(), usedSolverFactory.getConfigString()));
+                System.out.println(String.format("Solving %s with %s", game.getConfigString(), solver.getConfigString()));
             } else {
-                System.out.println(String.format("Solving %s with %s logged to %s.", gameDesc.getConfigString(), usedSolverFactory.getConfigString(), solverDir));
+                System.out.println(String.format("Solving %s with %s logged to %s.", game.getConfigString(), solver.getConfigString(), solverDir));
             }
         }
 
-        warmup(gameDesc, usedSolverFactory);
-        printUniformExp(gameDesc);
+        warmup(game, solver);
+        printUniformExp(game);
         Strategy bestStrategy = null;
         double bestStrategyExp = saveStrategy ? Double.MAX_VALUE : -1;
         final int evalEntriesCount = (int)(timeLimit*1000/evalFreq);
@@ -180,11 +169,11 @@ public class SolveCommand implements Runnable {
             String csvFileName = solverDir + "/" + getCSVName();
             try {
                 Writer output = dryRun ? new StringWriter() : new FileWriter(csvFileName);
-                Strategy newBestStrat = runSolver(usedSolverFactory, gameDesc, evalFreq, evalEntriesCount, quiet, bestStrategyExp, output);
+                Strategy newBestStrat = runSolver(solver, game, evalFreq, evalEntriesCount, quiet, bestStrategyExp, output);
                 if (newBestStrat != null) {
                     bestStrategy = newBestStrat;
                     newBestStrat.normalize();
-                    bestStrategyExp = ExploitabilityUtils.computeExploitability(newBestStrat, gameDesc);
+                    bestStrategyExp = ExploitabilityUtils.computeExploitability(newBestStrat, game);
                 }
             } catch (IOException e) {
                 continue;
