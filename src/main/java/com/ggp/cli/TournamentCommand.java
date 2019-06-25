@@ -173,7 +173,7 @@ public class TournamentCommand implements Runnable {
                 csvOut.flush();
                 int swId1 = swapPlayers ? 2 : 1;
                 int swId2 = PlayerHelpers.getOpponentId(swId1);
-                String status = String.format("[Game %" + countDigits +"d]: init (%d, %d), act (%d, %d) -> payoff (%.4f, %.4f)",
+                String status = String.format("[Game %" + countDigits +"d]: init (%d, %d), act (%d, %d) -> payoff (%6.4g, %6.4g)",
                         matchId + 1, data.initTimers[swId1].getDurationMs(), data.initTimers[swId2].getDurationMs(),
                         data.actTimers[swId1].getDurationMs()/Math.max(data.playerActions[swId1], 1), data.actTimers[swId2].getDurationMs()/Math.max(data.playerActions[swId2], 1),
                         data.payoff[swId1], data.payoff[swId2]);
@@ -184,7 +184,7 @@ public class TournamentCommand implements Runnable {
                 totalPayoff[2] += data.payoff[swId2];
             }
             if (!quiet) {
-                System.out.println(String.format("Average payoffs: %.4f, %.4f", totalPayoff[1]/count, totalPayoff[2]/count));
+                System.out.println(String.format("Average payoffs: %.4g, %.4g", totalPayoff[1]/count, totalPayoff[2]/count));
             }
         } catch (IOException e) {
             System.err.println(e.getMessage());

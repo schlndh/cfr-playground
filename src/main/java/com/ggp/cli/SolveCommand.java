@@ -115,7 +115,7 @@ public class SolveCommand implements Runnable {
                 csvOut.printRecord((entryIdx+1) * evaluateAfterMs ,timer.getDurationMs(), iter, visitedStates, exp, avgRegret);
                 csvOut.flush();
 
-                String status = String.format("(%8d ms, %10d iterations, %12d states) -> (%.4f exp, %.4f avg. regret) | %.4g iters/s",
+                String status = String.format("(%8d ms, %10d iterations, %12d states) -> (%10.4g exp, %10.4g avg. regret) | %.4g iters/s",
                         timer.getDurationMs(), iter, visitedStates, exp, avgRegret, 1000*(iter - lastEvalIters)/((double)evaluationTimer.getDurationMs()));
                 if (!quiet) {
                     System.out.println(status);
