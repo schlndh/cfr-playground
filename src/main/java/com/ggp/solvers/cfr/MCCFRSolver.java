@@ -23,6 +23,12 @@ public class MCCFRSolver extends BaseCFRSolver implements ITargetableSolver {
 
         public Factory(IRegretMatching.IFactory rmFactory, double explorationProb, double targetingProb, double cumulativeStratExp) {
             super(rmFactory);
+            if (explorationProb < 0 || explorationProb > 1) {
+                throw new IllegalArgumentException("Exploration probability has to be from [0,1]!");
+            }
+            if (targetingProb < 0 || targetingProb > 1) {
+                throw new IllegalArgumentException("Targeting probability has to be from [0,1]");
+            }
             this.explorationProb = explorationProb;
             this.targetingProb = targetingProb;
             this.cumulativeStratExp = cumulativeStratExp;

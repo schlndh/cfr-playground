@@ -18,6 +18,9 @@ public abstract class BaseCFRSolver {
         protected IRegretMatching.IFactory rmFactory;
 
         public Factory(IRegretMatching.IFactory rmFactory) {
+            if (rmFactory == null) {
+                throw new IllegalArgumentException("Regret matching factory can't be null!");
+            }
             this.rmFactory = rmFactory;
         }
 

@@ -15,6 +15,9 @@ public class GameDescription implements IGameDescription {
     private final CompleteInformationState initialState;
 
     public GameDescription(int maxTime) {
+        if (maxTime < 0) {
+            throw new IllegalArgumentException("Max time must be non-negative!");
+        }
         this.maxTime = maxTime;
         initialState = new CompleteInformationState(
                 new InformationSet(this, 1, graph.getInitialPosition(1), 0),

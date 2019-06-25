@@ -36,6 +36,9 @@ public class StrategyBasedPlayer implements IPlayer {
         private String strategyDir;
 
         public DynamiclyLoadedStrategyFactory(String strategyDir) {
+            if (strategyDir == null || "".equals(strategyDir)) {
+                throw new IllegalArgumentException("Strategy directory name must be non-empty!");
+            }
             this.strategyDir = strategyDir;
         }
 

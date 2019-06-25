@@ -23,11 +23,17 @@ public class ContinualResolvingPlayer implements IEvaluablePlayer {
         private ArrayList<IEvaluablePlayer.IListener> resolvingListeners = new ArrayList<>();
 
         public Factory(ISubgameResolver.IFactory resolverFactory) {
+            if (resolverFactory == null) {
+                throw new IllegalArgumentException("Subgame resolver factory can't be null!");
+            }
             this.resolverFactory = resolverFactory;
         }
 
         public Factory(BaseCFRSolver.Factory cfrSolverFactory) {
             this(new ExternalCFRResolver.Factory(cfrSolverFactory));
+            if (cfrSolverFactory == null) {
+                throw new IllegalArgumentException("CFR solver factory can't be null!");
+            }
         }
 
         @Override

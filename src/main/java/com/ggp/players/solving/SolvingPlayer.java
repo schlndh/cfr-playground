@@ -25,6 +25,9 @@ public class SolvingPlayer implements IEvaluablePlayer {
         private ArrayList<IListener> resolvingListeners = new ArrayList<>();
 
         public Factory(BaseCFRSolver.Factory cfrSolverFactory) {
+            if (cfrSolverFactory == null) {
+                throw new IllegalArgumentException("CFR solver factory can't be null!");
+            }
             this.cfrSolverFactory = cfrSolverFactory;
         }
 

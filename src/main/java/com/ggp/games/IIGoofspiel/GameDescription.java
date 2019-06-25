@@ -13,6 +13,9 @@ public class GameDescription implements IGameDescription {
     private CompleteInformationState initialState;
 
     public GameDescription(int gameSize) {
+        if (gameSize < 0) {
+            throw new IllegalArgumentException("Game size must be non-negative!");
+        }
         initialState = new CompleteInformationState(
                 new InformationSet(1, gameSize, null, null),
                 new InformationSet(2, gameSize, null, null)

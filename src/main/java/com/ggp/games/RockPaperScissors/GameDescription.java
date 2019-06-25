@@ -12,7 +12,8 @@ public class GameDescription implements IGameDescription {
      * @param size size of the game (only odd number are possible so that each choice covers and is covered by the same no of other choices)
      */
     public GameDescription(int size) {
-        if (size % 2 == 0) throw new IllegalArgumentException("size must be odd");
+        if (size < 1) throw new IllegalArgumentException("Size must be at least 1!");
+        if (size % 2 == 0) throw new IllegalArgumentException("Size must be odd!");
         InformationSet p1 = new InformationSet(1, null, size),
                 p2 = new InformationSet(2, null, size);
         initialState = new CompleteInformationState(p1, p2);

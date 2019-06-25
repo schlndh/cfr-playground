@@ -13,6 +13,9 @@ public class PlayerSwapGameDescription implements IGameDescription {
     private final IGameDescription gameDesc;
 
     public PlayerSwapGameDescription(IGameDescription gameDesc) {
+        if (gameDesc == null) {
+            throw new IllegalArgumentException("Inner game description can't be null!");
+        }
         this.gameDesc = gameDesc;
     }
 

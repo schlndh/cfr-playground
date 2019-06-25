@@ -8,6 +8,9 @@ public class ExplorativeRegretMatching implements IRegretMatching {
         private final double gamma;
 
         public Factory(IFactory rmFactory, double gamma) {
+            if (rmFactory == null) {
+                throw new IllegalArgumentException("Inner regret matching factory can't be null!");
+            }
             this.rmFactory = rmFactory;
             this.gamma = gamma;
         }

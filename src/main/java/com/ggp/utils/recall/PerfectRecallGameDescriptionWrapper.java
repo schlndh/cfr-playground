@@ -14,6 +14,9 @@ public class PerfectRecallGameDescriptionWrapper implements IGameDescription {
     private PerfectRecallCIS initialState;
 
     public PerfectRecallGameDescriptionWrapper(IGameDescription gameDesc) {
+        if (gameDesc == null) {
+            throw new IllegalArgumentException("Inner game description can't be null!");
+        }
         this.gameDesc = gameDesc;
         ICompleteInformationState s = gameDesc.getInitialState();
         initialState = (PerfectRecallCIS) wrapInitialState(s);

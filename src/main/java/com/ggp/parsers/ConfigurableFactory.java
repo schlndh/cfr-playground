@@ -1,6 +1,7 @@
 package com.ggp.parsers;
 
 import com.ggp.parsers.exceptions.ConfigAssemblyException;
+import com.ggp.parsers.exceptions.TypeFactoryException;
 import com.ggp.parsers.exceptions.WrongConfigKeyException;
 import com.ggp.parsers.exceptions.WrongExpressionTypeException;
 
@@ -80,7 +81,13 @@ public class ConfigurableFactory {
         return new ParameterList(params, null, (posParams, kvParams) -> {
             try {
                 return constructor.newInstance(posParams.toArray());
-            } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
+            } catch (InvocationTargetException e) {
+                if (e.getCause() == null) {
+                    throw new RuntimeException(e);
+                } else {
+                    throw new TypeFactoryException(e.getCause());
+                }
+            } catch (IllegalAccessException | InstantiationException e) {
                 throw new RuntimeException(e);
             }
         }, plDesc);

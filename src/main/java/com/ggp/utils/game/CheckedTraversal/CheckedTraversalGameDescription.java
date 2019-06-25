@@ -10,6 +10,9 @@ public class CheckedTraversalGameDescription implements IGameDescription {
     private final IGameDescription gameDesc;
 
     public CheckedTraversalGameDescription(IGameDescription gameDesc) {
+        if (gameDesc == null) {
+            throw new IllegalArgumentException("Inner game description can't be null!");
+        }
         this.gameDesc = gameDesc;
     }
 

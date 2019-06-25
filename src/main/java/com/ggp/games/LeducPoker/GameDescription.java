@@ -18,6 +18,15 @@ public class GameDescription implements IGameDescription {
     }
 
     public GameDescription(int startingMoney1, int startingMoney2, int betsPerRound, int cardsPerSuite) {
+        if (startingMoney1 < 1 || startingMoney2 < 1) {
+            throw new IllegalArgumentException("Starting money must be at least 1 for both players!");
+        }
+        if (betsPerRound < 0) {
+            throw new IllegalArgumentException("Bets per round must be non-negative!");
+        }
+        if (cardsPerSuite < 2) {
+            throw new IllegalArgumentException("Not enough cards per suit (must be at least 2)!");
+        }
         this.startingMoney[0] = startingMoney1;
         this.startingMoney[1] = startingMoney2;
         this.betsPerRound = betsPerRound;

@@ -9,6 +9,9 @@ public class ContinualResolvingkUtilityEstimatorWrapper implements IUtilityEstim
         private IUtilityEstimator.IFactory ueFactory;
 
         public Factory(IFactory ueFactory) {
+            if (ueFactory == null) {
+                throw new IllegalArgumentException("Inner utility estimator factory can't be null!");
+            }
             this.ueFactory = ueFactory;
         }
 

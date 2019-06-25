@@ -6,6 +6,9 @@ public class VRMCCFRSolverFactory extends MCCFRSolver.Factory {
     public VRMCCFRSolverFactory(IRegretMatching.IFactory rmFactory, double explorationProb, double targetingProb,
                                 double cumulativeStratExp, IBaseline.IFactory baselineFactory) {
         super(rmFactory, explorationProb, targetingProb, cumulativeStratExp);
+        if (baselineFactory == null) {
+            throw new IllegalArgumentException("Baseline factory can't be null!");
+        }
         this.baselineFactory = baselineFactory;
     }
 

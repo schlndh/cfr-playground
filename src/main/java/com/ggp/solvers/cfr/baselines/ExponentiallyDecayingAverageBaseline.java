@@ -9,6 +9,9 @@ public class ExponentiallyDecayingAverageBaseline implements IBaseline {
         private final double alpha;
 
         public Factory(double alpha) {
+            if (alpha < 0 || alpha > 1) {
+                throw new IllegalArgumentException("Decay rate must be from [0,1]!");
+            }
             this.alpha = alpha;
         }
 

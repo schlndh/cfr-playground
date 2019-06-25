@@ -19,6 +19,9 @@ public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
         }
 
         public Factory(int iters) {
+            if (iters < 1) {
+                throw new IllegalArgumentException("At least one iteration is required!");
+            }
             this.iters = iters;
         }
 

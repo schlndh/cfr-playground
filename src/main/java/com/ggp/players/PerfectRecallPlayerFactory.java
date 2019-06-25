@@ -12,6 +12,9 @@ public class PerfectRecallPlayerFactory implements IPlayerFactory {
     private IPlayerFactory playerFactory;
 
     public PerfectRecallPlayerFactory(IPlayerFactory playerFactory) {
+        if (playerFactory == null) {
+            throw new IllegalArgumentException("Inner player factory can't be null!");
+        }
         this.playerFactory = playerFactory;
     }
 
