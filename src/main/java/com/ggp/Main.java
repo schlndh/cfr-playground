@@ -288,6 +288,13 @@ public class Main {
                 ),
                 "Game-playing evaluator"
         );
+        factory.register(IPlayerEvaluator.IFactory.class, "GamePlayingEvaluator",
+                ConfigurableFactory.createPositionalParameterList(
+                        GamePlayingEvaluator.Factory.class.getConstructor(int.class, int.class),
+                        "Number of games to play", "Player's role in the first game (1/2)"
+                ),
+                "Game-playing evaluator"
+        );
         factory.register(IPlayerEvaluator.IFactory.class, "TraversingEvaluator",
                 ConfigurableFactory.createPositionalParameterList(
                         TraversingEvaluator.Factory.class.getConstructor()

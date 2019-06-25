@@ -18,21 +18,28 @@ import java.util.*;
  */
 public class GamePlayingEvaluator implements IPlayerEvaluator {
     public static class Factory implements IFactory {
-        private int gameCount;
+        private final int gameCount;
+        private final int firstGameRoleAssignment;
 
         public Factory(int gameCount) {
+            this(gameCount, 1);
+        }
+
+        public Factory(int gameCount, int firstGameRoleAssignment) {
             this.gameCount = gameCount;
+            this.firstGameRoleAssignment = firstGameRoleAssignment;
         }
 
         @Override
         public IPlayerEvaluator create(int initMs, List<Integer> logPointsMs) {
-            return new GamePlayingEvaluator(initMs, logPointsMs, gameCount);
+            return new GamePlayingEvaluator(initMs, logPointsMs, gameCount, firstGameRoleAssignment);
         }
 
         @Override
         public String getConfigString() {
             return "GamePlayingEvaluator{" +
                     gameCount +
+                    ',' + firstGameRoleAssignment +
                     '}';
         }
 
@@ -45,7 +52,8 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
     private int initMs;
     private int timeoutMs;
     StrategyAggregatorListener stratAggregator;
-    private int gameCount;
+    private final int gameCount;
+    private final int firstGameRoleAssignment;
     private HashMap<IInformationSet, HashSet<IAction>> visitedActions = new HashMap<>();
 
     /**
@@ -53,12 +61,14 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
      * @param initMs timeout for player initialization
      * @param logPointsMs ASC ordered list of times when strategies should be aggregated
      * @param gameCount number of games to play
+     * @param firstGameRoleAssignment player's role assignment for the first game (1/2)
      */
-    public GamePlayingEvaluator(int initMs, List<Integer> logPointsMs, int gameCount) {
+    public GamePlayingEvaluator(int initMs, List<Integer> logPointsMs, int gameCount, int firstGameRoleAssignment) {
         this.initMs = initMs;
         this.timeoutMs = logPointsMs.get(logPointsMs.size() - 1);
         this.stratAggregator = new StrategyAggregatorListener(initMs, logPointsMs);
         this.gameCount = gameCount;
+        this.firstGameRoleAssignment = firstGameRoleAssignment;
     }
 
     private void visit(HashSet<IInformationSet> infoSets, ICompleteInformationState s) {
@@ -182,7 +192,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
         for (int i = 0; i < gameCount; ++i) {
             if (evaluationTimeLimit != null && evaluationTimeLimit.isFinished()) break;
             IPlayerFactory pl1 = playerFactory, pl2 = random;
-            if (i % 2 == 1) {
+            if ((i % 2) == (firstGameRoleAssignment % 2)) {
                 pl1 = random;
                 pl2 = playerFactory;
             }
