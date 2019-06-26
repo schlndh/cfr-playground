@@ -52,8 +52,8 @@ public class ConfigHelpCommand implements Runnable {
             System.out.println(implDesc);
         }
         for (ParameterList pl: confImpl.getFactories()) {
-            System.out.println();
             System.out.println(pl.getDescription());
+            System.out.println("-----------------------");
             if (pl.getPositionalParams() != null && pl.getPositionalParams().size() > 0) {
                 System.out.println("Positional parameters:");
                 CommandLine.Help.TextTable textTable = createTable(40);
