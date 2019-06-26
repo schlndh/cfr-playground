@@ -101,11 +101,6 @@ public class Main {
                 "Perfect recall implementation of Rock-Paper-Scissors with variable size."
         );
 
-        factory.register(IGameDescription.class, "KriegTicTacToe",
-                ConfigurableFactory.createPositionalParameterList(
-                        GameRepository.kriegTTT().getClass().getConstructor()
-                )
-        );
         factory.register(IGameDescription.class, "PerfectRecall",
                 ConfigurableFactory.createPositionalParameterList(
                         PerfectRecallGameDescriptionWrapper.class.getConstructor(IGameDescription.class),
