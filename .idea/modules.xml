@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/GeneralDeepstack.iml" filepath="$PROJECT_DIR$/GeneralDeepstack.iml" group="GeneralDeepstack" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/GeneralDeepstack_main.iml" filepath="$PROJECT_DIR$/.idea/modules/GeneralDeepstack_main.iml" group="GeneralDeepstack" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/GeneralDeepstack_test.iml" filepath="$PROJECT_DIR$/.idea/modules/GeneralDeepstack_test.iml" group="GeneralDeepstack" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CFRPlayground.iml" filepath="$PROJECT_DIR$/.idea/modules/CFRPlayground.iml" group="CFRPlayground" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CFRPlayground_main.iml" filepath="$PROJECT_DIR$/.idea/modules/CFRPlayground_main.iml" group="CFRPlayground" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/CFRPlayground_test.iml" filepath="$PROJECT_DIR$/.idea/modules/CFRPlayground_test.iml" group="CFRPlayground" />
     </modules>
   </component>
 </project>

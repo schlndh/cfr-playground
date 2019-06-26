@@ -3,10 +3,9 @@ package com.ggp.cli;
 import com.ggp.parsers.ConfigurableFactory;
 import picocli.CommandLine;
 
-@CommandLine.Command(name="./GeneralDeepstack", subcommands = {
+@CommandLine.Command(name="./CFRPlayground", subcommands = {
         RunCommand.class,
         TournamentCommand.class,
-        //HelpCommand.class,
         CommandLine.HelpCommand.class,
         SolveCommand.class,
         EvaluateCommand.class,
@@ -24,5 +23,6 @@ public class MainCommand implements Runnable {
 
     @Override
     public void run() {
+        System.out.println("No sub-command was selected! Run './CFRPlayground help' to see the list of available sub-commands.");
     }
 }
