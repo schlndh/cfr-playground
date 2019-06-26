@@ -50,7 +50,7 @@ public class RandomSampler {
     /**
      * Sample option with given probability map
      * @param options
-     * @param probMap option -> probability (must sum to 1 over all options)
+     * @param probMap option {@literal ->} probability (must sum to 1 over all options)
      * @return
      */
     public <T> SampleResult<T> select(Iterable<T> options, Function<T, Double> probMap) {
@@ -70,7 +70,7 @@ public class RandomSampler {
     /**
      * Sample option with given probability map
      * @param options
-     * @param probMap optionIdx -> probability (must sum to 1 over all options)
+     * @param probMap optionIdx {@literal ->} probability (must sum to 1 over all options)
      * @return
      */
     public <T> SampleResult<T> selectByIdx(Iterable<T> options, Function<Integer, Double> probMap) {
@@ -92,7 +92,7 @@ public class RandomSampler {
     /**
      * Sample option index with given probability map
      * @param size
-     * @param probMap optionIdx -> probability (must sum to 1 over all options)
+     * @param probMap optionIdx {@literal ->} probability (must sum to 1 over all options)
      * @return
      */
     public SampleResult<Integer> selectIdx(int size, Function<Integer, Double> probMap) {

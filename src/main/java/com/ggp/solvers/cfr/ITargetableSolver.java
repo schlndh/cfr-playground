@@ -8,7 +8,7 @@ public interface ITargetableSolver {
     void setTargeting(ISearchTargeting targeting);
 
     /**
-     * Asks the solver if it wants targeting (eg. targeting probability > 0)
+     * Asks the solver if it wants targeting (eg. targeting probability {@literal >} 0)
      * @return
      */
     boolean wantsTargeting();

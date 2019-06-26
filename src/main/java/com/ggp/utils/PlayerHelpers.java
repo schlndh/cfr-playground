@@ -25,7 +25,7 @@ public class PlayerHelpers {
     /**
      * Calls fn(P1, P2)
      *
-     * Can also be used as cwop(myId, p1Val, p2Val, fn) -> fn(myVal, oppVal)
+     * Can also be used as cwop(myId, p1Val, p2Val, fn) {@literal ->} fn(myVal, oppVal)
      * @param id
      * @param myParam
      * @param opponentParam
@@ -48,13 +48,12 @@ public class PlayerHelpers {
     /**
      * Calls fn(P1, P2)
      *
-     * Can also be used as cwop(myId, p1Val, p2Val, fn) -> fn(myVal, oppVal)
+     * Can also be used as cwop(myId, p1Val, p2Val, fn) {@literal ->} fn(myVal, oppVal)
      * @param id
      * @param myParam
      * @param opponentParam
      * @param fn
      * @param <T>
-     * @return
      */
     public static <T> void callWithOrderedParamsVoid(int id, T myParam, T opponentParam, BiConsumer<T, T> fn) {
         if (id == 1) {
@@ -87,7 +86,6 @@ public class PlayerHelpers {
      * @param player2Param
      * @param fn
      * @param <T>
-     * @return
      */
     public static <T> void callWithSelectedParamVoid(int id, T player1Param, T player2Param, Consumer<T> fn) {
         fn.accept(selectByPlayerId(id, player1Param, player2Param));
