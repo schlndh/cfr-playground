@@ -69,14 +69,14 @@ public class Main {
         factory.setTypeDescription(IGameDescription.class,  "Game description");
 
         factory.register(IGameDescription.class, "LeducPoker",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         GameRepository.leducPoker(7).getClass().getConstructor(int.class),
                         "Starting money (M)",
                         "Shortcut for LeducPoker{M,M,1,3}"
                 )
         );
         factory.register(IGameDescription.class, "LeducPoker",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         GameRepository.leducPoker(7).getClass().getConstructor(int.class, int.class, int.class, int.class),
                         "Starting money for player 1", "Starting money for player 2",
                         "Number of allowed raises per betting round", "Number of different cards in each of the two suites",
@@ -86,7 +86,7 @@ public class Main {
         factory.setImplementationDescription(IGameDescription.class, "LeducPoker","Imperfect recall Leduc poker");
 
         factory.register(IGameDescription.class, "IIGoofspiel",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         GameRepository.iiGoofspiel(5).getClass().getConstructor(int.class),
                         "Number of cards in each deck (N)"
                 ),
@@ -94,7 +94,7 @@ public class Main {
         );
 
         factory.register(IGameDescription.class, "RockPaperScissors",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         GameRepository.rps(5).getClass().getConstructor(int.class),
                         "Number of possible moves (must be odd)"
                 ),
@@ -102,7 +102,7 @@ public class Main {
         );
 
         factory.register(IGameDescription.class, "PerfectRecall",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         PerfectRecallGameDescriptionWrapper.class.getConstructor(IGameDescription.class),
                         "Game to wrap"
                 ),
@@ -110,27 +110,27 @@ public class Main {
         );
 
         factory.register(IGameDescription.class, "PrincessAndMonster",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         GameRepository.princessAndMonster(5).getClass().getConstructor(int.class),
                         "Number of max. turns per player"
                 ),
                 "Imperfect recall implementation of princess and monster on a 3x3 grid without diagonal connections"
         );
         factory.register(IGameDescription.class, "LatentTicTacToe",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         GameRepository.latentTTT().getClass().getConstructor()
                 ),
                 "Imperfect recall implementation of latent tic-tac-toe on a 3x3 grid"
         );
         factory.register(IGameDescription.class, "PlayerSwap",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         PlayerSwapGameDescription.class.getConstructor(IGameDescription.class),
                         "Game to wrap"
                 ),
                 "Wrapper that adds an initial chance node which swaps player roles with 50% probability"
         );
         factory.register(IGameDescription.class, "CheckedTraversal",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         CheckedTraversalGameDescription.class.getConstructor(IGameDescription.class),
                         "Game to wrap"
                 ),
@@ -149,7 +149,7 @@ public class Main {
             params.put("dl", new Parameter(int.class, 0, false, "Depth limit"));
             params.put("au", new Parameter(boolean.class, true, false, "Alternating updates"));
             params.put("cse", cse);
-            factory.register(BaseCFRSolver.Factory.class, "CFR", new ParameterList(null, params,
+            factory.register(BaseCFRSolver.Factory.class, "CFR", new FactoryDescription(null, params,
                     (posParams, kvParams) -> new DepthLimitedCFRSolver.Factory(
                             (IRegretMatching.IFactory) kvParams.get("rm"),
                             (int) kvParams.get("dl"),
@@ -167,7 +167,7 @@ public class Main {
             params.put("e", e);
             params.put("t", t);
             params.put("cse", cse);
-            factory.register(BaseCFRSolver.Factory.class, "MC-CFR", new ParameterList(null, params,
+            factory.register(BaseCFRSolver.Factory.class, "MC-CFR", new FactoryDescription(null, params,
                     (posParams, kvParams) -> new MCCFRSolver.Factory(
                             (IRegretMatching.IFactory) kvParams.get("rm"),
                             (double) kvParams.get("e"),
@@ -183,7 +183,7 @@ public class Main {
             params.put("e", e);
             params.put("t", t);
             params.put("cse", cse);
-            factory.register(BaseCFRSolver.Factory.class, "VR-MCCFR", new ParameterList(null, params,
+            factory.register(BaseCFRSolver.Factory.class, "VR-MCCFR", new FactoryDescription(null, params,
                     (posParams, kvParams) -> new VRMCCFRSolverFactory(
                             (IRegretMatching.IFactory) kvParams.get("rm"),
                             (double) kvParams.get("e"),
@@ -199,28 +199,28 @@ public class Main {
         factory.setTypeDescription(IPlayerFactory.class, "Player factory");
 
         factory.register(IPlayerFactory.class, "RandomPlayer",
-                new ParameterList(null, null, (a, b) -> new RandomPlayer.Factory()),
+                new FactoryDescription(null, null, (a, b) -> new RandomPlayer.Factory()),
                 "Uniform random player"
         );
-        factory.register(IPlayerFactory.class, "ContinualResolving", ConfigurableFactory.createPositionalParameterList(
+        factory.register(IPlayerFactory.class, "ContinualResolving", ConfigurableFactory.createPositionalFactory(
                 ContinualResolvingPlayer.Factory.class.getConstructor(BaseCFRSolver.Factory.class),
                 "CFR solver used for re-solving",
                 "Continual resolving player with default resolver"
         ), "Continual resolving player");
-        factory.register(IPlayerFactory.class, "ContinualResolving", ConfigurableFactory.createPositionalParameterList(
+        factory.register(IPlayerFactory.class, "ContinualResolving", ConfigurableFactory.createPositionalFactory(
                 ContinualResolvingPlayer.Factory.class.getConstructor(ISubgameResolver.IFactory.class),
                 "Subgame resolver",
                 "Continual resolving player with custom resolver"
         ));
-        factory.register(IPlayerFactory.class, "PerfectRecall", ConfigurableFactory.createPositionalParameterList(
+        factory.register(IPlayerFactory.class, "PerfectRecall", ConfigurableFactory.createPositionalFactory(
                 PerfectRecallPlayerFactory.class.getConstructor(IPlayerFactory.class),
                 "Player to wrap"
         ), "Wrapper that passes a perfect recall version of the game to the wrapped player");
-        factory.register(IPlayerFactory.class, "SolvingPlayer", ConfigurableFactory.createPositionalParameterList(
+        factory.register(IPlayerFactory.class, "SolvingPlayer", ConfigurableFactory.createPositionalFactory(
                 SolvingPlayer.Factory.class.getConstructor(BaseCFRSolver.Factory.class),
                 "Used CFR solver"
         ), "Player that solves the game while playing");
-        factory.register(IPlayerFactory.class, "StrategyBasedPlayer", ConfigurableFactory.createPositionalParameterList(
+        factory.register(IPlayerFactory.class, "StrategyBasedPlayer", ConfigurableFactory.createPositionalFactory(
                 StrategyBasedPlayer.DynamiclyLoadedStrategyFactory.class.getConstructor(String.class),
                 "Directory with serialized strategies (filenames in format of GAME.strat)"
         ), "Player that uses a precomputed strategy to play");
@@ -230,16 +230,16 @@ public class Main {
         factory.setTypeDescription(IRegretMatching.IFactory.class, "Regret matching factory");
 
         factory.register(IRegretMatching.IFactory.class, "RM",
-                new ParameterList(null, null, (a, b) -> new RegretMatching.Factory()),
+                new FactoryDescription(null, null, (a, b) -> new RegretMatching.Factory()),
                 "Classical regret matching");
         factory.register(IRegretMatching.IFactory.class, "RM+",
-                new ParameterList(null, null, (a, b) -> new RegretMatchingPlus.Factory()),
+                new FactoryDescription(null, null, (a, b) -> new RegretMatchingPlus.Factory()),
                 "Regret matching+");
-        factory.register(IRegretMatching.IFactory.class, "DRM", ConfigurableFactory.createPositionalParameterList(
+        factory.register(IRegretMatching.IFactory.class, "DRM", ConfigurableFactory.createPositionalFactory(
                 DiscountedRegretMatching.Factory.class.getConstructor(double.class, double.class),
                 "Discounting exponent for positive regret", "Discounting exponent for negative regret"
         ), "Discounted regret matching");
-        factory.register(IRegretMatching.IFactory.class, "ERM", ConfigurableFactory.createPositionalParameterList(
+        factory.register(IRegretMatching.IFactory.class, "ERM", ConfigurableFactory.createPositionalFactory(
                 ExplorativeRegretMatching.Factory.class.getConstructor(IRegretMatching.IFactory.class, double.class),
                 "Underlying regret matching", "Uniform strategy weight"
         ), "Wrapper that adds a uniform strategy to the one produced by the underlying regret matching with the given weight");
@@ -249,10 +249,10 @@ public class Main {
         factory.setTypeDescription(IUtilityEstimator.IFactory.class, "Game-state utility estimator factory");
 
         factory.register(IUtilityEstimator.IFactory.class, "RandomPlayout",
-                new ParameterList(Arrays.asList(new Parameter(int.class, null, true, "Number of random playouts used to get an estimate")), null,
+                new FactoryDescription(Arrays.asList(new Parameter(int.class, null, true, "Number of random playouts used to get an estimate")), null,
                         (posParams, kvParams) -> new RandomPlayoutUtilityEstimator.Factory((int)posParams.get(0))),
                 "Uniform random playout estimator");
-        factory.register(IUtilityEstimator.IFactory.class, "CRUEW", ConfigurableFactory.createPositionalParameterList(
+        factory.register(IUtilityEstimator.IFactory.class, "CRUEW", ConfigurableFactory.createPositionalFactory(
                 ContinualResolvingkUtilityEstimatorWrapper.Factory.class.getConstructor(IUtilityEstimator.IFactory.class),
                 "Underlying utility estimator"
         ), "Wrapper that makes sure that depth-limited CFR visits the states required by continual resolving (player's next turn in a different subgame).");
@@ -262,14 +262,14 @@ public class Main {
         factory.setTypeDescription(IBaseline.IFactory.class, "VR-MCCFR baseline factory");
 
         factory.register(IBaseline.IFactory.class, "ExpAvg",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         ExponentiallyDecayingAverageBaseline.Factory.class.getConstructor(double.class),
                         "Exponential decay factor"
                 ),
                 "Exponentially decaying average baseline"
         );
         factory.register(IBaseline.IFactory.class, "None",
-                new ParameterList(null, null, (a, b) -> new NoBaseline.Factory()),
+                new FactoryDescription(null, null, (a, b) -> new NoBaseline.Factory()),
                 "Empty baseline");
     }
 
@@ -277,21 +277,21 @@ public class Main {
         factory.setTypeDescription(IPlayerEvaluator.IFactory.class,"Player evaluator factory");
 
         factory.register(IPlayerEvaluator.IFactory.class, "GamePlayingEvaluator",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         GamePlayingEvaluator.Factory.class.getConstructor(int.class),
                         "Number of games to play"
                 ),
                 "Game-playing evaluator"
         );
         factory.register(IPlayerEvaluator.IFactory.class, "GamePlayingEvaluator",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         GamePlayingEvaluator.Factory.class.getConstructor(int.class, int.class),
                         "Number of games to play", "Player's role in the first game (1/2)"
                 ),
                 "Game-playing evaluator"
         );
         factory.register(IPlayerEvaluator.IFactory.class, "TraversingEvaluator",
-                ConfigurableFactory.createPositionalParameterList(
+                ConfigurableFactory.createPositionalFactory(
                         TraversingEvaluator.Factory.class.getConstructor()
                 ),
                 "Traversing evaluator"

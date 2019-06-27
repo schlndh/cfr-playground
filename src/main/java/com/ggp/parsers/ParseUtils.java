@@ -6,6 +6,12 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 public class ParseUtils {
+    /**
+     * Helper method for parsing config expression from a string.
+     * @param str config string
+     * @return parsed expression
+     * @throws InvalidInputStringException
+     */
     public static ConfigExpression parseConfigExpression(String str) throws InvalidInputStringException {
         CharStream inputStream = CharStreams.fromString(str);
         ConfigKeyLexer lexer = new ConfigKeyLexer(inputStream);

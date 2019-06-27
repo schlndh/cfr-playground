@@ -1,13 +1,15 @@
 package com.ggp.parsers;
 
 import com.ggp.parsers.exceptions.ConfigAssemblyException;
-import com.ggp.parsers.exceptions.WrongConfigKeyException;
 import com.ggp.parsers.exceptions.WrongExpressionTypeException;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Parsed config expression. It consists of a type and a value.
+ */
 public class ConfigExpression {
     public enum Type {
         CONFIG_KEY, NUMBER, BOOL, STRING, ARRAY

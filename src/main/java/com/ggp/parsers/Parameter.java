@@ -1,5 +1,8 @@
 package com.ggp.parsers;
 
+/**
+ * Parameter specification for a factory function.
+ */
 public class Parameter {
     private Class<?> type;
     private Object defaultValue;

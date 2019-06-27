@@ -1,25 +1,29 @@
 package com.ggp.parsers;
 
-import com.ggp.parsers.exceptions.ConfigAssemblyException;
-import com.ggp.parsers.exceptions.TypeFactoryException;
-import com.ggp.parsers.exceptions.WrongConfigKeyException;
-import com.ggp.parsers.exceptions.WrongExpressionTypeException;
+import com.ggp.parsers.exceptions.*;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
+/**
+ * Configurable factory which can be used to register factories for different types (i.e. interfaces).
+ * And then can be used to recursively construct implementations of these types from a string.
+ */
 public class ConfigurableFactory {
+    /**
+     * Registry of factories of given implementation.
+     */
     public static class ConfigurableImplementation {
-        private ArrayList<ParameterList> factories = new ArrayList<>();
+        private ArrayList<FactoryDescription> factories = new ArrayList<>();
         private String description = "";
 
-        public List<ParameterList> getFactories() {
+        public List<FactoryDescription> getFactories() {
             return Collections.unmodifiableList(factories);
         }
 
-        void addFactory(ParameterList parameters) {
+        void addFactory(FactoryDescription parameters) {
             factories.add(parameters);
         }
 
@@ -32,6 +36,9 @@ public class ConfigurableFactory {
         }
     }
 
+    /**
+     * Registry of configurable implementations of given type.
+     */
     public static class ConfigurableType {
         private HashMap<String, ConfigurableImplementation> registry = new HashMap<>();
         private String description = "";
@@ -55,18 +62,37 @@ public class ConfigurableFactory {
 
     private HashMap<Class<?>, ConfigurableType> registry = new HashMap<>();
 
-    public void register(Class<?> type, String name, ParameterList parameters) {
+    /**
+     * Register factory for implementation of given type.
+     * @param type of the implementation
+     * @param name implementation name
+     * @param factory factory for the implementation
+     */
+    public void register(Class<?> type, String name, FactoryDescription factory) {
         registry.computeIfAbsent(type, a -> new ConfigurableType()).getModifiableRegistry()
                 .computeIfAbsent(name, b -> new ConfigurableImplementation())
-                .addFactory(parameters);
+                .addFactory(factory);
     }
 
-    public void register(Class<?> type, String name, ParameterList parameters, String description) {
-        register(type, name, parameters);
+    /**
+     * Register factory for implementation of given type.
+     * @param type of the implementation
+     * @param name implementation name
+     * @param factory factory for the implementation
+     * @param description factory description
+     */
+    public void register(Class<?> type, String name, FactoryDescription factory, String description) {
+        register(type, name, factory);
         registry.get(type).getRegisteredImplementations().get(name).setDescription(description);
     }
 
-    public static ParameterList createPositionalParameterList(Constructor<?> constructor, String ... parameterDescriptions) {
+    /**
+     * Creates a factory with positional parameters from given constructor.
+     * @param constructor constructor from which to create the factory
+     * @param parameterDescriptions optional array of descriptions for the parameters of the constructor
+     * @return
+     */
+    public static FactoryDescription createPositionalFactory(Constructor<?> constructor, String ... parameterDescriptions) {
         ArrayList<Parameter> params = new ArrayList<>();
         if (parameterDescriptions == null) {
             parameterDescriptions = new String[0];
@@ -78,7 +104,7 @@ public class ConfigurableFactory {
             parameterIdx++;
         }
         String plDesc = parameterDescriptions.length > parameterIdx ? parameterDescriptions[parameterIdx] : "";
-        return new ParameterList(params, null, (posParams, kvParams) -> {
+        return new FactoryDescription(params, null, (posParams, kvParams) -> {
             try {
                 return constructor.newInstance(posParams.toArray());
             } catch (InvocationTargetException e) {
@@ -93,10 +119,26 @@ public class ConfigurableFactory {
         }, plDesc);
     }
 
+    /**
+     * Configure a type implementation from config key.
+     * @param type return type
+     * @param key config key
+     * @param <T> return type
+     * @return configured implementation of given type.
+     * @throws ConfigAssemblyException
+     */
     public <T> T create(Class<T> type, ConfigKey key) throws ConfigAssemblyException {
         return (T) doCreate(type, key);
     }
 
+    /**
+     * Configure a type implementation from config expression.
+     * @param type return type
+     * @param expr config expression
+     * @param <T> return type
+     * @return configured implementation of given type.
+     * @throws ConfigAssemblyException
+     */
     public <T> T create(Class<T> type, ConfigExpression expr) throws ConfigAssemblyException {
         return (T) doCreate(type, expr);
     }
@@ -122,23 +164,23 @@ public class ConfigurableFactory {
         ConfigurableType confType = registry.getOrDefault(type, null);
         if (confType == null) return null;
         HashMap<String, ConfigurableImplementation> typeRegistry = confType.getModifiableRegistry();
-        if (!typeRegistry.containsKey(key.getName())) throw new WrongConfigKeyException();
+        if (!typeRegistry.containsKey(key.getName())) throw new UnknownImplementationException();
         ConfigurableImplementation impl = typeRegistry.getOrDefault(key.getName(), null);
         if (impl == null) return null;
-        for (ParameterList pl: impl.getFactories()) {
+        for (FactoryDescription fd: impl.getFactories()) {
             List<Object> posParams = null;
-            if (pl.getPositionalParams() != null) {
-                posParams = matchPositionalParameters(key.getPositionalParams(), pl.getPositionalParams());
+            if (fd.getPositionalParams() != null) {
+                posParams = matchPositionalParameters(key.getPositionalParams(), fd.getPositionalParams());
             }
-            if (posParams == null && pl.getPositionalParams() != null) continue;
+            if (posParams == null && fd.getPositionalParams() != null) continue;
             Map<String, Object> kvParams = null;
-            if (pl.getKvParams() != null) {
-                kvParams = matchKVParams(key.getKvParams(), pl.getKvParams());
+            if (fd.getKvParams() != null) {
+                kvParams = matchKVParams(key.getKvParams(), fd.getKvParams());
             }
-            if (kvParams == null && pl.getKvParams() != null) continue;
-            return pl.getFactory().apply(posParams, kvParams);
+            if (kvParams == null && fd.getKvParams() != null) continue;
+            return fd.getFactory().apply(posParams, kvParams);
         }
-        throw new WrongConfigKeyException();
+        throw new NoMatchingFactoryException();
     }
 
     private Object doCreate(Class<?> type, ConfigExpression s) throws ConfigAssemblyException {

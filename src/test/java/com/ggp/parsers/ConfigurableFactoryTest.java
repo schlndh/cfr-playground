@@ -90,12 +90,12 @@ class ConfigurableFactoryTest {
 
     private ConfigurableFactory createFactory() throws NoSuchMethodException {
         ConfigurableFactory factory = new ConfigurableFactory();
-        factory.register(IntA.class, "A1", ConfigurableFactory.createPositionalParameterList(A1.class.getConstructor(int.class, int.class, IntB.class)));
+        factory.register(IntA.class, "A1", ConfigurableFactory.createPositionalFactory(A1.class.getConstructor(int.class, int.class, IntB.class)));
         {
             HashMap<String, Parameter> kvParams = new HashMap<>();
             kvParams.put("b", new Parameter(IntB.class, null, false));
             factory.register(IntA.class, "A1",
-                    new ParameterList(
+                    new FactoryDescription(
                             Arrays.asList(
                                     new Parameter(int.class, 0, true),
                                     new Parameter(int.class, 9, false)
@@ -106,15 +106,15 @@ class ConfigurableFactoryTest {
             );
         }
 
-        factory.register(IntA.class, "A2", ConfigurableFactory.createPositionalParameterList(A2.class.getConstructor(int.class, int.class, IntB.class)));
+        factory.register(IntA.class, "A2", ConfigurableFactory.createPositionalFactory(A2.class.getConstructor(int.class, int.class, IntB.class)));
         {
             HashMap<String, Parameter> params = new HashMap<>();
             params.put("x", new Parameter(int.class, 1, false));
             params.put("y", new Parameter(int.class, 2, false));
-            factory.register(IntB.class, "B1", new ParameterList(null, params,
+            factory.register(IntB.class, "B1", new FactoryDescription(null, params,
                     (pos, kv) -> new B1((int) kv.get("x"), (int) kv.get("y"))));
         }
-        factory.register(IntB.class, "B2", ConfigurableFactory.createPositionalParameterList(B2.class.getConstructor(int[].class)));
+        factory.register(IntB.class, "B2", ConfigurableFactory.createPositionalFactory(B2.class.getConstructor(int[].class)));
         return factory;
     }
 

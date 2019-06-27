@@ -2,7 +2,7 @@ package com.ggp.cli;
 
 import com.ggp.parsers.ConfigurableFactory;
 import com.ggp.parsers.Parameter;
-import com.ggp.parsers.ParameterList;
+import com.ggp.parsers.FactoryDescription;
 import picocli.CommandLine;
 
 import java.util.Map;
@@ -51,20 +51,20 @@ public class ConfigHelpCommand implements Runnable {
         if (implDesc != null && implDesc.length() > 0) {
             System.out.println(implDesc);
         }
-        for (ParameterList pl: confImpl.getFactories()) {
-            System.out.println(pl.getDescription());
+        for (FactoryDescription fd: confImpl.getFactories()) {
+            System.out.println(fd.getDescription());
             System.out.println("-----------------------");
-            if (pl.getPositionalParams() != null && pl.getPositionalParams().size() > 0) {
+            if (fd.getPositionalParams() != null && fd.getPositionalParams().size() > 0) {
                 System.out.println("Positional parameters:");
                 CommandLine.Help.TextTable textTable = createTable(40);
-                for (Parameter p: pl.getPositionalParams()) {
+                for (Parameter p: fd.getPositionalParams()) {
                     textTable.addRowValues(classToString(p.getType()), p.getDescription());
                 }
                 System.out.println(textTable.toString());
             }
-            if (pl.getKvParams() != null &&  pl.getKvParams().size() > 0) {
+            if (fd.getKvParams() != null &&  fd.getKvParams().size() > 0) {
                 System.out.println("Key-value parameters:");
-                for (Map.Entry<String, Parameter> entry: pl.getKvParams().entrySet()) {
+                for (Map.Entry<String, Parameter> entry: fd.getKvParams().entrySet()) {
                     System.out.println(entry.getKey() + "\t" + classToString(entry.getValue().getType()));
                     String desc = entry.getValue().getDescription();
                     if (desc != null && desc.length() > 0) {

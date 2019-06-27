@@ -2,6 +2,9 @@ package com.ggp.parsers;
 
 import java.util.*;
 
+/**
+ * Parsed config key with a name and parameters.
+ */
 public class ConfigKey {
     private String name;
     private List<ConfigExpression> positionalParams;
