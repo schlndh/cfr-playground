@@ -15,7 +15,7 @@ import java.util.Map;
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
-public class ConfigHelpCommand implements Runnable {
+class ConfigHelpCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 

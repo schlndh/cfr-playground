@@ -16,7 +16,7 @@ import java.util.Date;
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
-public class TournamentCommand implements Runnable {
+class TournamentCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 

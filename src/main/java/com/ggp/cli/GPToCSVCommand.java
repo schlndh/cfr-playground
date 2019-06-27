@@ -26,7 +26,7 @@ import java.util.HashSet;
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
-public class GPToCSVCommand implements Runnable {
+class GPToCSVCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 

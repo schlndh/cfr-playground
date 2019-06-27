@@ -27,7 +27,7 @@ import java.util.Date;
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
-public class EvaluateCommand implements Runnable {
+class EvaluateCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 

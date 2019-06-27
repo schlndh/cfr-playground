@@ -33,7 +33,7 @@ import java.util.*;
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
-public class CFRDEvalCommand implements Runnable {
+class CFRDEvalCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 

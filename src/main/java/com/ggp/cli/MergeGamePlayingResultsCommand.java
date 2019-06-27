@@ -11,7 +11,7 @@ import java.io.File;
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
-public class MergeGamePlayingResultsCommand implements Runnable {
+class MergeGamePlayingResultsCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 

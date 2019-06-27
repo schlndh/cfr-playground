@@ -10,7 +10,7 @@ import picocli.CommandLine;
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
-public class RunCommand implements Runnable {
+class RunCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 

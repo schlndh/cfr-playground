@@ -12,7 +12,7 @@ import java.util.List;
         optionListHeading = "%nOptions:%n",
         sortOptions = false
 )
-public class GameInfoCommand implements Runnable {
+class GameInfoCommand implements Runnable {
     @CommandLine.ParentCommand
     private MainCommand mainCommand;
 
