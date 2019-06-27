@@ -6,7 +6,7 @@ import com.ggp.IGameDescription;
 import java.util.Objects;
 
 /**
- * Transforms the game to swap players at the beginning with 50% chance
+ * Transforms the game to swap players at the beginning with 50% chance, which makes the game perfectly balanced (game-value is 0).
  */
 public class PlayerSwapGameDescription implements IGameDescription {
     private static final long serialVersionUID = 1L;

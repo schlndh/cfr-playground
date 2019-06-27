@@ -3,6 +3,9 @@ package com.ggp.utils.time;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Counter which increments in specified time intervals.
+ */
 public class TimedCounter {
     private List<Integer> incPointsMs;
     private int counter = 0;

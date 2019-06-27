@@ -6,6 +6,11 @@ import com.ggp.IStrategy;
 
 import java.util.Set;
 
+/**
+ * Restricts strategy to given info sets.
+ *
+ * Returns uniform random strategy in other infosets.
+ */
 public class RestrictedStrategy implements IStrategy {
     private static final long serialVersionUID = 1L;
     private IStrategy innerStrategy;

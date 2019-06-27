@@ -1,5 +1,8 @@
 package com.ggp.utils.time;
 
+/**
+ * Helper class which allows to easily check time-limits in iterative algorithms by tracking average iteration time.
+ */
 public class IterationTimer {
     private StopWatch totalTime = new StopWatch();
     private StopWatch iterTime = new StopWatch();
@@ -39,6 +42,10 @@ public class IterationTimer {
         return totalIterTime/iters;
     }
 
+    /**
+     * Checks if remaining time is larger than estimated iteration time.
+     * @return yes/no
+     */
     public boolean canDoAnotherIteration() {
         long remainingMs = timeoutMs - totalTime.getLiveDurationMs();
         return (remainingMs > getEstimatedIterationLengthMs());

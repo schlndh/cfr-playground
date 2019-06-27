@@ -5,6 +5,11 @@ import com.ggp.IGameDescription;
 
 import java.util.Objects;
 
+/**
+ * Game description wrapper which checks correctness of CIS/IS transitions (legal actions, valid percepts, ...).
+ *
+ * Useful for debugging new game implementations.
+ */
 public class CheckedTraversalGameDescription implements IGameDescription {
     private static final long serialVersionUID = 1L;
     private final IGameDescription gameDesc;

@@ -10,6 +10,9 @@ import com.ggp.utils.random.RandomSampler;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Utility estimator which uses fixed amount of uniform random playouts to estimate state's utility.
+ */
 public class RandomPlayoutUtilityEstimator implements IUtilityEstimator {
     public static class Factory implements IUtilityEstimator.IFactory {
         private final int iters;

@@ -2,6 +2,12 @@ package com.ggp.utils.strategy;
 
 import com.ggp.IInfoSetStrategy;
 
+/**
+ * Normalizing wrapper for infoset strategy.
+ *
+ * This class assumes the underlying strategy doesn't change while the wrapper is in use.
+ * If the underlying strategy changes new wrapper must be created to reflect those changes.
+ */
 public class NormalizingInfoSetStrategyWrapper implements IInfoSetStrategy {
     private static final long serialVersionUID = 1L;
     private IInfoSetStrategy unnormalizedIsStrat;

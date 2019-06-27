@@ -57,3 +57,11 @@ idea {
         sourceDirs += file("build/generated-src/antlr/main")
     }
 }
+javadoc {
+    exclude('com/ggp/parsers/ConfigKeyLexer**')
+    exclude('com/ggp/parsers/ConfigKeyParser**')
+    exclude('com/ggp/parsers/ConfigKeyVisitor**')
+    exclude('com/ggp/parsers/ConfigKeyBaseVisitor**')
+    exclude('com/ggp/parsers/visitors/**')
+    options.addStringOption('noqualifier', 'java.lang')
+}

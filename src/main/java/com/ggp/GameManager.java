@@ -6,6 +6,9 @@ import com.ggp.utils.random.RandomSampler;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+/**
+ * Game manager is given player factories for both players and a game description. Then it runs a match with given time-limits.
+ */
 public class GameManager {
     public interface IActionSelector {
         /**
@@ -43,10 +46,21 @@ public class GameManager {
         this.state = game.getInitialState();
     }
 
+    /**
+     * Run a match with given time limits
+     * @param initTimeoutMillis init time
+     * @param actTimeoutMillis time limit for each action selection
+     */
     public void run(long initTimeoutMillis, long actTimeoutMillis) {
         run(initTimeoutMillis, actTimeoutMillis, s -> null);
     }
 
+    /**
+     * Run a match with given time limits and action selector
+     * @param initTimeoutMillis init time
+     * @param actTimeoutMillis time limit for each action selection
+     * @param actionSelector action selector used to override player's decisions
+     */
     public void run(long initTimeoutMillis, long actTimeoutMillis, IActionSelector actionSelector) {
         gameListeners.forEach((listener) -> listener.gameStart(player1, player2));
         gameListeners.forEach((listener) -> listener.playerInitStarted(1));
@@ -60,6 +74,12 @@ public class GameManager {
         gameListeners.forEach((listener) -> listener.gameEnd(getPayoff(1), getPayoff(2)));
     }
 
+    /**
+     * Runs a match with given time limits and forced actions
+     * @param initTimeoutMillis init time
+     * @param actTimeoutMillis time limit for each action selection
+     * @param forcedActions sequence of forced actions to override player's decisions
+     */
     public void run(long initTimeoutMillis, long actTimeoutMillis, Iterator<IAction> forcedActions) {
         run(initTimeoutMillis, actTimeoutMillis, new ItertorActionSelector(forcedActions));
     }
@@ -101,6 +121,11 @@ public class GameManager {
         return false;
     }
 
+    /**
+     * Returns payoff after the match has finished.
+     * @param role player for which to return the payoff (1/2)
+     * @return payoff
+     */
     public int getPayoff(int role) {
         return (int) state.getPayoff(role);
     }

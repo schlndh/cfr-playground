@@ -2,6 +2,9 @@ package com.ggp.player_evaluators;
 
 import com.ggp.*;
 
+/**
+ * Extended interface for players with support for evaluation.
+ */
 public interface IEvaluablePlayer extends IPlayer {
     interface IFactory extends IPlayerFactory {
         @Override

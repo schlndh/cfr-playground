@@ -3,6 +3,9 @@ package com.ggp.cli;
 import com.ggp.parsers.ConfigurableFactory;
 import picocli.CommandLine;
 
+/**
+ * Main CLI command.
+ */
 @CommandLine.Command(name="./CFRPlayground", subcommands = {
         RunCommand.class,
         TournamentCommand.class,

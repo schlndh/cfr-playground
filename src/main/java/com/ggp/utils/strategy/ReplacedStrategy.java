@@ -6,6 +6,11 @@ import com.ggp.IStrategy;
 
 import java.util.HashSet;
 
+/**
+ * Replaces infoset strategies from the original with infoset strategies from the new strategy.
+ *
+ * Returns original infoset strategy for infosets which are undefined in the new strategy.
+ */
 public class ReplacedStrategy implements IStrategy {
     private IStrategy origStrat, replacingStrat;
 

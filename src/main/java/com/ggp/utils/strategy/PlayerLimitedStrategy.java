@@ -6,6 +6,11 @@ import com.ggp.IStrategy;
 
 import java.util.stream.StreamSupport;
 
+/**
+ * Limits the underlying strategy to given player.
+ *
+ * Infosets where the underlying strategy is not defined and other player's info sets return uniform random strategy.
+ */
 public class PlayerLimitedStrategy implements IStrategy {
     private IStrategy strat;
     private int myId;

@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Random;
 import java.util.function.Function;
 
+/**
+ * Collection of random sampling helpers.
+ */
 public class RandomSampler {
 
     public static class SampleResult<T> {

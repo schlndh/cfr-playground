@@ -5,6 +5,9 @@ import com.ggp.IPercept;
 
 import java.util.Objects;
 
+/**
+ * Helper class which turns action into percept.
+ */
 public class OwnActionPercept implements IPercept {
     private static final long serialVersionUID = 1L;
     private int owner;

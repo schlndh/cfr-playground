@@ -6,6 +6,9 @@ import com.ggp.IRandomNode;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Random node with uniform probability distribution over its actions.
+ */
 public class UniformRandomNode implements IRandomNode {
     private static final long serialVersionUID = 1L;
     private List<IAction> actions;
