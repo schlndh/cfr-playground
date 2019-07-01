@@ -23,6 +23,12 @@ class RunCommand implements Runnable {
     @CommandLine.Option(names={"--player2"}, description="player 2 (IPlayerFactory)", required=true)
     private IPlayerFactory player2;
 
+    @CommandLine.Option(names={"-i", "--init"}, description="Init time (ms)", required=true)
+    private int init;
+
+    @CommandLine.Option(names={"-t", "--time-limit"}, description="Time limit per move (ms)", required=true)
+    private int timeLimit;
+
     @Override
     public void run() {
         if (game == null) {
@@ -41,7 +47,7 @@ class RunCommand implements Runnable {
             manager.registerGameListener(new GamePlayVisualizer(visualizer));
         }
 
-        manager.run(1000, 1000);
+        manager.run(init, timeLimit);
         System.out.println("Result 1:" + manager.getPayoff(1) + ", 2:" + manager.getPayoff(2));
 
     }
