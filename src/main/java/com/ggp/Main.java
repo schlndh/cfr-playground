@@ -5,7 +5,7 @@ import com.ggp.parsers.*;
 import com.ggp.players.PerfectRecallPlayerFactory;
 import com.ggp.players.StrategyBasedPlayer;
 import com.ggp.players.continual_resolving.ContinualResolvingPlayer;
-import com.ggp.players.continual_resolving.utils.ContinualResolvingkUtilityEstimatorWrapper;
+import com.ggp.players.continual_resolving.utils.ContinualResolvingUtilityEstimatorWrapper;
 import com.ggp.players.solving.SolvingPlayer;
 import com.ggp.player_evaluators.GamePlayingEvaluator;
 import com.ggp.player_evaluators.IPlayerEvaluator;
@@ -253,7 +253,7 @@ public class Main {
                         (posParams, kvParams) -> new RandomPlayoutUtilityEstimator.Factory((int)posParams.get(0))),
                 "Uniform random playout estimator");
         factory.register(IUtilityEstimator.IFactory.class, "CRUEW", ConfigurableFactory.createPositionalFactory(
-                ContinualResolvingkUtilityEstimatorWrapper.Factory.class.getConstructor(IUtilityEstimator.IFactory.class),
+                ContinualResolvingUtilityEstimatorWrapper.Factory.class.getConstructor(IUtilityEstimator.IFactory.class),
                 "Underlying utility estimator"
         ), "Wrapper that makes sure that depth-limited CFR visits the states required by continual resolving (player's next turn in a different subgame).");
     }

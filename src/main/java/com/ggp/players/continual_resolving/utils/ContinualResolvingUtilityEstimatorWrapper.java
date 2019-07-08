@@ -4,7 +4,7 @@ import com.ggp.players.continual_resolving.trackers.CFRDTracker;
 import com.ggp.players.continual_resolving.trackers.IGameTraversalTracker;
 import com.ggp.utils.IUtilityEstimator;
 
-public class ContinualResolvingkUtilityEstimatorWrapper implements IUtilityEstimator {
+public class ContinualResolvingUtilityEstimatorWrapper implements IUtilityEstimator {
     public static class Factory implements  IUtilityEstimator.IFactory {
         private IUtilityEstimator.IFactory ueFactory;
 
@@ -28,7 +28,7 @@ public class ContinualResolvingkUtilityEstimatorWrapper implements IUtilityEstim
 
     private IUtilityEstimator utilityEstimator;
 
-    public ContinualResolvingkUtilityEstimatorWrapper(IUtilityEstimator utilityEstimator) {
+    public ContinualResolvingUtilityEstimatorWrapper(IUtilityEstimator utilityEstimator) {
         this.utilityEstimator = utilityEstimator;
     }
 
@@ -44,6 +44,6 @@ public class ContinualResolvingkUtilityEstimatorWrapper implements IUtilityEstim
 
     @Override
     public IUtilityEstimator copy() {
-        return new ContinualResolvingkUtilityEstimatorWrapper(utilityEstimator.copy());
+        return new ContinualResolvingUtilityEstimatorWrapper(utilityEstimator.copy());
     }
 }
