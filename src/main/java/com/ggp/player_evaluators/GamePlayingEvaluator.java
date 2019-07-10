@@ -29,7 +29,7 @@ public class GamePlayingEvaluator implements IPlayerEvaluator {
             if (gameCount < 1) {
                 throw new IllegalArgumentException("At least one match must be played!");
             }
-            if (firstGameRoleAssignment != 1 || firstGameRoleAssignment != 2) {
+            if (firstGameRoleAssignment != 1 && firstGameRoleAssignment != 2) {
                 throw new IllegalArgumentException("First game role must be either 1 or 2!");
             }
             this.gameCount = gameCount;
